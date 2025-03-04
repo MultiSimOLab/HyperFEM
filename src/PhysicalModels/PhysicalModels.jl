@@ -1,0 +1,651 @@
+module PhysicalModels
+
+using Gridap
+using Gridap.Helpers
+using DrWatson
+
+using ForwardDiff
+using LinearAlgebra
+using ..TensorAlgebra
+using ..TensorAlgebra: _δδ_μ_3D
+using ..TensorAlgebra: _δδ_λ_3D
+using ..TensorAlgebra: _δδ_μ_2D
+using ..TensorAlgebra: _δδ_λ_2D
+using ..TensorAlgebra: I3
+using ..TensorAlgebra: I9
+using StaticArrays
+
+
+export NeoHookean3D
+export MoneyRivlin3D
+export MoneyRivlin2D
+export NonlinearMoneyRivlin3D
+export TransverseIsotropy3D
+export LinearElasticity3D
+export LinearElasticity2D
+export IdealDielectric
+export ThermalModel
+export ElectroMechModel
+export ThermoElectroMechModel
+export ThermoMechModel
+export ThermoMech_EntropicPolyconvex
+export FlexoElectroModel
+export ThermoElectroMech_Govindjee
+export ThermoElectroMech_PINNs
+
+export Mechano
+export Electro
+export Magneto
+export Thermo
+export ElectroMechano
+export ThermoElectroMechano
+export ThermoMechano
+export ThermoElectro
+export FlexoElectro
+
+export EnergyInterpolationScheme
+
+export DerivativeStrategy
+
+export update_state!
+
+struct DerivativeStrategy{Kind} end
+
+abstract type PhysicalModel end
+abstract type Mechano <: PhysicalModel end
+abstract type Electro <: PhysicalModel end
+abstract type Magneto <: PhysicalModel end
+abstract type Thermo <: PhysicalModel end
+
+abstract type MultiPhysicalModel <: PhysicalModel end
+abstract type ElectroMechano <: MultiPhysicalModel end
+abstract type ThermoElectroMechano <: MultiPhysicalModel end
+abstract type ThermoMechano <: MultiPhysicalModel end
+abstract type ThermoElectro <: MultiPhysicalModel end
+abstract type FlexoElectro <: MultiPhysicalModel end
+
+include("KinematicModels.jl")
+include("PINNs.jl")
+export Kinematics
+export EvolutiveKinematics
+export get_Kinematics
+export getIsoInvariants
+
+
+# ======================
+# Energy interpolations
+# ======================
+struct EnergyInterpolationScheme{A,B} <: PhysicalModel
+  p::Float64
+  model1::A
+  model2::B
+  function EnergyInterpolationScheme(model1, model2; p::Float64=3.0)
+    new{typeof(model1), typeof(model2)}(p, model1, model2)
+  end
+  
+  function (obj::EnergyInterpolationScheme{<:Mechano, <:Mechano})()
+    Ψs, ∂Ψs, ∂2Ψs = obj.model1()
+    Ψv, ∂Ψv, ∂2Ψv = obj.model2()
+    p=obj.p
+
+    Ψ(ρ, F) = ρ^p * Ψs(F) + (1 - ρ^p) * Ψv(F) 
+    DΨ_Dρ(ρ, F) = p * ρ^(p - 1) * Ψs(F) - (p * ρ^(p - 1)) * Ψv(F)
+
+    ∂Ψ(ρ, F) = ρ^p * ∂Ψs(F) + (1 - ρ^p) * ∂Ψv(F)
+    D∂Ψ_Dρ(ρ, F) = p * ρ^(p - 1) * ∂Ψs(F) - (p * ρ^(p - 1)) * ∂Ψv(F)
+
+    ∂2Ψ(ρ, F) = ρ^p * ∂2Ψs(F) + (1 - ρ^p) * ∂2Ψv(F)
+    D∂2Ψ_Dρ(ρ, F) = p * ρ^(p - 1) * ∂2Ψs(F) - (p * ρ^(p - 1)) * ∂2Ψv(F)
+
+    return (Ψ,∂Ψ,∂2Ψ,DΨ_Dρ,D∂Ψ_Dρ,D∂2Ψ_Dρ)
+  end
+end
+
+# ===================
+# Electro models
+# ===================
+
+struct IdealDielectric{A} <: Electro
+  ε::Float64
+  Kinematic::A
+  function IdealDielectric(; ε::Float64, Kinematic::KinematicModel=Kinematics(Electro))
+    new{typeof(Kinematic)}(ε, Kinematic)
+  end
+end
+
+# ===================
+# Thermal models
+# ===================
+
+struct ThermalModel <: Thermo
+  Cv::Float64
+  θr::Float64
+  α::Float64
+  κ::Float64
+  function ThermalModel(; Cv::Float64, θr::Float64, α::Float64, κ::Float64=10.0)
+    new(Cv, θr, α, κ)
+  end
+
+  function (obj::ThermalModel)(Λ::Float64=1.0)
+    Ψ(δθ) = obj.Cv * (δθ - (δθ + obj.θr) * log((δθ + obj.θr) / obj.θr))
+    ∂Ψθ(δθ) = -obj.Cv * log((δθ + obj.θr) / obj.θr)
+    ∂Ψθθ(δθ) = -obj.Cv / (δθ + obj.θr)
+    return (Ψ, ∂Ψθ, ∂Ψθθ)
+  end
+
+end
+
+
+# ===================
+# Mechanical models
+# ===================
+
+struct LinearElasticity2D{A} <: Mechano
+  λ::Float64
+  μ::Float64
+  ρ::Float64
+  Kinematic::A
+  function LinearElasticity2D(; λ::Float64, μ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(λ, μ, ρ, Kinematic)
+  end
+
+  function (obj::LinearElasticity2D)(Λ::Float64=1.0)
+    λ, μ = obj.λ, obj.μ
+    I22 = I2()
+    ∂Ψuu(F) = _δδ_μ_2D(μ) + _δδ_λ_2D(λ)
+    ∂Ψu(F) = ∂Ψuu(F) ⊙ (F - I22)
+    Ψ(F) = 0.5 * (F - I22) ⊙ (∂Ψuu(F) ⊙ (F - I22))
+    return (Ψ, ∂Ψu, ∂Ψuu)
+  end
+
+
+end
+
+
+
+struct LinearElasticity3D{A} <: Mechano
+  λ::Float64
+  μ::Float64
+  ρ::Float64
+  Kinematic::A
+  function LinearElasticity3D(; λ::Float64, μ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(λ, μ, ρ, Kinematic)
+  end
+
+  function (obj::LinearElasticity3D)(Λ::Float64=1.0)
+    λ, μ = obj.λ, obj.μ
+    I33 = I3()
+    ∂Ψuu(F) = _δδ_μ_3D(μ) + _δδ_λ_3D(λ)
+    ∂Ψu(F) = ∂Ψuu(F) ⊙ (F - I33)
+    Ψ(F) = 0.5 * (F - I33) ⊙ (∂Ψuu(F) ⊙ (F - I33))
+    return (Ψ, ∂Ψu, ∂Ψuu)
+  end
+
+
+end
+
+struct NeoHookean3D{A} <: Mechano
+  λ::Float64
+  μ::Float64
+  ρ::Float64
+  Kinematic::A
+  function NeoHookean3D(; λ::Float64, μ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(λ, μ, ρ, Kinematic)
+  end
+
+  function (obj::NeoHookean3D)(Λ::Float64=1.0; Threshold=0.01)
+    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    λ, μ = obj.λ, obj.μ
+    Ψ(F) = μ / 2 * tr((F)' * F) - μ * logreg(J(F)) + (λ / 2) * (J(F) - 1)^2 - 3.0 * (μ / 2.0)
+
+    ∂log∂J(J) = J >= Threshold ? 1 / J : (2 / Threshold - J / (Threshold^2))
+    ∂log2∂J2(J) = J >= Threshold ? -1 / (J^2) : (-1 / (Threshold^2))
+
+    ∂Ψ_∂J(F) = -μ * ∂log∂J(J(F)) + λ * (J(F) - 1)
+    ∂Ψu(F) = μ * F + ∂Ψ_∂J(F) * H(F)
+    I_ = I9()
+    ∂Ψ2_∂J2(F) = -μ * ∂log2∂J2(J(F)) + λ
+    ∂Ψuu(F) = μ * I_ + ∂Ψ2_∂J2(F) * (H(F) ⊗ H(F)) + ∂Ψ_∂J(F) * ×ᵢ⁴(F)
+    return (Ψ, ∂Ψu, ∂Ψuu)
+  end
+
+end
+
+struct MoneyRivlin3D{A} <: Mechano
+  λ::Float64
+  μ1::Float64
+  μ2::Float64
+  ρ::Float64
+  Kinematic::A
+  function MoneyRivlin3D(; λ::Float64, μ1::Float64, μ2::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(λ, μ1, μ2, ρ, Kinematic)
+  end
+
+
+
+  function (obj::MoneyRivlin3D)(Λ::Float64=1.0; Threshold=0.01)
+    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    λ, μ1, μ2 = obj.λ, obj.μ1, obj.μ2
+    Ψ(F) = μ1 / 2 * tr((F)' * F) + μ2 / 2.0 * tr((H(F))' * H(F)) - (μ1 + 2 * μ2) * logreg(J(F)) +
+           (λ / 2.0) * (J(F) - 1)^2 - (3.0 / 2.0) * (μ1 + μ2)
+    ∂Ψ_∂F(F) = μ1 * F
+    ∂Ψ_∂H(F) = μ2 * H(F)
+    ∂log∂J(J) = J >= Threshold ? 1 / J : (2 / Threshold - J / (Threshold^2))
+    ∂log2∂J2(J) = J >= Threshold ? -1 / (J^2) : (-1 / (Threshold^2))
+    ∂Ψ_∂J(F) = -(μ1 + 2.0 * μ2) * ∂log∂J(J(F)) + λ * (J(F) - 1)
+    ∂Ψ2_∂J2(F) = -(μ1 + 2.0 * μ2) * ∂log2∂J2(J(F)) + λ
+    # ∂Ψ_∂J(F) = -(μ1 + 2.0 * μ2) / J(F) + λ * (J(F) - 1)
+    # ∂Ψ2_∂J2(F) = (μ1 + 2.0 * μ2) / (J(F)^2) + λ
+
+    ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂H(F) × F + ∂Ψ_∂J(F) * H(F)
+    # I_ = TensorValue(Matrix(1.0I, 9, 9))
+    I_ = I9()
+    # ∂Ψuu(∇u) = μ1 * I_ + μ2 * (F × (I_ × F)) + ∂Ψ2_∂J2(∇u) * (H(F) ⊗ H(F)) + (I_ × (∂Ψ_∂H(∇u) + ∂Ψ_∂J(∇u) * F))
+    ∂Ψuu(F) = μ1 * I_ + μ2 * (F × (I_ × F)) + ∂Ψ2_∂J2(F) * (H(F) ⊗ H(F)) + ×ᵢ⁴(∂Ψ_∂H(F) + ∂Ψ_∂J(F) * F)
+
+    return (Ψ, ∂Ψu, ∂Ψuu)
+
+  end
+
+
+end
+
+struct MoneyRivlin2D{A} <: Mechano
+  λ::Float64
+  μ1::Float64
+  μ2::Float64
+  ρ::Float64
+  Kinematic::A
+
+  function MoneyRivlin2D(; λ::Float64, μ1::Float64, μ2::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(λ, μ1, μ2, ρ,Kinematic)
+  end
+
+  function (obj::MoneyRivlin2D)(Λ::Float64=1.0; Threshold=0.01)
+    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    λ, μ1, μ2 = obj.λ, obj.μ1, obj.μ2
+    Ψ(F) = (μ1 / 2 + μ2 / 2) * tr((F)' * F) + μ2 / 2.0 * J(F)^2 - (μ1 + 2 * μ2) * logreg(J(F)) +
+           (λ / 2.0) * (J(F) - 1)^2
+    ∂Ψ_(F) = ForwardDiff.gradient(F -> Ψ(F), get_array(F))
+    ∂2Ψ_(F) = ForwardDiff.jacobian(F -> ∂Ψ_(F), get_array(F))
+
+    ∂Ψu(F) = TensorValue(∂Ψ_(F))
+    ∂Ψuu(F) = TensorValue(∂2Ψ_(F))
+
+    return (Ψ, ∂Ψu, ∂Ψuu)
+
+  end
+
+
+end
+
+
+struct NonlinearMoneyRivlin3D{A} <: Mechano
+  λ::Float64
+  μ1::Float64
+  μ2::Float64
+  α::Float64
+  β::Float64
+  ρ::Float64
+  Kinematic::A
+  function NonlinearMoneyRivlin3D(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(λ, μ1, μ2, α, β, ρ, Kinematic)
+  end
+
+  function (obj::NonlinearMoneyRivlin3D)(Λ::Float64=1.0; Threshold=0.01)
+    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    λ, μ1, μ2, α, β = obj.λ, obj.μ1, obj.μ2, obj.α, obj.β
+    Ψ(F) = μ1 / (2.0*α*3.0^(α-1))*(tr((F)' * F))^α + μ2 /(2.0*β*3.0^(β-1)) * (tr((H(F))' * H(F)))^β - (μ1 + 2 * μ2) * logreg(J(F)) +
+           (λ / 2.0) * (J(F) - 1)^2 
+
+    ∂Ψ_∂F(F) = (μ1 / (3.0^(α-1)) * (tr((F)' * F))^(α-1))*F
+    ∂Ψ_∂H(F) = (μ2 / (3.0^(β-1)) * (tr((H(F))' * H(F)))^(β-1))*H(F)
+    ∂log∂J(J) = J >= Threshold ? 1 / J : (2 / Threshold - J / (Threshold^2))
+    ∂log2∂J2(J) = J >= Threshold ? -1 / (J^2) : (-1 / (Threshold^2))
+    ∂Ψ_∂J(F) = -(μ1 + 2.0 * μ2) * ∂log∂J(J(F)) + λ * (J(F) - 1)
+    ∂Ψ2_∂J2(F) = -(μ1 + 2.0 * μ2) * ∂log2∂J2(J(F)) + λ
+
+    ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂H(F) × F + ∂Ψ_∂J(F) * H(F)
+    I_ = I9()
+    ∂ΨFF(F) =  (2*μ1*(α-1)/ (3.0^(α-1)) * (tr((F)' * F))^(α-2))*(F ⊗ F)+(μ1 / (3.0^(α-1)) * (tr((F)' * F))^(α-1)) * I_
+    ∂ΨHH(F) =  (2*μ2*(β-1)/ (3.0^(β-1)) * (tr((H(F))' * H(F)))^(β-2))*(H(F) ⊗ H(F))+(μ2 / (3.0^(β-1)) * (tr((H(F))' * H(F)))^(β-1)) * I_
+    ∂Ψuu(F) = ∂ΨFF(F) + (F × (∂ΨHH(F) × F)) + ∂Ψ2_∂J2(F) * (H(F) ⊗ H(F)) + ×ᵢ⁴(∂Ψ_∂H(F) + ∂Ψ_∂J(F) * F)
+
+    return (Ψ, ∂Ψu, ∂Ψuu)
+
+  end
+
+
+end
+
+
+struct TransverseIsotropy3D{A} <: Mechano
+  μ::Float64
+  α::Float64
+  β::Float64
+  ρ::Float64
+  Kinematic::A
+  function TransverseIsotropy3D(; μ::Float64, α::Float64, β::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(μ, α, β, ρ, Kinematic)
+  end
+
+
+  function (obj::TransverseIsotropy3D)(Λ::Float64=1.0; Threshold=0.01)
+    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    I4(F,N) = (F*N) ⋅ (F*N)
+    I5(F,N) = (H(F)*N) ⋅ (H(F)*N)
+    μ, α, β = obj.μ, obj.α, obj.β
+    Ψ(F, N) = μ / (2.0*α)*(I4(F,N)^α-1) + μ /(2.0*β)*(I5(F,N)^β-1) - μ * logreg(J(F)) 
+
+    ∂Ψ_∂F(F,N) = (μ * (I4(F,N)^(α-1)) ) * ((F*N) ⊗ N) 
+    ∂Ψ_∂H(F,N) = (μ * (I5(F,N)^(β-1)) ) * ((H(F)*N) ⊗ N)
+    ∂log∂J(J) = J >= Threshold ? 1 / J : (2 / Threshold - J / (Threshold^2))
+    ∂log2∂J2(J) = J >= Threshold ? -1 / (J^2) : (-1 / (Threshold^2))
+    ∂Ψ_∂J(F,N) = -μ * ∂log∂J(J(F))
+    ∂Ψ2_∂J2(F,N) = -μ * ∂log2∂J2(J(F))
+
+    ∂Ψu(F,N) = ∂Ψ_∂F(F,N) + ∂Ψ_∂H(F,N) × F + ∂Ψ_∂J(F,N) * H(F)
+    I__= I3()
+    ∂ΨFF(F,N) = μ*(I4(F,N)^(α-1))* (I__ ⊗₁₃²⁴ (N ⊗ N))+ 2μ*(α-1)*I4(F,N)^(α-2)*(((F*N) ⊗ N) ⊗ ((F*N) ⊗ N))
+    ∂ΨHH(F,N) = μ*(I5(F,N)^(β-1))* (I__ ⊗₁₃²⁴ (N ⊗ N))+ 2μ*(β-1)*I5(F,N)^(β-2)*(((H(F)*N) ⊗ N) ⊗ ((H(F)*N) ⊗ N))
+    ∂Ψuu(F,N) = ∂ΨFF(F,N) + (F × (∂ΨHH(F,N) × F)) + ∂Ψ2_∂J2(F,N) * (H(F) ⊗ H(F)) + ×ᵢ⁴(∂Ψ_∂H(F,N) + ∂Ψ_∂J(F,N) * F)
+
+    return (Ψ, ∂Ψu, ∂Ψuu)
+
+  end
+
+
+end
+
+
+# ===================
+# MultiPhysicalModel models
+# ===================
+
+struct FlexoElectroModel{A} <: FlexoElectro
+  ElectroMechano::A
+  κ::Float64
+  function FlexoElectroModel(; Mechano::Mechano, Electro::Electro, κ=1.0)
+    physmodel = ElectroMechModel(Mechano=Mechano, Electro=Electro)
+    A = typeof(physmodel)
+    new{A}(physmodel, κ)
+  end
+  function (obj::FlexoElectroModel)(Λ::Float64=1.0)
+    e₁ = VectorValue(1.0, 0.0, 0.0)
+    e₂ = VectorValue(0.0, 1.0, 0.0)
+    e₃ = VectorValue(0.0, 0.0, 1.0)
+    # Φ(ϕ₁,ϕ₂,ϕ₃)=ϕ₁ ⊗₁² e₁+ϕ₂ ⊗₁² e₂+ϕ₃ ⊗₁² e₃
+    f1(δϕ) = δϕ ⊗₁² e₁
+    f2(δϕ) = δϕ ⊗₁² e₂
+    f3(δϕ) = δϕ ⊗₁² e₃
+    Φ(ϕ₁, ϕ₂, ϕ₃) = (f1 ∘ (ϕ₁) + f2 ∘ (ϕ₂) + f3 ∘ (ϕ₃))
+
+    Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = obj.ElectroMechano(Λ)
+    return Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ, Φ
+  end
+
+end
+
+struct ElectroMechModel{A,B} <: ElectroMechano
+  Mechano::A
+  Electro::B
+  function ElectroMechModel(; Mechano::Mechano, Electro::Electro)
+    A, B = typeof(Mechano), typeof(Electro)
+    new{A,B}(Mechano, Electro)
+  end
+  function (obj::ElectroMechModel)(Λ::Float64=1.0)
+    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.Mechano(Λ)
+    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.Mechano, obj.Electro, Λ)
+    Ψ(F, E) = Ψm(F) + Ψem(F, E)
+    ∂Ψu(F, E) = ∂Ψm_u(F) + ∂Ψem_u(F, E)
+    ∂Ψφ(F, E) = ∂Ψem_φ(F, E)
+    ∂Ψuu(F, E) = ∂Ψm_uu(F) + ∂Ψem_uu(F, E)
+    ∂Ψφu(F, E) = ∂Ψem_φu(F, E)
+    ∂Ψφφ(F, E) = ∂Ψem_φφ(F, E)
+    return (Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ)
+  end
+
+end
+
+struct ThermoMechModel{A,B,C,D} <: ThermoMechano
+  Thermo::A
+  Mechano::B
+  fθ::C
+  dfdθ::D
+  function ThermoMechModel(; Thermo::Thermo, Mechano::Mechano, fθ::Function, dfdθ::Function)
+    A, B, C, D = typeof(Thermo), typeof(Mechano), typeof(fθ), typeof(dfdθ)
+    new{A,B,C,D}(Thermo, Mechano, fθ, dfdθ)
+  end
+
+  function (obj::ThermoMechModel)(Λ::Float64=1.0)
+    Ψt, ∂Ψt_θ, ∂Ψt_θθ = obj.Thermo(Λ)
+    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.Mechano(Λ)
+    Ψtm, ∂Ψtm_u, ∂Ψtm_θ, ∂Ψtm_uu, ∂Ψtm_uθ, ∂Ψtm_θθ = _getCoupling(obj.Mechano, obj.Thermo, Λ)
+    f(δθ) = (obj.fθ(δθ)::Float64)
+    df(δθ) = (obj.dfdθ(δθ)::Float64)
+    Ψ(F, δθ) = f(δθ) * (Ψm(F)) + (Ψt(δθ) + Ψtm(F, δθ))
+    ∂Ψu(F, δθ) = f(δθ) * (∂Ψm_u(F)) + ∂Ψtm_u(F, δθ)
+    ∂Ψθ(F, δθ) = df(δθ) * (Ψm(F)) + ∂Ψtm_θ(F, δθ) + ∂Ψt_θ(δθ)
+    ∂Ψuu(F, δθ) = f(δθ) * (∂Ψm_uu(F)) + ∂Ψtm_uu(F, δθ)
+    ∂Ψθθ(F, δθ) = ∂Ψtm_θθ(F, δθ) + ∂Ψt_θθ(δθ)
+    ∂Ψuθ(F, δθ) = df(δθ) * (∂Ψm_u(F)) + ∂Ψtm_uθ(F, δθ)
+    η(F, δθ) = -∂Ψθ(F, δθ)
+    return (Ψ, ∂Ψu, ∂Ψθ, ∂Ψuu, ∂Ψθθ, ∂Ψuθ, η)
+  end
+
+
+end
+
+struct ThermoMech_EntropicPolyconvex{A,B,C,D,E} <: ThermoMechano
+  Thermo::A
+  Mechano::B
+  β::Float64
+  G::C
+  ϕ::D
+  s::E
+  function ThermoMech_EntropicPolyconvex(; Thermo::Thermo, Mechano::Mechano, β::Float64, G::Function, ϕ::Function, s::Function)
+    A, B, C, D, E = typeof(Thermo), typeof(Mechano), typeof(G), typeof(ϕ), typeof(s)
+    new{A,B,C,D,E}(Thermo, Mechano, β, G, ϕ, s)
+  end
+
+  function (obj::ThermoMech_EntropicPolyconvex)(Λ::Float64=1.0)
+    Ψt, _, _ = obj.Thermo(Λ)
+    Ψm, _, _ = obj.Mechano(Λ)
+    θr = obj.Thermo.θr
+    Cv = obj.Thermo.Cv
+    α = obj.Thermo.α
+    β = obj.β
+    G = obj.G
+    ϕ = obj.ϕ
+    s = obj.s
+
+    _, H, J = get_Kinematics(obj.Mechano.Kinematic; Λ=Λ)
+
+    I1(F) = tr(F' * F)
+    I2(F) = tr(H(F)' * H(F))
+    I3(F) = J(F)
+
+    f(δθ) = (δθ + θr) / θr
+    eᵣ(F) = α * (J(F) - 1.0)
+    L1(δθ) = (1 - β) * Ψt(δθ)
+    L2(δθ) = Cv * θr * (1 - β) * G(f(δθ))
+    L3(F, δθ) = -Cv * θr * β * s(I1(F), I2(F), I3(F)) * ϕ(f(δθ))
+
+    Ψ(F, δθ) = f(δθ) * Ψm(F) + (1 - f(δθ)) * eᵣ(F) + L1(δθ) + L2(δθ) + L3(F, δθ)
+
+    ∂Ψ_∂∇u(F, δθ) = ForwardDiff.gradient(F -> Ψ(F, δθ), get_array(F))
+    ∂Ψ_∂θ(F, δθ) = ForwardDiff.derivative(δθ -> Ψ(get_array(F), δθ), δθ)
+    ∂2Ψ_∂2∇u(F, δθ) = ForwardDiff.hessian(F -> Ψ(F, δθ), get_array(F))
+    ∂2Ψ_∂2θθ(F, δθ) = ForwardDiff.derivative(δθ -> ∂Ψ_∂θ(get_array(F), δθ), δθ)
+    ∂2Ψ_∂2∇uθ(F, δθ) = ForwardDiff.derivative(δθ -> ∂Ψ_∂∇u(get_array(F), δθ), δθ)
+
+    ∂Ψu(F, δθ) = TensorValue(∂Ψ_∂∇u(F, δθ))
+    ∂Ψθ(F, δθ) = ∂Ψ_∂θ(F, δθ)
+    ∂Ψuu(F, δθ) = TensorValue(∂2Ψ_∂2∇u(F, δθ))
+    ∂Ψθθ(F, δθ) = ∂2Ψ_∂2θθ(F, δθ)
+    ∂Ψuθ(F, δθ) = TensorValue(∂2Ψ_∂2∇uθ(F, δθ))
+
+    return (Ψ, ∂Ψu, ∂Ψθ, ∂Ψuu, ∂Ψθθ, ∂Ψuθ)
+  end
+end
+
+struct ThermoElectroMechModel{A,B,C} <: ThermoElectroMechano
+  Thermo::A
+  Electro::B
+  Mechano::C
+  fθ::Function
+  dfdθ::Function
+  function ThermoElectroMechModel(; Thermo::Thermo, Electro::Electro, Mechano::Mechano, fθ::Function, dfdθ::Function)
+    A, B, C = typeof(Thermo), typeof(Electro), typeof(Mechano)
+    new{A,B,C}(Thermo, Electro, Mechano, fθ, dfdθ)
+  end
+
+
+  function (obj::ThermoElectroMechModel)(Λ::Float64=1.0)
+    Ψt, ∂Ψt_θ, ∂Ψt_θθ = obj.Thermo(Λ)
+    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.Mechano(Λ)
+    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.Mechano, obj.Electro, Λ)
+    Ψtm, ∂Ψtm_u, ∂Ψtm_θ, ∂Ψtm_uu, ∂Ψtm_uθ, ∂Ψtm_θθ = _getCoupling(obj.Mechano, obj.Thermo, Λ)
+    f(δθ) = (obj.fθ(δθ)::Float64)
+    df(δθ) = (obj.dfdθ(δθ)::Float64)
+
+    Ψ(F, E, δθ) = f(δθ) * (Ψm(F) + Ψem(F, E)) + (Ψt(δθ) + Ψtm(F, δθ))
+    ∂Ψu(F, E, δθ) = f(δθ) * (∂Ψm_u(F) + ∂Ψem_u(F, E)) + ∂Ψtm_u(F, δθ)
+    ∂Ψφ(F, E, δθ) = f(δθ) * ∂Ψem_φ(F, E)
+    ∂Ψθ(F, E, δθ) = df(δθ) * (Ψm(F) + Ψem(F, E)) + ∂Ψtm_θ(F, δθ) + ∂Ψt_θ(δθ)
+
+    ∂Ψuu(F, E, δθ) = f(δθ) * (∂Ψm_uu(F) + ∂Ψem_uu(F, E)) + ∂Ψtm_uu(F, δθ)
+    ∂Ψφu(F, E, δθ) = f(δθ) * ∂Ψem_φu(F, E)
+    ∂Ψφφ(F, E, δθ) = f(δθ) * ∂Ψem_φφ(F, E)
+    ∂Ψθθ(F, E, δθ) = ∂Ψtm_θθ(F, δθ) + ∂Ψt_θθ(δθ)
+    ∂Ψuθ(F, E, δθ) = df(δθ) * (∂Ψm_u(F) + ∂Ψem_u(F, E)) + ∂Ψtm_uθ(F, δθ)
+    ∂Ψφθ(F, E, δθ) = df(δθ) * ∂Ψem_φ(F, E)
+    η(F, E, δθ) = -∂Ψθ(F, E, δθ)
+    return (Ψ, ∂Ψu, ∂Ψφ, ∂Ψθ, ∂Ψuu, ∂Ψφφ, ∂Ψθθ, ∂Ψφu, ∂Ψuθ, ∂Ψφθ, η)
+  end
+end
+
+struct ThermoElectroMech_Govindjee{A,B,C} <: ThermoElectroMechano
+  Thermo::A
+  Electro::B
+  Mechano::C
+  fθ::Function
+  dfdθ::Function
+  gθ::Function
+  dgdθ::Function
+  β::Float64
+  function ThermoElectroMech_Govindjee(; Thermo::Thermo, Electro::Electro, Mechano::Mechano, fθ::Function, dfdθ::Function, gθ::Function, dgdθ::Function, β::Float64=0.0)
+    A, B, C, = typeof(Thermo), typeof(Electro), typeof(Mechano)
+    new{A,B,C}(Thermo, Electro, Mechano, fθ, dfdθ, gθ, dgdθ, β)
+  end
+
+
+  function (obj::ThermoElectroMech_Govindjee)(Λ::Float64=1.0)
+    Ψm, _, _ = obj.Mechano(Λ)
+    Ψem, _, _, _, _, _ = _getCoupling(obj.Mechano, obj.Electro, Λ)
+    f(δθ) = obj.fθ(δθ)
+    df(δθ) = obj.dfdθ(δθ)
+    g(δθ) = obj.gθ(δθ)
+    dg(δθ) = obj.dgdθ(δθ)
+
+    _, _, J = get_Kinematics(obj.Mechano.Kinematic; Λ=Λ)
+    Ψer(F) = obj.Thermo.α * (J(F) - 1.0) * obj.Thermo.θr
+    ΨL1(δθ) = obj.Thermo.Cv * obj.Thermo.θr * (1 - obj.β) * ((δθ + obj.Thermo.θr) / obj.Thermo.θr * (1.0 - log((δθ + obj.Thermo.θr) / obj.Thermo.θr)) - 1.0)
+    ΨL3(δθ) = g(δθ) - g(0.0) - dg(0.0) * δθ
+
+    Ψ(F, E, δθ) = f(δθ) * (Ψm(F) + Ψem(F, E)) + (1 - f(δθ)) * Ψer(F) + ΨL1(δθ) + ΨL3(δθ) * (Ψm(F) + Ψem(F, E))
+    ∂Ψ_∂F(F, E, θ) = ForwardDiff.gradient(F -> Ψ(F, get_array(E), θ), get_array(F))
+    ∂Ψ_∂E(F, E, θ) = ForwardDiff.gradient(E -> Ψ(get_array(F), E, θ), get_array(E))
+    ∂Ψ_∂θ(F, E, θ) = ForwardDiff.derivative(θ -> Ψ(get_array(F), get_array(E), θ), θ)
+
+    ∂Ψu(F, E, θ) = TensorValue(∂Ψ_∂F(F, E, θ))
+    ∂ΨE(F, E, θ) = VectorValue(∂Ψ_∂E(F, E, θ))
+    ∂Ψθ(F, E, θ) = ∂Ψ_∂θ(F, E, θ)
+
+    ∂2Ψ_∂2E(F, E, θ) = ForwardDiff.hessian(E -> Ψ(get_array(F), E, θ), get_array(E))
+    ∂ΨEE(F, E, θ) = TensorValue(∂2Ψ_∂2E(F, E, θ))
+    ∂2Ψθθ(F, E, θ) = ForwardDiff.derivative(θ -> ∂Ψ_∂θ(get_array(F), get_array(E), θ), θ)
+
+    ∂2Ψ_∂2Eθ(F, E, θ) = ForwardDiff.derivative(θ -> ∂Ψ_∂E(get_array(F), get_array(E), θ), θ)
+    ∂ΨEθ(F, E, θ) = VectorValue(∂2Ψ_∂2Eθ(F, E, θ))
+
+    ∂2Ψ_∂2F(F, E, θ) = ForwardDiff.hessian(F -> Ψ(F, get_array(E), θ), get_array(F))
+    ∂ΨFF(F, E, θ) = TensorValue(∂2Ψ_∂2F(F, E, θ))
+
+    ∂2Ψ_∂2Fθ(F, E, θ) = ForwardDiff.derivative(θ -> ∂Ψ_∂F(get_array(F), get_array(E), θ), θ)
+    ∂ΨFθ(F, E, θ) = TensorValue(∂2Ψ_∂2Fθ(F, E, θ))
+
+    ∂2Ψ_∂EF(F, E, θ) = ForwardDiff.jacobian(F -> ∂Ψ_∂E(F, get_array(E), θ), get_array(F))
+    ∂ΨEF(F, E, θ) = TensorValue(∂2Ψ_∂EF(F, E, θ))
+
+    η(F, E, θ) = -∂Ψθ(F, E, θ)
+
+    return (Ψ, ∂Ψu, ∂ΨE, ∂Ψθ, ∂ΨFF, ∂ΨEE, ∂2Ψθθ, ∂ΨEF, ∂ΨFθ, ∂ΨEθ, η)
+
+  end
+end
+
+
+# ===============================
+# Coupling terms for multiphysic
+# ===============================
+
+function _getCoupling(mec::Mechano, elec::IdealDielectric, Λ::Float64)
+  _, H, J = get_Kinematics(mec.Kinematic; Λ=Λ)
+
+  # Energy #
+  HE(F, E) = H(F) * E
+  HEHE(F, E) = HE(F, E) ⋅ HE(F, E)
+  Ψem(F, E) = (-elec.ε / (2.0 * J(F))) * HEHE(F, E)
+  # First Derivatives #
+  ∂Ψem_∂H(F, E) = (-elec.ε / (J(F))) * (HE(F, E) ⊗ E)
+  ∂Ψem_∂J(F, E) = (+elec.ε / (2.0 * J(F)^2.0)) * HEHE(F, E)
+  ∂Ψem_∂E(F, E) = (-elec.ε / (J(F))) * (H(F)' * HE(F, E))
+  ∂Ψem_u(F, E) = ∂Ψem_∂H(F, E) × F + ∂Ψem_∂J(F, E) * H(F)
+  # ∂Ψem_φ(F, E) = -∂Ψem_∂E(F, E)
+  ∂Ψem_φ(F, E) = ∂Ψem_∂E(F, E)
+
+  # Second Derivatives #
+  # I33 = TensorValue(Matrix(1.0I, 3, 3))
+  I33 = I3()
+  ∂Ψem_HH(F, E) = (-elec.ε / (J(F))) * (I33 ⊗₁₃²⁴ (E ⊗ E))
+  ∂Ψem_HJ(F, E) = (+elec.ε / (J(F))^2.0) * (HE(F, E) ⊗ E)
+  ∂Ψem_JJ(F, E) = (-elec.ε / (J(F))^3.0) * HEHE(F, E)
+  ∂Ψem_uu(F, E) = (F × (∂Ψem_HH(F, E) × F)) +
+                  H(F) ⊗₁₂³⁴ (∂Ψem_HJ(F, E) × F) +
+                  (∂Ψem_HJ(F, E) × F) ⊗₁₂³⁴ H(F) +
+                  ∂Ψem_JJ(F, E) * (H(F) ⊗₁₂³⁴ H(F)) +
+                  ×ᵢ⁴(∂Ψem_∂H(F, E) + ∂Ψem_∂J(F, E) * F)
+
+  ∂Ψem_EH(F, E) = (-elec.ε / (J(F))) * ((I33 ⊗₁₃² HE(F, E)) + (H(F)' ⊗₁₂³ E))
+  ∂Ψem_EJ(F, E) = (+elec.ε / (J(F))^2.0) * (H(F)' * HE(F, E))
+
+  # ∂Ψem_φu(F, E) = -(∂Ψem_EH(F, E) × F) - (∂Ψem_EJ(F, E) ⊗₁²³ H(F))
+  ∂Ψem_φu(F, E) = (∂Ψem_EH(F, E) × F) + (∂Ψem_EJ(F, E) ⊗₁²³ H(F))
+
+  ∂Ψem_φφ(F, E) = (-elec.ε / (J(F))) * (H(F)' * H(F))
+
+  return (Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ)
+
+end
+function _getCoupling(mec::Mechano, term::Thermo, Λ::Float64)
+  _, H, J = get_Kinematics(mec.Kinematic; Λ=Λ)
+
+  ∂Ψtm_∂J(F, δθ) = -6.0 * term.α * J(F) * δθ
+  ∂Ψtm_u(F, δθ) = ∂Ψtm_∂J(F, δθ) * H(F)
+  ∂Ψtm_θ(F, δθ) = -3.0 * term.α * (J(F)^2.0 - 1.0)
+  ∂Ψtm_uu(F, δθ) = (-6.0 * term.α * δθ) * (H(F) ⊗₁₂³⁴ H(F)) + ×ᵢ⁴(∂Ψtm_∂J(F, δθ) * F)
+  ∂Ψtm_uθ(F, δθ) = -6.0 * term.α * J(F) * H(F)
+  ∂Ψtm_θθ(F, δθ) = 0.0
+
+  Ψtm(F, δθ) = ∂Ψtm_θ(F, δθ) * δθ
+
+  return (Ψtm, ∂Ψtm_u, ∂Ψtm_θ, ∂Ψtm_uu, ∂Ψtm_uθ, ∂Ψtm_θθ)
+end
+
+
+
+
+
+
+end

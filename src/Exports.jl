@@ -1,0 +1,102 @@
+
+macro publish(mod, name)
+  quote
+    using HyperFEM.$mod: $name
+    export $name
+  end
+end
+
+@publish TensorAlgebra (*)
+@publish TensorAlgebra (×ᵢ⁴)
+@publish TensorAlgebra (⊗₁₂³)
+@publish TensorAlgebra (⊗₁₃²)
+@publish TensorAlgebra (⊗₁²³)
+@publish TensorAlgebra (⊗₁₃²⁴)
+@publish TensorAlgebra (⊗₁₂³⁴)
+@publish TensorAlgebra (⊗₁²)
+@publish TensorAlgebra logreg
+@publish TensorAlgebra Box
+@publish TensorAlgebra Ellipsoid
+@publish TensorAlgebra I9
+
+
+@publish PhysicalModels DerivativeStrategy
+@publish PhysicalModels LinearElasticity3D
+@publish PhysicalModels LinearElasticity2D
+@publish PhysicalModels NeoHookean3D
+@publish PhysicalModels MoneyRivlin3D
+@publish PhysicalModels MoneyRivlin2D
+@publish PhysicalModels NonlinearMoneyRivlin3D
+@publish PhysicalModels TransverseIsotropy3D
+@publish PhysicalModels ThermalModel
+@publish PhysicalModels IdealDielectric
+@publish PhysicalModels ElectroMechModel
+@publish PhysicalModels ThermoElectroMechModel
+@publish PhysicalModels ThermoMechModel
+@publish PhysicalModels ThermoMech_EntropicPolyconvex
+@publish PhysicalModels FlexoElectroModel
+@publish PhysicalModels ThermoElectroMech_Govindjee
+@publish PhysicalModels ThermoElectroMech_PINNs
+
+@publish PhysicalModels Mechano
+@publish PhysicalModels Thermo
+@publish PhysicalModels Electro
+@publish PhysicalModels ThermoMechano
+@publish PhysicalModels ElectroMechano
+@publish PhysicalModels ThermoElectro
+@publish PhysicalModels FlexoElectro
+@publish PhysicalModels ThermoElectroMechano
+@publish PhysicalModels EnergyInterpolationScheme
+@publish PhysicalModels update_state!
+@publish PhysicalModels Kinematics
+@publish PhysicalModels EvolutiveKinematics
+@publish PhysicalModels get_Kinematics
+@publish PhysicalModels getIsoInvariants
+ 
+
+
+@publish WeakForms residual
+@publish WeakForms jacobian
+@publish WeakForms mass_term
+
+@publish ComputationalModels  DirichletBC
+@publish ComputationalModels  NeumannBC
+@publish ComputationalModels  get_Neumann_dΓ
+@publish ComputationalModels  residual_Neumann
+@publish ComputationalModels  NothingBC
+@publish ComputationalModels  MultiFieldBC
+@publish ComputationalModels  SingleFieldTC
+@publish ComputationalModels  MultiFieldTC
+@publish ComputationalModels  TrialFESpace
+@publish ComputationalModels  get_state
+@publish ComputationalModels  get_measure
+@publish ComputationalModels  get_spaces
+@publish ComputationalModels  get_assemblers
+@publish ComputationalModels  StaticNonlinearModel
+@publish ComputationalModels  DynamicNonlinearModel
+@publish ComputationalModels  StaticLinearModel
+@publish ComputationalModels  solve!
+@publish ComputationalModels  project_dirichlet!
+@publish ComputationalModels  PostMechanical
+@publish ComputationalModels  PostElectroMechanical
+@publish ComputationalModels  PostThermoElectroMechanical
+@publish ComputationalModels  GmshDiscreteModel
+
+@publish Solvers IterativeSolver
+
+
+@publish TopOpt PDEConstrainedFunctional
+@publish TopOpt adimensionalize!
+@publish TopOpt evaluate_derivative!
+@publish TopOpt evaluate_objective
+@publish TopOpt evaluate!
+@publish TopOpt get_space
+@publish TopOpt get_derivative
+@publish TopOpt OptimFEVariable
+@publish TopOpt update!
+@publish TopOpt pushforward!
+@publish TopOpt pullback!
+
+
+# @publish LinearSolvers solve
+# @publish LinearSolvers solve!
