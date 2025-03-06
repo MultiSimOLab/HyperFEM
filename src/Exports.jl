@@ -81,6 +81,7 @@ end
 @publish ComputationalModels  PostElectroMechanical
 @publish ComputationalModels  PostThermoElectroMechanical
 @publish ComputationalModels  GmshDiscreteModel
+# @publish ComputationalModels  evaluate!
 
 @publish Solvers IterativeSolver
 

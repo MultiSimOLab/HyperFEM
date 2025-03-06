@@ -20,33 +20,35 @@ struct StaticNonlinearModel{A,B,C,D,E} <: ComputationalModel
     jac::B
     spaces::C
     dirichlet::D
-    fwd_caches::E
+    caches::E
 
     function StaticNonlinearModel(
         res::Function, jac::Function, U, V, dirbc, dΩ...;
         assem_U=SparseMatrixAssembler(U, V),
-        nls::NonlinearSolver=NewtonSolver(LUSolver(); maxiter=10, rtol=1.e-8, verbose=true))
+        nls::NonlinearSolver=NewtonSolver(LUSolver(); maxiter=10, rtol=1.e-8, verbose=true),
+        xh::FEFunction=FEFunction(U, zero_free_values(U)))
+       
         ∆U = TrialFESpace(U, dirbc, 0.0)
         spaces = (U, V, ∆U)
-        x = zero_free_values(U)
+        x =  get_free_dof_values(xh)
         x⁻ = zero_free_values(U)
         _res = res(1.0)
         _jac = jac(1.0)
         op = get_algebraic_operator(FEOperator(_res, _jac, U, V, assem_U))
         nls_cache = instantiate_caches(x, nls, op)
-        fwd_caches = (nls, nls_cache, x, x⁻, assem_U)
+        caches = (nls, nls_cache, x, x⁻, assem_U)
 
         A, B, C = typeof(res), typeof(jac), typeof(spaces)
-        D, E = typeof(dirbc), typeof(fwd_caches)
-        return new{A,B,C,D,E}(res, jac, spaces, dirbc, fwd_caches)
+        D, E = typeof(dirbc), typeof(caches)
+        return new{A,B,C,D,E}(res, jac, spaces, dirbc, caches)
     end
 end
 
 # Getters
-get_state(m::StaticNonlinearModel) = FEFunction(get_trial_space(m), m.fwd_caches[3])
+get_state(m::StaticNonlinearModel) = FEFunction(get_trial_space(m), m.caches[3])
 get_measure(m::StaticNonlinearModel) = m.res.dΩ
 get_spaces(m::StaticNonlinearModel) = m.spaces
-get_assemblers(m::StaticNonlinearModel) = (m.fwd_caches[4])
+get_assemblers(m::StaticNonlinearModel) = (m.caches[4])
 
 
 # is_vtk=true,
@@ -60,7 +62,7 @@ function solve!(m::StaticNonlinearModel;
     flagconv = 1 # convergence flag 0 (max bisections) 1 (max steps)
     U, V = m.spaces
     TrialFESpace!(U, m.dirichlet, 0.0)
-    nls, nls_cache, x, x⁻, assem_U = m.fwd_caches
+    nls, nls_cache, x, x⁻, assem_U = m.caches
     Λ = 0.0
     ∆Λ = 1.0 / stepping[:nsteps]
     nbisect = 0
@@ -130,7 +132,7 @@ function project_dirichlet!(x::Vector{Float64}, m::StaticNonlinearModel, Λ::Flo
     l(v) = -1.0 * res(uh, v)
     a(du, v) = jac(uh, du, v)
     op = AffineFEOperator(a, l, ∆U, V)
-    ls = m.fwd_caches[1].ls
+    ls = m.caches[1].ls
     duh = solve(ls, op)
     x .+= get_free_dof_values(duh)
 end
@@ -146,14 +148,16 @@ struct DynamicNonlinearModel{A,B,C,D,E,F} <: ComputationalModel
     spaces::C
     dirichlet::D
     velocity::E
-    fwd_caches::F
+    caches::F
 
     function DynamicNonlinearModel(
         res::Function, jac::Function, U, Uold, V, dirbc, velocity::TimedependentCondition, dΩ...;
         assem_U=SparseMatrixAssembler(U, V),
-        nls::NonlinearSolver=NewtonSolver(LUSolver(); maxiter=10, rtol=1.e-8, verbose=true))
+        nls::NonlinearSolver=NewtonSolver(LUSolver(); maxiter=10, rtol=1.e-8, verbose=true),
+        xh::FEFunction=FEFunction(U, zero_free_values(U)))
+
         spaces = (U, V, Uold)
-        x = zero_free_values(U)
+        x =  get_free_dof_values(xh)
         x⁻ = zero_free_values(Uold)
         uh⁻ = FEFunction(Uold, x⁻)
         vuh = velocity()
@@ -161,18 +165,18 @@ struct DynamicNonlinearModel{A,B,C,D,E,F} <: ComputationalModel
         _jac = jac(0.0, uh⁻, vuh)
         op = get_algebraic_operator(FEOperator(_res, _jac, U, V, assem_U))
         nls_cache = instantiate_caches(x, nls, op)
-        fwd_caches = (nls, nls_cache, x, x⁻, assem_U, uh⁻)
+        caches = (nls, nls_cache, x, x⁻, assem_U, uh⁻)
         A, B, C = typeof(res), typeof(jac), typeof(spaces)
-        D, E, F = typeof(dirbc), typeof(velocity), typeof(fwd_caches)
-        return new{A,B,C,D,E,F}(res, jac, spaces, dirbc, velocity, fwd_caches)
+        D, E, F = typeof(dirbc), typeof(velocity), typeof(caches)
+        return new{A,B,C,D,E,F}(res, jac, spaces, dirbc, velocity, caches)
     end
 end
 
 # Getters
-get_state(m::DynamicNonlinearModel) = FEFunction(get_trial_space(m), m.fwd_caches[3])
+get_state(m::DynamicNonlinearModel) = FEFunction(get_trial_space(m), m.caches[3])
 get_measure(m::DynamicNonlinearModel) = m.res.dΩ
 get_spaces(m::DynamicNonlinearModel) = m.spaces
-get_assemblers(m::DynamicNonlinearModel) = (m.fwd_caches[4])
+get_assemblers(m::DynamicNonlinearModel) = (m.caches[4])
 
 
 
@@ -193,7 +197,7 @@ function solve!(m::DynamicNonlinearModel;
     t = 0.0
     Δt = stepping[:Δt]
     nsteps = stepping[:nsteps]
-    nls, nls_cache, x, x⁻, assem_U, uh⁻ = m.fwd_caches
+    nls, nls_cache, x, x⁻, assem_U, uh⁻ = m.caches
     itime = 0
     KE = zeros(Float64, nsteps)
     EE = zeros(Float64, nsteps)
@@ -251,25 +255,27 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
     jac::B
     spaces::C
     dirichlet::D
-    fwd_caches::E
+    caches::E
 
     function StaticLinearModel(
         res::Function, jac::Function, U, V, dirbc, dΩ...;
         assem_U=SparseMatrixAssembler(U, V),
         ls::LinearSolver=LUSolver(),
-    )
+        xh::FEFunction=FEFunction(U, zero_free_values(U)))
+
         spaces = (U, V)
         op = AffineFEOperator(jac, res, U, V, assem_U)
         K, b = get_matrix(op), get_vector(op)
-        x = allocate_in_domain(K)
+        x =  get_free_dof_values(xh)
+        # x = allocate_in_domain(K)
         fill!(x, zero(eltype(x)))
         ns = numerical_setup(symbolic_setup(ls, K), K)
-        fwd_caches = (ns, K, b, x, assem_U)
+        caches = (ns, K, b, x, assem_U)
 
 
         A, B, C = typeof(res), typeof(jac), typeof(spaces)
-        D, E = typeof(dirbc), typeof(fwd_caches)
-        return new{A,B,C,D,E}(res, jac, spaces, dirbc, fwd_caches)
+        D, E = typeof(dirbc), typeof(caches)
+        return new{A,B,C,D,E}(res, jac, spaces, dirbc, caches)
     end
 
 
@@ -277,8 +283,8 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
     function StaticLinearModel(
         res::Vector{<:Function}, jac::Function, U0, V0, dirbc, dΩ...;
         assem_U0=SparseMatrixAssembler(U0, V0),
-        ls::LinearSolver=LUSolver(),
-    )
+        ls::LinearSolver=LUSolver())
+
         nblocks = length(res)
         U, V = repeat_spaces(nblocks, U0, V0)
         spaces = (U, V)
@@ -289,11 +295,11 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
         x = repeated_allocate_in_domain(nblocks, K)
         fill!(x, zero(eltype(x))) # nD
         ns = numerical_setup(symbolic_setup(ls, K), K) # 1D
-        fwd_caches = (ns, K, b, x, assem_U0)
+        caches = (ns, K, b, x, assem_U0)
 
         A, B, C = Vector{<:Function}, typeof(jac), typeof(spaces)
-        D, E = typeof(dirbc), typeof(fwd_caches)
-        return new{A,B,C,D,E}(res, jac, spaces, dirbc, fwd_caches)
+        D, E = typeof(dirbc), typeof(caches)
+        return new{A,B,C,D,E}(res, jac, spaces, dirbc, caches)
     end
 
 
@@ -302,20 +308,21 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
         jac::Function, U, V, dirbc, dΩ...;
         assem_U=SparseMatrixAssembler(U, V),
         ls::LinearSolver=LUSolver(),
-    )
-        spaces = (U, V)
+        xh::FEFunction=FEFunction(U, zero_free_values(U)))
 
+        spaces = (U, V)
         K = assemble_matrix(jac, assem_U, U, V) 
         b = allocate_in_range(K)
         fill!(b, zero(eltype(b))) 
-        x = allocate_in_domain(K)
+        x =  get_free_dof_values(xh)
+        # x = allocate_in_domain(K)
         fill!(x, zero(eltype(x))) 
         ns = numerical_setup(symbolic_setup(ls, K), K) # 1D
-        fwd_caches = (ns, K, b, x, assem_U)
+        caches = (ns, K, b, x, assem_U)
 
         A, B, C = Nothing, typeof(jac), typeof(spaces)
-        D, E = typeof(dirbc), typeof(fwd_caches)
-        return new{A,B,C,D,E}(nothing, jac, spaces, dirbc, fwd_caches)
+        D, E = typeof(dirbc), typeof(caches)
+        return new{A,B,C,D,E}(nothing, jac, spaces, dirbc, caches)
     end
 
 
@@ -323,7 +330,7 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
     function (m::StaticLinearModel)(x::Vector{Float64}; Assembly=false)
         U, V = m.spaces
         jac = m.jac
-        ns, K, b, _, assem_U = m.fwd_caches
+        ns, K, b, _, assem_U = m.caches
         b .= x
         if Assembly
             assemble_matrix!(jac, K, assem_U, U, V)
@@ -341,7 +348,7 @@ function solve!(m::StaticLinearModel; Assembly=true, post=PostProcessor())
     U, V = m.spaces
     jac = m.jac
     res = m.res
-    ns, K, b, x, assem_U = m.fwd_caches
+    ns, K, b, x, assem_U = m.caches
     if Assembly
         assemble_matrix_and_vector!(jac, res, K, b, assem_U, U, V)
     else
@@ -357,7 +364,7 @@ end
 function solve!(m::StaticLinearModel, b::Vector{Float64}; Assembly=true, post=PostProcessor())
     U, V = m.spaces
     jac = m.jac
-    ns, K, _, x, assem_U = m.fwd_caches
+    ns, K, _, x, assem_U = m.caches
     if Assembly
         assemble_matrix!(jac, K, assem_U, U, V)
     end
@@ -374,7 +381,7 @@ function solve!(m::StaticLinearModel{Vector{<:Function},<:Any,<:Any,<:Any,<:Any}
     V0 = V[1]
     jac = m.jac
     res = m.res
-    ns, K, b, x, assem_U0 = m.fwd_caches
+    ns, K, b, x, assem_U0 = m.caches
 
     if Assembly
         assemble_matrix!(jac, K, assem_U0, U0, V0)
@@ -390,9 +397,9 @@ function solve!(m::StaticLinearModel{Vector{<:Function},<:Any,<:Any,<:Any,<:Any}
 end
 
 # Getters
-get_state(m::StaticLinearModel) = FEFunction(get_trial_space(m), m.fwd_caches[4])
+get_state(m::StaticLinearModel) = FEFunction(get_trial_space(m), m.caches[4])
 get_measure(m::StaticLinearModel) = m.biform.dΩ
 get_spaces(m::StaticLinearModel) = m.spaces
-get_assemblers(m::StaticLinearModel) = (m.fwd_caches[5], m.plb_caches[2], m.adj_caches[4])
+get_assemblers(m::StaticLinearModel) = (m.caches[5], m.plb_caches[2], m.adj_caches[4])
 
 

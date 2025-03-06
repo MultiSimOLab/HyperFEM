@@ -1,9 +1,9 @@
 # HyperFEM :construction: :construction: :construction: **Work in progress** :construction: :construction: :construction:
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://jmartfrut.github.io/Mimosa.jl/stable/)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://jmartfrut.github.io/Mimosa.jl/dev/)
-[![Build Status](https://github.com/jmartfrut/Mimosa.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/jmartfrut/Mimosa.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![Coverage](https://codecov.io/gh/jmartfrut/Mimosa.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/jmartfrut/Mimosa.jl)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://jmartfrut.github.io/HyperFEM.jl/stable/)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://jmartfrut.github.io/HyperFEM.jl/dev/)
+[![Build Status](https://github.com/jmartfrut/HyperFEM.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/jmartfrut/HyperFEM.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![Coverage](https://codecov.io/gh/jmartfrut/HyperFEM.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/jmartfrut/HyperFEM.jl)
 
 # **M**ultiphysics-informed **D**esign of **T**unable **S**mart **M**aterials
 
@@ -24,6 +24,6 @@ using HyperFEM
  <p align="center"> 
 &nbsp; &nbsp; &nbsp; &nbsp;
 <img alt="Dark"
-src="https://github.com/jmartfrut/Mimosa/blob/main/docs/imgs/aei.png" width="70%">
+src="https://github.com/jmartfrut/HyperFEM/blob/main/docs/imgs/aei.png?raw=true" width="70%">
 </p>
  

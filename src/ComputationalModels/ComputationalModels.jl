@@ -64,6 +64,7 @@ export StaticNonlinearModel
 export DynamicNonlinearModel
 export StaticLinearModel
 export solve!
+# export evaluate!
 export project_dirichlet!
 export get_state
 export get_measure

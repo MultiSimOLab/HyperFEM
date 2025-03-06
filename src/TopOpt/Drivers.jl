@@ -28,11 +28,11 @@ struct SIMP{A,B,C,D,E} <: TopOpt
         _jac = jac(1.0)
         op = get_algebraic_operator(FEOperator(_res, _jac, U, V, assem_U))
         nls_cache = instantiate_caches(x, nls, op)
-        fwd_caches = (nls, nls_cache, x, x⁻, assem_U)
+        caches = (nls, nls_cache, x, x⁻, assem_U)
 
         A, B, C = typeof(res), typeof(jac), typeof(spaces)
-        D, E = typeof(dirbc), typeof(fwd_caches)
-        return new{A,B,C,D,E}(res, jac, spaces, dirbc, fwd_caches)
+        D, E = typeof(dirbc), typeof(caches)
+        return new{A,B,C,D,E}(res, jac, spaces, dirbc, caches)
     end
 end
 

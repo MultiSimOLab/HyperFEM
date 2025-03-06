@@ -30,5 +30,6 @@ scripts/serial/
 scripts/MPI/
 test/
 debug/
+.vscode/
 
 *.DS_Store
