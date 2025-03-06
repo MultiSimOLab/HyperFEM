@@ -25,6 +25,7 @@ Manifest.toml
 
 test/
 data/sims/
+data/models/
 scripts/serial/
 scripts/MPI/
 test/
