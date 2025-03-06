@@ -163,7 +163,7 @@ end
 
 
 
-struct LinearElasticity3D{A} <: Mechano
+mutable struct LinearElasticity3D{A} <: Mechano
   λ::Float64
   μ::Float64
   ρ::Float64
