@@ -29,3 +29,5 @@ scripts/serial/
 scripts/MPI/
 test/
 debug/
+
+*.DS_Store
