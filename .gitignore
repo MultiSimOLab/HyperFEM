@@ -28,3 +28,4 @@ data/sims/
 scripts/serial/
 scripts/MPI/
 test/
+debug/
