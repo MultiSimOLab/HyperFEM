@@ -70,18 +70,32 @@ end
 
  
 
-struct DirichletBC <: BoundaryCondition
+struct DirichletBC{A} <: BoundaryCondition
     tags::Vector{String}         # tags for boundary conditions
     values::Vector{Function}     # f(x)
     timesteps::Vector{Function}  # f(Λ)
+    caches::A
 
     function DirichletBC(bc_tags::Vector{String}, bc_values, bc_timesteps)  
         @assert(length(bc_tags) == length(bc_values) == length(bc_timesteps))
         tags_,funcs_=_get_bc_func(bc_tags, bc_values, bc_timesteps)
-        new(tags_, funcs_, bc_timesteps)
+        caches = (bc_values)
+        new{typeof(caches)}(tags_, funcs_, bc_timesteps,caches)
     end
 end
  
+function updateBC!(m::DirichletBC, bc_values, bc_timesteps)
+    @assert(length(m.tags) == length(bc_values) == length(bc_timesteps))
+    _,newfuncs=_get_bc_func(m.tags, bc_values, bc_timesteps)
+    m.values .= newfuncs 
+    m.timesteps .= bc_timesteps 
+end
+
+function updateBC!(m::DirichletBC, bc_values)
+    @assert(length(m.tags) == length(bc_values))
+    _,newfuncs=_get_bc_func(m.tags, bc_values, m.timesteps)
+    m.values .= newfuncs 
+end
 
 struct NeumannBC <: BoundaryCondition
     tags::Vector{String}         # tags for boundary conditions
@@ -134,4 +148,3 @@ function get_Neumann_dΓ(model,bc::MultiFieldBC,degree::Int64)
     return dΓ
 end
 
- 

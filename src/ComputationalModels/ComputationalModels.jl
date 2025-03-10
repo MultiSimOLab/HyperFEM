@@ -49,6 +49,7 @@ export MultiFieldBC
 export SingleFieldTC
 export MultiFieldTC
 export residual_Neumann
+export updateBC!
 
 include("FESpaces.jl")
 export TrialFESpace
@@ -60,6 +61,7 @@ include("GridapExtras.jl")
 export GmshDiscreteModel
  
 include("Drivers.jl")
+export StaggeredModel
 export StaticNonlinearModel
 export DynamicNonlinearModel
 export StaticLinearModel

@@ -15,6 +15,60 @@ end
 #    					 StaticNonlinearModel
 #*******************************************************************************	
 
+
+struct StaggeredModel{A,B,C,D} <: ComputationalModel
+    compmodels::A
+    state⁺::B
+    state⁻::C
+    caches::D
+
+    function StaggeredModel(CompModels::Tuple{Vararg{<:ComputationalModel}},
+        state⁺::Tuple{Vararg{<:FEFunction}},
+        state⁻::Tuple{Vararg{<:FEFunction}})
+
+        @assert(length(CompModels) == length(state⁺) == length(state⁻))
+
+        x⁺=map((x)->get_free_dof_values(x), state⁺)
+        x⁻=map((x)->get_free_dof_values(x), state⁻)
+
+        caches = (x⁺, x⁻)
+        A, B, C, D = typeof(CompModels), typeof(state⁺), typeof(state⁻), typeof(caches)
+
+        return new{A,B,C,D}(CompModels, state⁺, state⁻, caches)
+    end
+
+end
+
+
+function solve!(m::StaggeredModel;
+    stepping=(nsteps=20, maxbisec=15),
+    kargsolve,
+    post::Tuple=ntuple(i -> PostProcessor(), length(m.compmodels)))
+
+    x⁺, x⁻= m.caches 
+    map((x)->TrialFESpace!(x.spaces[1], x.dirichlet, 0.0),m.compmodels)
+    map((x,y)->TrialFESpace!(x.fe_space, y.dirichlet, 0.0),m.state⁻,m.compmodels)
+
+    flagconv = 1 # convergence flag 0 (max bisections) 1 (max steps)
+    ∆Λ = 1.0 / stepping[:nsteps]
+    nbisect = 0
+    Λ_ = 0
+    while Λ_ < stepping[:nsteps]
+        stevol(Λ) = ∆Λ * (Λ + Λ_)
+        map(x-> updateBC!(x.dirichlet, x.dirichlet.caches, [stevol for _ in 1:length(x.dirichlet.caches)]), m.compmodels)
+        map((x)->TrialFESpace!(x.spaces[1], x.dirichlet, 1.0),m.compmodels)
+        _, flag= map((x,y)-> solve!(x; y...),m.compmodels, kargsolve)
+        map((x,y)->TrialFESpace!(x.fe_space, y.dirichlet, 1.0),m.state⁻,m.compmodels)
+        map((x,y) -> x .= y, x⁻, x⁺)
+        Λ_ += 1
+    end
+
+end
+
+#*******************************************************************************	
+#    					 StaticNonlinearModel
+#*******************************************************************************	
+
 struct StaticNonlinearModel{A,B,C,D,E} <: ComputationalModel
     res::A
     jac::B
@@ -27,10 +81,10 @@ struct StaticNonlinearModel{A,B,C,D,E} <: ComputationalModel
         assem_U=SparseMatrixAssembler(U, V),
         nls::NonlinearSolver=NewtonSolver(LUSolver(); maxiter=10, rtol=1.e-8, verbose=true),
         xh::FEFunction=FEFunction(U, zero_free_values(U)))
-       
+
         ∆U = TrialFESpace(U, dirbc, 0.0)
         spaces = (U, V, ∆U)
-        x =  get_free_dof_values(xh)
+        x = get_free_dof_values(xh)
         x⁻ = zero_free_values(U)
         _res = res(1.0)
         _jac = jac(1.0)
@@ -56,7 +110,7 @@ get_assemblers(m::StaticNonlinearModel) = (m.caches[4])
 #   vtk::WriteVTK.CollectionFile=paraview_collection(datadir("sims", "Temp") * "/Results", append=false)
 
 function solve!(m::StaticNonlinearModel;
-    stepping=(nsteps=20, maxbisec=15), ProjectDirichlet::Bool=true,    
+    stepping=(nsteps=20, maxbisec=15), ProjectDirichlet::Bool=true,
     post=PostProcessor())
 
     flagconv = 1 # convergence flag 0 (max bisections) 1 (max steps)
@@ -71,7 +125,7 @@ function solve!(m::StaticNonlinearModel;
         Λ += ∆Λ
         Λ = min(1.0, Λ)
         if ProjectDirichlet
-        project_dirichlet!(x, m, Λ, ∆Λ)
+            project_dirichlet!(x, m, Λ, ∆Λ)
         end
         TrialFESpace!(U, m.dirichlet, Λ)
         res = m.res(Λ)
@@ -157,7 +211,7 @@ struct DynamicNonlinearModel{A,B,C,D,E,F} <: ComputationalModel
         xh::FEFunction=FEFunction(U, zero_free_values(U)))
 
         spaces = (U, V, Uold)
-        x =  get_free_dof_values(xh)
+        x = get_free_dof_values(xh)
         x⁻ = zero_free_values(Uold)
         uh⁻ = FEFunction(Uold, x⁻)
         vuh = velocity()
@@ -266,7 +320,7 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
         spaces = (U, V)
         op = AffineFEOperator(jac, res, U, V, assem_U)
         K, b = get_matrix(op), get_vector(op)
-        x =  get_free_dof_values(xh)
+        x = get_free_dof_values(xh)
         # x = allocate_in_domain(K)
         fill!(x, zero(eltype(x)))
         ns = numerical_setup(symbolic_setup(ls, K), K)
@@ -311,12 +365,12 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
         xh::FEFunction=FEFunction(U, zero_free_values(U)))
 
         spaces = (U, V)
-        K = assemble_matrix(jac, assem_U, U, V) 
+        K = assemble_matrix(jac, assem_U, U, V)
         b = allocate_in_range(K)
-        fill!(b, zero(eltype(b))) 
-        x =  get_free_dof_values(xh)
+        fill!(b, zero(eltype(b)))
+        x = get_free_dof_values(xh)
         # x = allocate_in_domain(K)
-        fill!(x, zero(eltype(x))) 
+        fill!(x, zero(eltype(x)))
         ns = numerical_setup(symbolic_setup(ls, K), K) # 1D
         caches = (ns, K, b, x, assem_U)
 
