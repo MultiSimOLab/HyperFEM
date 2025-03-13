@@ -6,8 +6,8 @@ using Gridap.Helpers
 
 
 
-include("PDEConstrainedFunctionals.jl")
-export PDEConstrainedFunctional
+include("FEFunctionals.jl")
+export FEFunctional
 export OptimFEVariable
 export update!
 export pushforward!

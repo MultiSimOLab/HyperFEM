@@ -12,7 +12,7 @@ end
 
 
 #*******************************************************************************	
-#    					 StaticNonlinearModel
+#    					 StaggeredModel
 #*******************************************************************************	
 
 
@@ -77,7 +77,7 @@ struct StaticNonlinearModel{A,B,C,D,E} <: ComputationalModel
     caches::E
 
     function StaticNonlinearModel(
-        res::Function, jac::Function, U, V, dirbc, dΩ...;
+        res::Function, jac::Function, U, V, dirbc ;
         assem_U=SparseMatrixAssembler(U, V),
         nls::NonlinearSolver=NewtonSolver(LUSolver(); maxiter=10, rtol=1.e-8, verbose=true),
         xh::FEFunction=FEFunction(U, zero_free_values(U)))
@@ -205,7 +205,7 @@ struct DynamicNonlinearModel{A,B,C,D,E,F} <: ComputationalModel
     caches::F
 
     function DynamicNonlinearModel(
-        res::Function, jac::Function, U, Uold, V, dirbc, velocity::TimedependentCondition, dΩ...;
+        res::Function, jac::Function, U, Uold, V, dirbc, velocity::TimedependentCondition;
         assem_U=SparseMatrixAssembler(U, V),
         nls::NonlinearSolver=NewtonSolver(LUSolver(); maxiter=10, rtol=1.e-8, verbose=true),
         xh::FEFunction=FEFunction(U, zero_free_values(U)))
@@ -312,7 +312,7 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
     caches::E
 
     function StaticLinearModel(
-        res::Function, jac::Function, U, V, dirbc, dΩ...;
+        res::Function, jac::Function, U, V, dirbc;
         assem_U=SparseMatrixAssembler(U, V),
         ls::LinearSolver=LUSolver(),
         xh::FEFunction=FEFunction(U, zero_free_values(U)))
@@ -335,7 +335,7 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
 
 
     function StaticLinearModel(
-        res::Vector{<:Function}, jac::Function, U0, V0, dirbc, dΩ...;
+        res::Vector{<:Function}, jac::Function, U0, V0, dirbc;
         assem_U0=SparseMatrixAssembler(U0, V0),
         ls::LinearSolver=LUSolver())
 
@@ -359,7 +359,7 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
 
 
     function StaticLinearModel(
-        jac::Function, U, V, dirbc, dΩ...;
+        jac::Function, U, V, dirbc;
         assem_U=SparseMatrixAssembler(U, V),
         ls::LinearSolver=LUSolver(),
         xh::FEFunction=FEFunction(U, zero_free_values(U)))
@@ -394,8 +394,6 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
         return x
     end
 end
-
-
 
 
 function solve!(m::StaticLinearModel; Assembly=true, post=PostProcessor())

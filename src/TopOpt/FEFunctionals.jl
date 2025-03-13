@@ -57,14 +57,14 @@ get_state(obj::OptimFEVariable) = obj.func
 
 
 #*******************************************************************************	
-#                 PDEConstrainedFunctional
+#                 FEFunctional
 #*******************************************************************************	
 
-struct PDEConstrainedFunctional{A}
+struct FEFunctional{A}
   J::Function
   DJ::Function
   caches::A
-  function PDEConstrainedFunctional(J::Function, DJ::Function, uh, ph, ϕh)
+  function FEFunctional(J::Function, DJ::Function, uh, ph, ϕh)
     Vϕ = ϕh.fe_space
     dj = assemble_vector(DJ(uh, ph, ϕh), Vϕ)
     Jadim = [1.0]
@@ -75,19 +75,19 @@ struct PDEConstrainedFunctional{A}
   end
 end
 
-function adimensionalize!(func::PDEConstrainedFunctional, Jadim)
+function adimensionalize!(func::FEFunctional, Jadim)
   func.caches[6][1] = Jadim
   func.caches[5] ./= Jadim
   return 1.0, func.caches[5]
 end
 
-function evaluate_objective(func::PDEConstrainedFunctional)
+function evaluate_objective(func::FEFunctional)
   uh, _, ϕh, _, _, Jadim = func.caches
   jadim = Jadim[1]
   sum(func.J(uh, ϕh)) / jadim
 end
 
-function evaluate_derivative!(func::PDEConstrainedFunctional)
+function evaluate_derivative!(func::FEFunctional)
   uh, ph, ϕh, Vϕ, dj, Jadim = func.caches
   jadim = Jadim[1]
   assemble_vector!(func.DJ(uh, ph, ϕh), dj, Vϕ)
@@ -95,11 +95,11 @@ function evaluate_derivative!(func::PDEConstrainedFunctional)
   return dj
 end
 
-function evaluate!(func::PDEConstrainedFunctional)
-  j = evaluate_objective(func::PDEConstrainedFunctional)
-  dj = evaluate_derivative!(func::PDEConstrainedFunctional)
+function evaluate!(func::FEFunctional)
+  j = evaluate_objective(func::FEFunctional)
+  dj = evaluate_derivative!(func::FEFunctional)
   return j, dj
 end
 
-get_space(func::PDEConstrainedFunctional) = func.caches[4]
-get_derivative(func::PDEConstrainedFunctional) = FEFunction(get_space(func), func.caches[5])
+get_space(func::FEFunctional) = func.caches[4]
+get_derivative(func::FEFunctional) = FEFunction(get_space(func), func.caches[5])
