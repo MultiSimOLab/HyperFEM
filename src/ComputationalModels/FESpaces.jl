@@ -1,10 +1,10 @@
 
-function  Gridap.FESpaces.TestFESpace(model, reffe, bc::DirichletBC, conf)
-     TestFESpace(model, reffe, dirichlet_tags=bc.tags, conformity=conf)
+function  Gridap.FESpaces.TestFESpace(model, reffe, bc::DirichletBC, conf; kwargs...)
+     TestFESpace(model, reffe, dirichlet_tags=bc.tags, conformity=conf; kwargs...)
 end
 
-function Gridap.FESpaces.TestFESpace(model, reffe, ::NothingBC, conf)
-     TestFESpace(model, reffe, conformity=conf)
+function Gridap.FESpaces.TestFESpace(model, reffe, ::NothingBC, conf; kwargs...)
+     TestFESpace(model, reffe, conformity=conf; kwargs...)
 end
  
 function Gridap.FESpaces.TrialFESpace!(space::SingleFieldFESpace, bc::DirichletBC, Λ::Float64)

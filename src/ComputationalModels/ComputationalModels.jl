@@ -36,7 +36,7 @@ using WriteVTK
 using GridapGmsh 
 using GridapGmsh: GmshDiscreteModel
 using GridapGmsh:@check_if_loaded
-using Gmsh: Gmsh, gmsh
+# using Gmsh: Gmsh, gmsh
 
 
 include("BoundaryConditions.jl")
