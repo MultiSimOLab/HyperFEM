@@ -28,8 +28,8 @@ struct StaggeredModel{A,B,C,D} <: ComputationalModel
 
         @assert(length(CompModels) == length(state⁺) == length(state⁻))
 
-        x⁺=map((x)->get_free_dof_values(x), state⁺)
-        x⁻=map((x)->get_free_dof_values(x), state⁻)
+        x⁺ = map((x) -> get_free_dof_values(x), state⁺)
+        x⁻ = map((x) -> get_free_dof_values(x), state⁻)
 
         caches = (x⁺, x⁻)
         A, B, C, D = typeof(CompModels), typeof(state⁺), typeof(state⁻), typeof(caches)
@@ -45,9 +45,9 @@ function solve!(m::StaggeredModel;
     kargsolve,
     post::Tuple=ntuple(i -> PostProcessor(), length(m.compmodels)))
 
-    x⁺, x⁻= m.caches 
-    map((x)->TrialFESpace!(x.spaces[1], x.dirichlet, 0.0),m.compmodels)
-    map((x,y)->TrialFESpace!(x.fe_space, y.dirichlet, 0.0),m.state⁻,m.compmodels)
+    x⁺, x⁻ = m.caches
+    map((x) -> TrialFESpace!(x.spaces[1], x.dirichlet, 0.0), m.compmodels)
+    map((x, y) -> TrialFESpace!(x.fe_space, y.dirichlet, 0.0), m.state⁻, m.compmodels)
 
     flagconv = 1 # convergence flag 0 (max bisections) 1 (max steps)
     ∆Λ = 1.0 / stepping[:nsteps]
@@ -55,11 +55,11 @@ function solve!(m::StaggeredModel;
     Λ_ = 0
     while Λ_ < stepping[:nsteps]
         stevol(Λ) = ∆Λ * (Λ + Λ_)
-        map(x-> updateBC!(x.dirichlet, x.dirichlet.caches, [stevol for _ in 1:length(x.dirichlet.caches)]), m.compmodels)
-        map((x)->TrialFESpace!(x.spaces[1], x.dirichlet, 1.0),m.compmodels)
-        _, flag= map((x,y)-> solve!(x; y...),m.compmodels, kargsolve)
-        map((x,y)->TrialFESpace!(x.fe_space, y.dirichlet, 1.0),m.state⁻,m.compmodels)
-        map((x,y) -> x .= y, x⁻, x⁺)
+        map(x -> updateBC!(x.dirichlet, x.dirichlet.caches, [stevol for _ in 1:length(x.dirichlet.caches)]), m.compmodels)
+        map((x) -> TrialFESpace!(x.spaces[1], x.dirichlet, 1.0), m.compmodels)
+        _, flag = map((x, y) -> solve!(x; y...), m.compmodels, kargsolve)
+        map((x, y) -> TrialFESpace!(x.fe_space, y.dirichlet, 1.0), m.state⁻, m.compmodels)
+        map((x, y) -> x .= y, x⁻, x⁺)
         Λ_ += 1
     end
 
@@ -77,7 +77,7 @@ struct StaticNonlinearModel{A,B,C,D,E} <: ComputationalModel
     caches::E
 
     function StaticNonlinearModel(
-        res::Function, jac::Function, U, V, dirbc ;
+        res::Function, jac::Function, U, V, dirbc;
         assem_U=SparseMatrixAssembler(U, V),
         nls::NonlinearSolver=NewtonSolver(LUSolver(); maxiter=10, rtol=1.e-8, verbose=true),
         xh::FEFunction=FEFunction(U, zero_free_values(U)))
@@ -393,6 +393,17 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
         Algebra.solve!(x, ns, b)
         return x
     end
+
+    function (m::StaticLinearModel)(xh::SingleFieldFEFunction; kwargs ...)
+        x_ = get_free_dof_values(xh; kwargs...)
+        m(x_)
+        return x_
+    end
+
+    function (m::StaticLinearModel)(xh::MultiFieldFEFunction; kwargs ...)
+       map((x)->m(x), xh)
+    end
+
 end
 
 
