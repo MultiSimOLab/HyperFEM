@@ -8,7 +8,6 @@ include("PhysicalModels/PhysicalModels.jl")
 include("WeakForms/WeakForms.jl")
 include("ComputationalModels/ComputationalModels.jl")
 include("Solvers/Solvers.jl")
-# include("TopOpt/TopOpt.jl")
 
 include("Io.jl")
 export setupfolder
