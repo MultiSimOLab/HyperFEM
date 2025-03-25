@@ -18,6 +18,7 @@ end
 @publish TensorAlgebra Box
 @publish TensorAlgebra Ellipsoid
 @publish TensorAlgebra I9
+@publish TensorAlgebra Tensorize
 
 
 @publish PhysicalModels DerivativeStrategy

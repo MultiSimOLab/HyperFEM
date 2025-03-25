@@ -19,7 +19,7 @@ export I3
 export I9
 export I2
 export logreg
-
+export Tensorize
  
 include("FunctionalAlgebra.jl")
 export Box
@@ -860,6 +860,14 @@ function logreg(J; Threshold=0.01)
   else
     return log(Threshold) - (3.0 / 2.0) + (2 / Threshold) * J - (1 / (2 * Threshold^2)) * J^2
   end
+end
+
+@generated function Tensorize(A::VectorValue{D,Float64}) where {D}
+  str = ""
+  for i in 1:D
+    str *= "A.data[$i], "
+  end
+  Meta.parse("TensorValue($str)")
 end
 
 
