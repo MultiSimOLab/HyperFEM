@@ -381,7 +381,7 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
 
 
 
-    function (m::StaticLinearModel)(x::Vector{Float64}; Assembly=false)
+    function (m::StaticLinearModel)(x::AbstractVector{Float64}; Assembly=false)
         U, V = m.spaces
         jac = m.jac
         ns, K, b, _, assem_U = m.caches
