@@ -764,6 +764,13 @@ function Gridap.TensorValues.cross(A::TensorValue{3,9,Float64}, B::TensorValue{3
     A[3]*B[5] - A[6]*B[4] - A[12]*B[2] + A[15]*B[1])
 end
 
+function Gridap.TensorValues.cross(A::SMatrix, B::SMatrix)
+  return get_array(TensorValue(A) × TensorValue(B))
+end
+
+function Gridap.TensorValues.outer(A::SVector, B::SVector)
+  return get_array(VectorValue(A) ⊗ VectorValue(B))
+end
 
 function Gridap.TensorValues.inner(Ten1::TensorValue{9,9,Float64}, Ten2::TensorValue{3,3,Float64})
   TensorValue(Ten1[1] * Ten2[1] + Ten1[10] * Ten2[2] + Ten1[19] * Ten2[3] + Ten1[28] * Ten2[4] + Ten1[37] * Ten2[5] + Ten1[46] * Ten2[6] + Ten1[55] * Ten2[7] + Ten1[64] * Ten2[8] + Ten1[73] * Ten2[9],
