@@ -550,7 +550,7 @@ function (×ᵢ⁴)(A::TensorValue{3,3,Float64})
 end
 
 
-function Gridap.TensorValues.cross(A::TensorValue{3,3,Float64}, B::TensorValue{3,3,Float64})
+function Gridap.TensorValues.cross(A::TensorValue{3,3,T1}, B::TensorValue{3,3,T2}) where {T1,T2}
 
   TensorValue(A[5] * B[9] - A[6] * B[8] - A[8] * B[6] + A[9] * B[5],
     A[6] * B[7] - A[4] * B[9] + A[7] * B[6] - A[9] * B[4],
@@ -564,7 +564,7 @@ function Gridap.TensorValues.cross(A::TensorValue{3,3,Float64}, B::TensorValue{3
 end
 
 
-function Gridap.TensorValues.cross(H::TensorValue{9,9,Float64}, A::TensorValue{3,3,Float64})
+function Gridap.TensorValues.cross(H::TensorValue{9,9,T1}, A::TensorValue{3,3,T2}) where {T1,T2}
 
   TensorValue(A[9] * H[37] - A[8] * H[46] - A[6] * H[64] + A[5] * H[73],
     A[9] * H[38] - A[8] * H[47] - A[6] * H[65] + A[5] * H[74],
@@ -649,7 +649,7 @@ function Gridap.TensorValues.cross(H::TensorValue{9,9,Float64}, A::TensorValue{3
     A[5] * H[9] - A[4] * H[18] - A[2] * H[36] + A[1] * H[45])
 end
 
-function Gridap.TensorValues.cross(A::TensorValue{3,3,Float64}, H::TensorValue{9,9,Float64})
+function Gridap.TensorValues.cross(A::TensorValue{3,3,T1}, H::TensorValue{9,9,T2}) where {T1,T2}
 
   TensorValue(A[5] * H[9] - A[6] * H[8] - A[8] * H[6] + A[9] * H[5],
     A[6] * H[7] - A[4] * H[9] + A[7] * H[6] - A[9] * H[4],
@@ -734,7 +734,7 @@ function Gridap.TensorValues.cross(A::TensorValue{3,3,Float64}, H::TensorValue{9
     A[1] * H[77] - A[2] * H[76] - A[4] * H[74] + A[5] * H[73])
 end
 
-function Gridap.TensorValues.cross(A::TensorValue{3,9,Float64}, B::TensorValue{3,3,Float64})
+function Gridap.TensorValues.cross(A::TensorValue{3,9,T1}, B::TensorValue{3,3,T2}) where {T1,T2}
  
   TensorValue{3,9,Float64,27}(A[13]*B[9] - A[16]*B[8] - A[22]*B[6] + A[25]*B[5],
   A[14]*B[9] - A[17]*B[8] - A[23]*B[6] + A[26]*B[5],
