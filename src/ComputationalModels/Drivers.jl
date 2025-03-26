@@ -394,7 +394,7 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
         return x
     end
 
-    function (m::StaticLinearModel)(xh; kwargs ...)
+    function (m::StaticLinearModel)(xh::FEFunction; kwargs ...)
         x_ = get_free_dof_values(xh; kwargs...)
         m(x_)
         return x_
