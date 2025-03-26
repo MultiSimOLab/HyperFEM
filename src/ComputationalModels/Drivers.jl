@@ -394,9 +394,17 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
         return x
     end
 
-    function (m::StaticLinearModel)(xh::FEFunction; kwargs ...)
-        x_ = get_free_dof_values(xh; kwargs...)
-        m(x_)
+    function (m::StaticLinearModel)(xh::FEFunction; Measure=nothing,  Assembly=false, kwargs ...)
+        x_ = get_free_dof_values(xh)
+        _, V = m.spaces
+        jac = m.jac
+        ns, K, b, _, assem_U = m.caches
+        assemble_vector!((v)->∫(xh*v)Measure, b, assem_U, V)
+        if Assembly
+            assemble_matrix!(jac, K, assem_U, U, V)
+        end
+        numerical_setup!(ns, K)
+        Algebra.solve!(x_, ns, b)
         return x_
     end
 
