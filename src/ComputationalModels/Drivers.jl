@@ -121,6 +121,8 @@ function solve!(m::StaticNonlinearModel;
     ∆Λ = 1.0 / stepping[:nsteps]
     nbisect = 0
     Λ_ = 0
+    x .*= 0.0
+    x⁻ .*= 0.0
     while Λ < 1.0
         Λ += ∆Λ
         Λ = min(1.0, Λ)
@@ -394,7 +396,7 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
         return x
     end
 
-    function (m::StaticLinearModel)(xh::FEFunction; Measure=nothing,  Assembly=false, kwargs ...)
+    function (m::StaticLinearModel)(xh::SingleFieldFEFunction; Measure=nothing,  Assembly=false, kwargs ...)
         x_ = get_free_dof_values(xh)
         _, V = m.spaces
         jac = m.jac
