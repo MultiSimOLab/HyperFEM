@@ -72,19 +72,21 @@ end
 @publish ComputationalModels  get_state
 @publish ComputationalModels  get_measure
 @publish ComputationalModels  get_spaces
+@publish ComputationalModels  get_trial_space
+@publish ComputationalModels  get_test_space
 @publish ComputationalModels  get_assemblers
 @publish ComputationalModels  StaticNonlinearModel
 @publish ComputationalModels  DynamicNonlinearModel
 @publish ComputationalModels  StaticLinearModel
 @publish ComputationalModels  solve!
 @publish ComputationalModels  project_dirichlet!
-@publish ComputationalModels  PostMechanical
-@publish ComputationalModels  PostElectroMechanical
-@publish ComputationalModels  PostThermoElectroMechanical
 @publish ComputationalModels  GmshDiscreteModel
 @publish ComputationalModels  updateBC!
+@publish ComputationalModels  PostProcessor
 @publish ComputationalModels  StaggeredModel
-
+@publish ComputationalModels  Cauchy
+@publish ComputationalModels  Entropy
+@publish ComputationalModels  D0
 
 @publish Solvers IterativeSolver
 

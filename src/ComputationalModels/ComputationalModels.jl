@@ -72,10 +72,12 @@ export get_state
 export get_measure
 export get_spaces
 export get_assemblers
+export get_trial_space
+export get_test_space
 
 include("PostProcessors.jl")
-export PostMechanical
-export PostElectroMechanical
-export PostThermoElectroMechanical
- 
+export PostProcessor
+export Cauchy
+export Entropy
+export D0
 end

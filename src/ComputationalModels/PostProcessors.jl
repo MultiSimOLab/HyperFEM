@@ -3,196 +3,230 @@ get_pvd(::AbstractPostProcessor) = @abstractmethod
 vtk_save(::AbstractPostProcessor) = @abstractmethod
 
 
-struct PostProcessor end
-get_pvd(::PostProcessor) = nothing
-vtk_save(::PostProcessor) = nothing
-function (obj::PostProcessor)(state, Λ, Λ_, m) end
 
+
+mutable struct PostProcessor{A,B,C} <:AbstractPostProcessor
+    cache::B
+    cachevtk::C
+
+    function PostProcessor() 
+        cachevtk = (false, nothing, nothing)
+        cache = ((x...)->())
+        A, B, C = typeof(nothing), typeof(cache), typeof(cachevtk)
+        new{A,B,C}(cache, cachevtk)
+    end
+
+    function PostProcessor(comp_model,driver;
+        is_vtk=true,
+        filepath=datadir("sims", "Temp"),
+        kwargs...)
+        @show typeof(kwargs), kwargs
+        pvd = paraview_collection(filepath * "/Results", append=false)
+        cache = (driver, kwargs)
+        cachevtk = (is_vtk, filepath, pvd)
+
+        A, B, C = typeof(comp_model), typeof(cache), typeof(cachevtk)
+        new{A,B,C}(cache, cachevtk)
+    end
+
+
+end
+get_pvd(p::PostProcessor{<:Any,<:Any,<:Any}) = p.cachevtk[3]
+vtk_save(p::PostProcessor{<:Any,<:Any,<:Any}) =
+    if p.cachevtk[1]
+        WriteVTK.vtk_save(get_pvd(p))
+    end
+
+function (obj::PostProcessor{<:Nothing,<:Any,<:Any})(state, Λ, Λ_, m) end
+
+function (obj::PostProcessor{<:StaticNonlinearModel,<:Any,<:Any})(state, Λ, Λ_, m)
+    obj.cache[1](state, Λ, Λ_, obj, obj.cache[2]...)
+end
 
 # Mechanical Physics
 
-mutable struct PostMechanical{A,B,C,D} <: AbstractPostProcessor
-    physicalmodel::A
-    flags::B
-    cache::C
-    cachevtk::D
-    function PostMechanical(model::Mechano, Ω, dΩ;
-        is_vtk=true,
-        filepath=datadir("sims", "Temp"),
-        strains::Bool=false,
-        cauchy::Bool=false
-    )
+# mutable struct PostMechanical{A,B,C,D} <: AbstractPostProcessor
+#     physicalmodel::A
+#     flags::B
+#     cache::C
+#     cachevtk::D
+#     function PostMechanical(model::Mechano, Ω, dΩ;
+#         is_vtk=true,
+#         filepath=datadir("sims", "Temp"),
+#         strains::Bool=false,
+#         cauchy::Bool=false
+#     )
 
-        pvd = paraview_collection(filepath * "/Results", append=false)
-        flags = (; strains=strains, cauchy=cauchy)
-        cache = (Ω, dΩ)
-        cachevtk = (is_vtk, filepath, pvd)
+#         pvd = paraview_collection(filepath * "/Results", append=false)
+#         flags = (; strains=strains, cauchy=cauchy)
+#         cache = (Ω, dΩ)
+#         cachevtk = (is_vtk, filepath, pvd)
 
-        # if strains
-        #     push!(cache, get_trial_space(CompModel_))
-        # end
-        A, B, C, D = typeof(model), typeof(flags), typeof(cache), typeof(cachevtk)
-        new{A,B,C,D}(model, flags, cache, cachevtk)
-    end
-end
+#         # if strains
+#         #     push!(cache, get_trial_space(CompModel_))
+#         # end
+#         A, B, C, D = typeof(model), typeof(flags), typeof(cache), typeof(cachevtk)
+#         new{A,B,C,D}(model, flags, cache, cachevtk)
+#     end
+# end
 
-get_pvd(p::PostMechanical) = p.cachevtk[3]
-vtk_save(p::PostMechanical) =
-    if p.cachevtk[1]
-        WriteVTK.vtk_save(get_pvd(p))
-    end
-
-
-function (obj::PostMechanical)(state, Λ, Λ_, m)
-    println("PostMechanical")
-    Ω = get_triangulation(get_spaces(m)[1])
-    xh = FEFunction(get_trial_space(m), state)
-    pvd = obj.cachevtk[3]
-    filePath = obj.cachevtk[2]
-
-    if obj.cachevtk[1]
-        Λstring = replace(string(round(Λ, digits=2)), "." => "_")
-        pvd[Λ_] = createvtk(Ω,
-            filePath * "/_Λ_" * Λstring * "_TIME_$Λ_" * ".vtu",
-            cellfields=["u" => xh]
-        )
-    end
-end
+# get_pvd(p::PostMechanical) = p.cachevtk[3]
+# vtk_save(p::PostMechanical) =
+#     if p.cachevtk[1]
+#         WriteVTK.vtk_save(get_pvd(p))
+#     end
 
 
+# function (obj::PostMechanical)(state, Λ, Λ_, m)
+#     println("PostMechanical")
+#     Ω = get_triangulation(get_spaces(m)[1])
+#     xh = FEFunction(get_trial_space(m), state)
+#     pvd = obj.cachevtk[3]
+#     filePath = obj.cachevtk[2]
+
+#     if obj.cachevtk[1]
+#         Λstring = replace(string(round(Λ, digits=2)), "." => "_")
+#         pvd[Λ_] = createvtk(Ω,
+#             filePath * "/_Λ_" * Λstring * "_TIME_$Λ_" * ".vtu",
+#             cellfields=["u" => xh]
+#         )
+#     end
+# end
 
 
-# ElectroMechanical Physics
-
-mutable struct PostElectroMechanical{A,B,C} <: AbstractPostProcessor
-    flags::A
-    cache::B
-    cachevtk::C
-    function PostElectroMechanical(model::ElectroMechano, Ω, dΩ;
-        is_vtk=true,
-        filepath=datadir("sims", "Temp"),
-        strains::Bool=false,
-        cauchy::Bool=false
-    )
-
-        pvd = paraview_collection(filepath * "/Results", append=false)
-        flags = (; strains=strains, cauchy=cauchy)
-        cache = (Ω, dΩ)
-        cachevtk = (is_vtk, filepath, pvd)
-
-        # if strains
-        #     push!(cache, get_trial_space(CompModel_))
-        # end
-        A, B, C = typeof(flags), typeof(cache), typeof(cachevtk)
-        new{A,B,C}(flags, cache, cachevtk)
-    end
-end
-
-get_pvd(p::PostElectroMechanical) = p.cachevtk[3]
-vtk_save(p::PostElectroMechanical) =
-    if p.cachevtk[1]
-        WriteVTK.vtk_save(get_pvd(p))
-    end
 
 
-function (obj::PostElectroMechanical)(state, Λ, Λ_, m)
-    println("PostElectroMechanical")
-    Ω = get_triangulation(get_spaces(m)[1])
-    xh = FEFunction(get_trial_space(m), state)
-    uh = xh[1]
-    φh = xh[2]
-    pvd = obj.cachevtk[3]
-    filePath = obj.cachevtk[2]
+# # ElectroMechanical Physics
 
-    if obj.cachevtk[1] && (Λ_ % 20 == 0)
-        Λstring = replace(string(round(Λ, digits=2)), "." => "_")
-        pvd[Λ_] = createvtk(Ω,
-            filePath * "/_Λ_" * Λstring * "_TIME_$Λ_" * ".vtu",
-            cellfields=["u" => uh, "φ" => φh]
-        )
-    end
-end
+# mutable struct PostElectroMechanical{A,B,C} <: AbstractPostProcessor
+#     flags::A
+#     cache::B
+#     cachevtk::C
+#     function PostElectroMechanical(model::ElectroMechano, Ω, dΩ;
+#         is_vtk=true,
+#         filepath=datadir("sims", "Temp"),
+#         strains::Bool=false,
+#         cauchy::Bool=false
+#     )
+
+#         pvd = paraview_collection(filepath * "/Results", append=false)
+#         flags = (; strains=strains, cauchy=cauchy)
+#         cache = (Ω, dΩ)
+#         cachevtk = (is_vtk, filepath, pvd)
+
+#         # if strains
+#         #     push!(cache, get_trial_space(CompModel_))
+#         # end
+#         A, B, C = typeof(flags), typeof(cache), typeof(cachevtk)
+#         new{A,B,C}(flags, cache, cachevtk)
+#     end
+# end
+
+# get_pvd(p::PostElectroMechanical) = p.cachevtk[3]
+# vtk_save(p::PostElectroMechanical) =
+#     if p.cachevtk[1]
+#         WriteVTK.vtk_save(get_pvd(p))
+#     end
 
 
+# function (obj::PostElectroMechanical)(state, Λ, Λ_, m)
+#     println("PostElectroMechanical")
+#     Ω = get_triangulation(get_spaces(m)[1])
+#     xh = FEFunction(get_trial_space(m), state)
+#     uh = xh[1]
+#     φh = xh[2]
+#     pvd = obj.cachevtk[3]
+#     filePath = obj.cachevtk[2]
+
+#     if obj.cachevtk[1] && (Λ_ % 20 == 0)
+#         Λstring = replace(string(round(Λ, digits=2)), "." => "_")
+#         pvd[Λ_] = createvtk(Ω,
+#             filePath * "/_Λ_" * Λstring * "_TIME_$Λ_" * ".vtu",
+#             cellfields=["u" => uh, "φ" => φh]
+#         )
+#     end
+# end
 
 
 
 
 
-# ThermoElectroMechanical Physics
-
-mutable struct PostThermoElectroMechanical{A,B,C,D} <: AbstractPostProcessor
-    physicalmodel::A
-    flags::B
-    cache::C
-    cachevtk::D
-    function PostThermoElectroMechanical(model::ThermoElectroMechano, Ω, dΩ;
-        is_vtk=true,
-        filepath=datadir("sims", "Temp"),
-        interval=20,
-        strains::Bool=false,
-        cauchy::Bool=false,
-        entropy::Bool=false,
-        D0::Bool=false
-    )
-
-        pvd = paraview_collection(filepath * "/Results", append=false)
-        flags = (; strains=strains, cauchy=cauchy, entropy=entropy, D0=D0)
-        cache = (interval, Ω, dΩ)
-        cachevtk = (is_vtk, filepath, pvd)
-
-        # if strains
-        #     push!(cache, get_trial_space(CompModel_))
-        # end
-        A, B, C, D = typeof(model), typeof(flags), typeof(cache), typeof(cachevtk)
-        new{A,B,C,D}(model, flags, cache, cachevtk)
-    end
-end
-
-get_pvd(p::PostThermoElectroMechanical) = p.cachevtk[3]
-vtk_save(p::PostThermoElectroMechanical) =
-    if p.cachevtk[1]
-        WriteVTK.vtk_save(get_pvd(p))
-    end
 
 
-function (obj::PostThermoElectroMechanical)(state, Λ, Λ_, m)
-    println("PostThermoElectroMechanical")
-    Ω = obj.cache[2]
-    dΩ = obj.cache[3]
-    xh = FEFunction(get_trial_space(m), state)
-    uh = xh[1]
-    φh = xh[2]
-    θh = xh[3]
-    pvd = obj.cachevtk[3]
-    filePath = obj.cachevtk[2]
-    physmodel = obj.physicalmodel
+# # ThermoElectroMechanical Physics
 
-    cellfields=["u" => uh, "φ" => φh, "θ" => θh]
-    if obj.flags.cauchy
-        σ11h, σ12h, σ13h, σ22h, σ23h, σ33h, ph = Cauchy(physmodel, uh, φh, θh, Ω, dΩ, Λ)
-        push!(cellfields, "σ11" => σ11h, "σ12" => σ12h, "σ13" => σ13h, "σ22" => σ22h, "σ23" => σ23h, "σ33" => σ33h, "p" => ph)
-    end
+# mutable struct PostThermoElectroMechanical{A,B,C,D} <: AbstractPostProcessor
+#     physicalmodel::A
+#     flags::B
+#     cache::C
+#     cachevtk::D
+#     function PostThermoElectroMechanical(model::ThermoElectroMechano, Ω, dΩ;
+#         is_vtk=true,
+#         filepath=datadir("sims", "Temp"),
+#         interval=20,
+#         strains::Bool=false,
+#         cauchy::Bool=false,
+#         entropy::Bool=false,
+#         D0::Bool=false
+#     )
 
-    if obj.flags.entropy
-        ηh= Entropy(physmodel, uh, φh, θh, Ω, dΩ, Λ)
-        push!(cellfields, "η" => ηh )
-    end
+#         pvd = paraview_collection(filepath * "/Results", append=false)
+#         flags = (; strains=strains, cauchy=cauchy, entropy=entropy, D0=D0)
+#         cache = (interval, Ω, dΩ)
+#         cachevtk = (is_vtk, filepath, pvd)
 
-    if obj.flags.D0
-        D0_1h,D0_2h,D0_3h= D0(physmodel, uh, φh, θh, Ω, dΩ, Λ)
-        push!(cellfields, "D0_1h" => D0_1h, "D0_2h" => D0_2h, "D0_3h" => D0_3h)
-    end
+#         # if strains
+#         #     push!(cache, get_trial_space(CompModel_))
+#         # end
+#         A, B, C, D = typeof(model), typeof(flags), typeof(cache), typeof(cachevtk)
+#         new{A,B,C,D}(model, flags, cache, cachevtk)
+#     end
+# end
 
-    if obj.cachevtk[1] && (Λ_ % obj.cache[1] == 0)
-        Λstring = replace(string(round(Λ, digits=2)), "." => "_")
-        pvd[Λ_] = createvtk(Ω,
-            filePath * "/_Λ_" * Λstring * "_TIME_$Λ_" * ".vtu",
-            cellfields=cellfields
-        )
+# get_pvd(p::PostThermoElectroMechanical) = p.cachevtk[3]
+# vtk_save(p::PostThermoElectroMechanical) =
+#     if p.cachevtk[1]
+#         WriteVTK.vtk_save(get_pvd(p))
+#     end
 
-    end
-end
+
+# function (obj::PostThermoElectroMechanical)(state, Λ, Λ_, m)
+#     println("PostThermoElectroMechanical")
+#     Ω = obj.cache[2]
+#     dΩ = obj.cache[3]
+#     xh = FEFunction(get_trial_space(m), state)
+#     uh = xh[1]
+#     φh = xh[2]
+#     θh = xh[3]
+#     pvd = obj.cachevtk[3]
+#     filePath = obj.cachevtk[2]
+#     physmodel = obj.physicalmodel
+
+#     cellfields=["u" => uh, "φ" => φh, "θ" => θh]
+#     if obj.flags.cauchy
+#         σ11h, σ12h, σ13h, σ22h, σ23h, σ33h, ph = Cauchy(physmodel, uh, φh, θh, Ω, dΩ, Λ)
+#         push!(cellfields, "σ11" => σ11h, "σ12" => σ12h, "σ13" => σ13h, "σ22" => σ22h, "σ23" => σ23h, "σ33" => σ33h, "p" => ph)
+#     end
+
+#     if obj.flags.entropy
+#         ηh= Entropy(physmodel, uh, φh, θh, Ω, dΩ, Λ)
+#         push!(cellfields, "η" => ηh )
+#     end
+
+#     if obj.flags.D0
+#         D0_1h,D0_2h,D0_3h= D0(physmodel, uh, φh, θh, Ω, dΩ, Λ)
+#         push!(cellfields, "D0_1h" => D0_1h, "D0_2h" => D0_2h, "D0_3h" => D0_3h)
+#     end
+
+#     if obj.cachevtk[1] && (Λ_ % obj.cache[1] == 0)
+#         Λstring = replace(string(round(Λ, digits=2)), "." => "_")
+#         pvd[Λ_] = createvtk(Ω,
+#             filePath * "/_Λ_" * Λstring * "_TIME_$Λ_" * ".vtu",
+#             cellfields=cellfields
+#         )
+
+#     end
+# end
 
 
 function Cauchy(physmodel::ThermoElectroMechano, uh, φh, θh, Ω, dΩ, Λ=1.0)
