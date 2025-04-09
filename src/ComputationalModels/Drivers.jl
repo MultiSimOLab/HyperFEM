@@ -112,7 +112,8 @@ get_assemblers(m::StaticNonlinearModel) = (m.caches[4])
 function solve!(m::StaticNonlinearModel;
     stepping=(nsteps=20, maxbisec=15), ProjectDirichlet::Bool=true,
     post=PostProcessor())
-
+   
+    reset!(post)
     flagconv = 1 # convergence flag 0 (max bisections) 1 (max steps)
     U, V = m.spaces
     TrialFESpace!(U, m.dirichlet, 0.0)
@@ -148,7 +149,7 @@ function solve!(m::StaticNonlinearModel;
             Λ_ += 1
             x⁻ .= x
             # Write to PVD
-            post(x, Λ, Λ_, m)
+            post(Λ)
         end
         #  GC.gc()
 
@@ -160,7 +161,7 @@ function solve!(m::StaticNonlinearModel;
 
     end
 
-    vtk_save(post)
+     vtk_save(post)
 
     return x, flagconv
 end
@@ -249,6 +250,7 @@ function solve!(m::DynamicNonlinearModel;
     stepping=(nsteps=10, Δt=0.1),
     post=PostProcessor())
 
+    reset!(post)
     U, V, U⁻ = m.spaces
     t = 0.0
     Δt = stepping[:Δt]
@@ -283,7 +285,7 @@ function solve!(m::DynamicNonlinearModel;
         update_velocity!(m.velocity.vh, x, x⁻, Δt)
         x⁻ .= x
         print_message(nls.log, "\nStep: $itime, Time: $t\n")
-        post(x, t, itime, m)
+        post(t)
 
 
         # # Kinetic Energy
@@ -416,6 +418,8 @@ end
 
 
 function solve!(m::StaticLinearModel; Assembly=true, post=PostProcessor())
+    
+    reset!(post)
     U, V = m.spaces
     jac = m.jac
     res = m.res
@@ -427,12 +431,17 @@ function solve!(m::StaticLinearModel; Assembly=true, post=PostProcessor())
     end
     numerical_setup!(ns, K)
     Algebra.solve!(x, ns, b)
+    post(1.0)
+    vtk_save(post)
+
     return x
 end
 
 
 
 function solve!(m::StaticLinearModel, b::Vector{Float64}; Assembly=true, post=PostProcessor())
+   
+    reset!(post)
     U, V = m.spaces
     jac = m.jac
     ns, K, _, x, assem_U = m.caches
@@ -441,12 +450,15 @@ function solve!(m::StaticLinearModel, b::Vector{Float64}; Assembly=true, post=Po
     end
     numerical_setup!(ns, K)
     Algebra.solve!(x, ns, b)
+    post(1.0)
+    vtk_save(post)
     return x
 end
 
 
 
 function solve!(m::StaticLinearModel{Vector{<:Function},<:Any,<:Any,<:Any,<:Any}; Assembly=true, post=PostProcessor())
+    reset!(post)
     U, V = m.spaces
     U0 = U[1]
     V0 = V[1]
@@ -464,6 +476,8 @@ function solve!(m::StaticLinearModel{Vector{<:Function},<:Any,<:Any,<:Any,<:Any}
         assemble_vector!(li, b, assem_U0, V0)
         Algebra.solve!(xi, ns, b)
     end
+    post(1.0)
+    vtk_save(post)
     return x
 end
 

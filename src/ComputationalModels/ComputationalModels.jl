@@ -80,4 +80,5 @@ export PostProcessor
 export Cauchy
 export Entropy
 export D0
+export reset!
 end

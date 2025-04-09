@@ -6,42 +6,65 @@ vtk_save(::AbstractPostProcessor) = @abstractmethod
 
 
 mutable struct PostProcessor{A,B,C} <:AbstractPostProcessor
+    comp_model::A
     cache::B
     cachevtk::C
+    iter::Int64
+    Λ ::Vector{Float64}
 
     function PostProcessor() 
         cachevtk = (false, nothing, nothing)
         cache = ((x...)->())
+        Λ = Vector{Float64}()
         A, B, C = typeof(nothing), typeof(cache), typeof(cachevtk)
-        new{A,B,C}(cache, cachevtk)
+        new{A,B,C}(nothing, cache, cachevtk, 0, Λ)
     end
 
     function PostProcessor(comp_model,driver;
         is_vtk=true,
         filepath=datadir("sims", "Temp"),
         kwargs...)
-        @show typeof(kwargs), kwargs
+
         pvd = paraview_collection(filepath * "/Results", append=false)
         cache = (driver, kwargs)
         cachevtk = (is_vtk, filepath, pvd)
+        Λ = Vector{Float64}()
 
         A, B, C = typeof(comp_model), typeof(cache), typeof(cachevtk)
-        new{A,B,C}(cache, cachevtk)
+        new{A,B,C}(comp_model, cache, cachevtk, 0,Λ)
     end
 
 
 end
 get_pvd(p::PostProcessor{<:Any,<:Any,<:Any}) = p.cachevtk[3]
-vtk_save(p::PostProcessor{<:Any,<:Any,<:Any}) =
+function vtk_save(p::PostProcessor{<:Any,<:Any,<:Any}) 
     if p.cachevtk[1]
         WriteVTK.vtk_save(get_pvd(p))
     end
-
-function (obj::PostProcessor{<:Nothing,<:Any,<:Any})(state, Λ, Λ_, m) end
-
-function (obj::PostProcessor{<:StaticNonlinearModel,<:Any,<:Any})(state, Λ, Λ_, m)
-    obj.cache[1](state, Λ, Λ_, obj, obj.cache[2]...)
 end
+
+function reset!(obj::PostProcessor)  
+    obj.iter=0 
+    obj.Λ = Vector{Float64}()
+    is_vtk,filepath,pvd= obj.cachevtk
+    isnothing(pvd) ? pvd =nothing : pvd = paraview_collection(filepath * "/Results", append=false)
+    obj.cachevtk = (is_vtk, filepath, pvd)
+end
+
+function (obj::PostProcessor{<:Nothing,<:Any,<:Any})(Λ) end
+
+function (obj::PostProcessor{<:StaticNonlinearModel,<:Any,<:Any})(Λ)
+    obj.iter +=1
+    push!(obj.Λ, Λ)
+    obj.cache[1](obj, obj.cache[2]...)
+end
+
+function (obj::PostProcessor{<:StaticLinearModel,<:Any,<:Any})(Λ)
+    obj.iter +=1
+    push!(obj.Λ, Λ)
+    obj.cache[1](obj, obj.cache[2]...)
+end
+
 
 # Mechanical Physics
 

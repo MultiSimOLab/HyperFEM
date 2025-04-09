@@ -87,6 +87,7 @@ end
 @publish ComputationalModels  Cauchy
 @publish ComputationalModels  Entropy
 @publish ComputationalModels  D0
+@publish ComputationalModels  reset!
 
 @publish Solvers IterativeSolver
 
