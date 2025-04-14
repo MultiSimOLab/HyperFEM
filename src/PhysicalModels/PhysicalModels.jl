@@ -24,6 +24,8 @@ export TransverseIsotropy3D
 export LinearElasticity3D
 export LinearElasticity2D
 export IdealDielectric
+export IdealMagnetic
+export HardMagnetic
 export ThermalModel
 export ElectroMechModel
 export ThermoElectroMechModel
@@ -32,12 +34,14 @@ export ThermoMech_EntropicPolyconvex
 export FlexoElectroModel
 export ThermoElectroMech_Govindjee
 export ThermoElectroMech_PINNs
+export MagnetoMechModel
 
 export Mechano
 export Electro
 export Magneto
 export Thermo
 export ElectroMechano
+export MagnetoMechano
 export ThermoElectroMechano
 export ThermoMechano
 export ThermoElectro
@@ -63,6 +67,7 @@ abstract type ThermoElectroMechano <: MultiPhysicalModel end
 abstract type ThermoMechano <: MultiPhysicalModel end
 abstract type ThermoElectro <: MultiPhysicalModel end
 abstract type FlexoElectro <: MultiPhysicalModel end
+abstract type MagnetoMechano <: MultiPhysicalModel end
 
 include("KinematicModels.jl")
 include("PINNs.jl")
@@ -100,6 +105,37 @@ struct EnergyInterpolationScheme{A,B} <: PhysicalModel
     return (Ψ,∂Ψ,∂2Ψ,DΨ_Dρ,D∂Ψ_Dρ,D∂2Ψ_Dρ)
   end
 end
+
+
+
+# ===================
+# Magneto models
+# ===================
+
+struct IdealMagnetic{A} <: Magneto
+  μ::Float64
+  αr::Float64
+  χe::Float64
+  Kinematic::A
+  function IdealMagnetic(; μ::Float64, αr::Float64, χe::Float64=0.0, Kinematic::KinematicModel=Kinematics(Magneto))
+    new{typeof(Kinematic)}(μ, αr, χe, Kinematic)
+  end
+end
+
+
+struct HardMagnetic{A} <: Magneto
+  μ::Float64
+  αr::Float64
+  χe::Float64
+  χr::Float64
+  βmok::Float64
+  βcoup::Float64
+  Kinematic::A
+  function HardMagnetic(; μ::Float64, αr::Float64, χe::Float64=0.0, χr::Float64=8.0, βmok::Float64=1.0 ,βcoup::Float64=1.0 , Kinematic::KinematicModel=Kinematics(Magneto))
+    new{typeof(Kinematic)}(μ, αr, χe, χr,βmok, βcoup, Kinematic)
+  end
+end
+
 
 # ===================
 # Electro models
@@ -160,8 +196,6 @@ struct LinearElasticity2D{A} <: Mechano
 
 
 end
-
-
 
 mutable struct LinearElasticity3D{A} <: Mechano
   λ::Float64
@@ -361,6 +395,7 @@ end
 # ===================
 # MultiPhysicalModel models
 # ===================
+
 
 struct FlexoElectroModel{A} <: FlexoElectro
   ElectroMechano::A
@@ -586,6 +621,32 @@ struct ThermoElectroMech_Govindjee{A,B,C} <: ThermoElectroMechano
 end
 
 
+struct MagnetoMechModel{A,B} <: MagnetoMechano
+  Mechano::A
+  Magneto::B
+  function MagnetoMechModel(; Mechano::Mechano, Magneto::Magneto)
+    A, B = typeof(Mechano), typeof(Magneto)
+    new{A,B}(Mechano, Magneto)
+  end
+  function (obj::MagnetoMechModel)(Λ::Float64=1.0)
+    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.Mechano(Λ)
+    Ψmm, ∂Ψmm_u, ∂Ψmm_φ, ∂Ψmm_uu, ∂Ψmm_φu, ∂Ψmm_φφ = _getCoupling(obj.Mechano, obj.Magneto, Λ)
+
+    Ψ(F, ℋ₀, N)  = Ψm(F) + Ψmm(F, ℋ₀, N) 
+    ∂Ψu(F, ℋ₀, N) = ∂Ψm_u(F) + ∂Ψmm_u(F, ℋ₀, N) 
+    ∂Ψφ(F, ℋ₀, N)  = ∂Ψmm_φ(F, ℋ₀, N) 
+    ∂Ψuu(F, ℋ₀, N)  = ∂Ψm_uu(F) + ∂Ψmm_uu(F, ℋ₀, N) 
+    ∂Ψφu(F, ℋ₀, N)  = ∂Ψmm_φu(F, ℋ₀, N) 
+    ∂Ψφφ(F, ℋ₀, N)  = ∂Ψmm_φφ(F, ℋ₀, N) 
+
+    return (Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ)
+  end
+
+end
+
+
+
+
 # ===============================
 # Coupling terms for multiphysic
 # ===============================
@@ -644,8 +705,153 @@ function _getCoupling(mec::Mechano, term::Thermo, Λ::Float64)
 end
 
 
+function _getCoupling(mec::Mechano, mag::IdealMagnetic, Λ::Float64)
+  _, H, J = get_Kinematics(mec.Kinematic; Λ=Λ)
 
 
+  # Energy #
+  Hℋ₀(F, ℋ₀) = H(F) * ℋ₀
+  Hℋ₀Hℋ₀(F, ℋ₀) = Hℋ₀(F, ℋ₀) ⋅ Hℋ₀(F, ℋ₀)
+  Ψmm(F, ℋ₀) = (-mag.μ / (2.0 * J(F))) * Hℋ₀Hℋ₀(F, ℋ₀)*(1+mag.χe)
+ 
+  # First Derivatives #
+  ∂Ψmm_∂H(F, ℋ₀) = (-mag.μ / (J(F))) * (Hℋ₀(F, ℋ₀) ⊗ ℋ₀)*(1+mag.χe)
+  ∂Ψmm_∂J(F, ℋ₀) = (+mag.μ / (2.0 * J(F)^2.0)) * Hℋ₀Hℋ₀(F, ℋ₀)*(1+mag.χe)
+  ∂Ψmm_∂ℋ₀(F, ℋ₀) = (-mag.μ  / (J(F))) * (H(F)' * Hℋ₀(F, ℋ₀))*(1+mag.χe)
+  ∂Ψmm_∂u(F, ℋ₀) = ∂Ψmm_∂H(F, ℋ₀) × F + ∂Ψmm_∂J(F, ℋ₀) * H(F)
+  ∂Ψmm_∂φ(F, ℋ₀) = ∂Ψmm_∂ℋ₀(F, ℋ₀)
+  
+  # Second Derivatives #
+  I33 = I3()
+  ∂Ψmm_∂HH(F, ℋ₀) = (-mag.μ  / (J(F))) * (I33 ⊗₁₃²⁴ (ℋ₀ ⊗ ℋ₀))*(1+mag.χe)
+  ∂Ψmm_∂HJ(F, ℋ₀) = (+mag.μ  / (J(F))^2.0) * (Hℋ₀(F, ℋ₀) ⊗ ℋ₀)*(1+mag.χe)
+  ∂Ψmm_∂JJ(F, ℋ₀) = (-mag.μ / (J(F))^3.0) * Hℋ₀Hℋ₀(F, ℋ₀)*(1+mag.χe)
+  ∂Ψmm_∂uu(F, ℋ₀) = (F × (∂Ψmm_∂HH(F, ℋ₀) × F)) +
+                  H(F) ⊗₁₂³⁴ (∂Ψmm_∂HJ(F, ℋ₀) × F) +
+                  (∂Ψmm_∂HJ(F, ℋ₀) × F) ⊗₁₂³⁴ H(F) +
+                  ∂Ψmm_∂JJ(F, ℋ₀) * (H(F) ⊗₁₂³⁴ H(F)) +
+                  ×ᵢ⁴(∂Ψmm_∂H(F, ℋ₀) + ∂Ψmm_∂J(F, ℋ₀) * F)
+
+  ∂Ψmm_∂ℋ₀H(F, ℋ₀) = (-mag.μ  / (J(F))) * ((I33 ⊗₁₃² Hℋ₀(F, ℋ₀)) + (H(F)' ⊗₁₂³ ℋ₀))*(1+mag.χe)
+  ∂Ψmm_∂ℋ₀J(F, ℋ₀) = (+mag.μ  / (J(F))^2.0) * (H(F)' * Hℋ₀(F, ℋ₀))*(1+mag.χe)
+
+  ∂Ψmm_∂φu(F, ℋ₀) = (∂Ψmm_∂ℋ₀H(F, ℋ₀) × F) + (∂Ψmm_∂ℋ₀J(F, ℋ₀) ⊗₁²³ H(F))
+  ∂Ψmm_∂φφ(F, ℋ₀) = (-mag.μ / (J(F))) * (H(F)' * H(F))*(1+mag.χe)
+
+ 
+  return (Ψmm, ∂Ψmm_∂u, ∂Ψmm_∂φ, ∂Ψmm_∂uu, ∂Ψmm_∂φu, ∂Ψmm_∂φφ)
+
+end
+
+
+function _getCoupling(mec::Mechano, mag::HardMagnetic, Λ::Float64)
+
+# Miguel Angel Moreno-Mateos, Mokarram Hossain, Paul Steinmann, Daniel Garcia-Gonzalez,
+# Hard magnetics in ultra-soft magnetorheological elastomers enhance fracture toughness and 
+# delay crack propagation, Journal of the Mechanics and Physics of Solids,
+
+  _, H, J = get_Kinematics(mec.Kinematic; Λ=Λ)
+
+
+
+  #-------------------------------------------------------------------------------------
+                    # FIRST TERM
+  #-------------------------------------------------------------------------------------
+  # Energy #
+   Hℋ₀(F, ℋ₀) = H(F) * ℋ₀
+  Hℋ₀Hℋ₀(F, ℋ₀) = Hℋ₀(F, ℋ₀) ⋅ Hℋ₀(F, ℋ₀)
+  Ψmm(F, ℋ₀) = (-mag.μ / (2.0 * J(F))) * Hℋ₀Hℋ₀(F, ℋ₀)*(1+mag.χe)
+ 
+  # First Derivatives #
+  ∂Ψmm_∂H(F, ℋ₀) = (-mag.μ / (J(F))) * (Hℋ₀(F, ℋ₀) ⊗ ℋ₀)*(1+mag.χe)
+  ∂Ψmm_∂J(F, ℋ₀) = (+mag.μ / (2.0 * J(F)^2.0)) * Hℋ₀Hℋ₀(F, ℋ₀)*(1+mag.χe)
+  ∂Ψmm_∂ℋ₀(F, ℋ₀) = (-mag.μ  / (J(F))) * (H(F)' * Hℋ₀(F, ℋ₀))*(1+mag.χe)
+  ∂Ψmm_∂u(F, ℋ₀) = ∂Ψmm_∂H(F, ℋ₀) × F + ∂Ψmm_∂J(F, ℋ₀) * H(F)
+  ∂Ψmm_∂φ(F, ℋ₀) = ∂Ψmm_∂ℋ₀(F, ℋ₀)
+
+  # Second Derivatives #
+  # I33 = TensorValue(Matrix(1.0I, 3, 3))
+  I33 = I3()
+  ∂Ψmm_∂HH(F, ℋ₀) = (-mag.μ  / (J(F))) * (I33 ⊗₁₃²⁴ (ℋ₀ ⊗ ℋ₀))*(1+mag.χe)
+  ∂Ψmm_∂HJ(F, ℋ₀) = (+mag.μ  / (J(F))^2.0) * (Hℋ₀(F, ℋ₀) ⊗ ℋ₀)*(1+mag.χe)
+  ∂Ψmm_∂JJ(F, ℋ₀) = (-mag.μ / (J(F))^3.0) * Hℋ₀Hℋ₀(F, ℋ₀)*(1+mag.χe)
+  ∂Ψmm_∂uu(F, ℋ₀) = (F × (∂Ψmm_∂HH(F, ℋ₀) × F)) +
+                  H(F) ⊗₁₂³⁴ (∂Ψmm_∂HJ(F, ℋ₀) × F) +
+                  (∂Ψmm_∂HJ(F, ℋ₀) × F) ⊗₁₂³⁴ H(F) +
+                  ∂Ψmm_∂JJ(F, ℋ₀) * (H(F) ⊗₁₂³⁴ H(F)) +
+                  ×ᵢ⁴(∂Ψmm_∂H(F, ℋ₀) + ∂Ψmm_∂J(F, ℋ₀) * F)
+
+  ∂Ψmm_∂ℋ₀H(F, ℋ₀) = (-mag.μ  / (J(F))) * ((I33 ⊗₁₃² Hℋ₀(F, ℋ₀)) + (H(F)' ⊗₁₂³ ℋ₀))*(1+mag.χe)
+  ∂Ψmm_∂ℋ₀J(F, ℋ₀) = (+mag.μ  / (J(F))^2.0) * (H(F)' * Hℋ₀(F, ℋ₀))*(1+mag.χe)
+
+  ∂Ψmm_∂φu(F, ℋ₀) = (∂Ψmm_∂ℋ₀H(F, ℋ₀) × F) + (∂Ψmm_∂ℋ₀J(F, ℋ₀) ⊗₁²³ H(F))
+  ∂Ψmm_∂φφ(F, ℋ₀) = (-mag.μ / (J(F))) * (H(F)' * H(F))*(1+mag.χe)
+
+ 
+  #-------------------------------------------------------------------------------------
+                    # SECOND TERM
+  #-------------------------------------------------------------------------------------
+
+  ℋᵣ(N)=mag.μ*mag.αr*N
+  Fℋᵣ(F,N)=F*ℋᵣ(N)
+  Ψcoup(F, N) = (mag.μ*J(F))*(Fℋᵣ(F,N)⋅Fℋᵣ(F,N)-ℋᵣ(N)⋅ℋᵣ(N))
+  ∂Ψcoup_∂F(F, N) = 2*(mag.μ*J(F))*(Fℋᵣ(F,N)⊗ℋᵣ(N))
+  ∂Ψcoup_∂J(F, N) = (mag.μ)*(Fℋᵣ(F,N)⋅Fℋᵣ(F,N)-ℋᵣ(N)⋅ℋᵣ(N))
+  ∂Ψcoup_∂u(F, N) = ∂Ψcoup_∂J(F, N)*H(F)+ ∂Ψcoup_∂F(F, N) 
+  
+  ∂Ψcoup_∂JF(F, N) = 2*mag.μ*(H(F)⊗(Fℋᵣ(F,N)⊗ℋᵣ(N))+(Fℋᵣ(F,N)⊗ℋᵣ(N))⊗H(F))
+  ∂Ψcoup_∂FF(F, N) = 2*mag.μ*J(F)*(I33 ⊗₁₃²⁴ (ℋᵣ(N) ⊗ ℋᵣ(N)))
+  ∂Ψcoup_∂uu(F, N) = ∂Ψcoup_∂JF(F, N)+ ∂Ψcoup_∂FF(F, N) + ∂Ψcoup_∂J(F, N)* ×ᵢ⁴(F)
+
+  #-------------------------------------------------------------------------------------
+                    # THIRD TERM
+  #-------------------------------------------------------------------------------------
+
+  Ψmok(F, N) = (0.5*mag.μ*J(F)/mag.χr)*(ℋᵣ(N)⋅ℋᵣ(N))
+  ∂Ψmok_∂u(F, N) =(0.5*mag.μ/mag.χr)*(ℋᵣ(N)⋅ℋᵣ(N))*H(F)
+  ∂Ψmok_∂uu(F, N) =(0.5*mag.μ/mag.χr)*(ℋᵣ(N)⋅ℋᵣ(N))* ×ᵢ⁴(F)
+  
+  #-------------------------------------------------------------------------------------
+                    # FOURTH TERM
+  #-------------------------------------------------------------------------------------
+  Hℋᵣ(F, N) = H(F) * ℋᵣ(N)
+  Ψtorq(F, ℋ₀, N) =(mag.μ *(1+mag.χe)/J(F))*(Hℋ₀(F, ℋ₀) ⋅ Hℋᵣ(F, N))
+  ∂Ψtorq_∂H(F, ℋ₀, N)= (mag.μ *(1+mag.χe)/J(F))*(Hℋᵣ(F, N) ⊗ ℋ₀ + Hℋ₀(F, ℋ₀) ⊗ ℋᵣ(N))
+  ∂Ψtorq_∂J(F, ℋ₀, N)= -(mag.μ *(1+mag.χe)/J(F)^2)*(Hℋ₀(F, ℋ₀) ⋅ Hℋᵣ(F, N))
+  ∂Ψtorq_∂u(F, ℋ₀, N)= ∂Ψtorq_∂H(F, ℋ₀, N) × F + ∂Ψtorq_∂J(F, ℋ₀, N) * H(F)
+  ∂Ψtorq_∂φ(F, ℋ₀, N)= (mag.μ *(1+mag.χe)/J(F))*(H(F)' * Hℋᵣ(F, N))
+
+  ∂Ψtorq_∂HH(F, ℋ₀, N)= (mag.μ *(1+mag.χe)/J(F))*(I33 ⊗₁₃²⁴ (ℋᵣ(N) ⊗ ℋ₀ + ℋ₀ ⊗ ℋᵣ(N)))
+  ∂Ψtorq_∂HJ(F, ℋ₀, N)= -(mag.μ *(1+mag.χe)/J(F)^2)*(Hℋᵣ(F, N) ⊗ ℋ₀ + Hℋ₀(F, ℋ₀) ⊗ ℋᵣ(N))
+  ∂Ψtorq_∂JJ(F, ℋ₀, N)= (mag.μ *(1+mag.χe)/J(F)^3)*(Hℋ₀(F, ℋ₀) ⋅ Hℋᵣ(F, N))
+
+  ∂Ψtorq_∂uu(F, ℋ₀, N)=(F × (∂Ψtorq_∂HH(F, ℋ₀, N) × F)) +
+                        H(F) ⊗₁₂³⁴ (∂Ψtorq_∂HJ(F, ℋ₀, N) × F) +
+                        (∂Ψtorq_∂HJ(F, ℋ₀, N) × F) ⊗₁₂³⁴ H(F) +
+                        ∂Ψtorq_∂JJ(F, ℋ₀, N) * (H(F) ⊗₁₂³⁴ H(F)) +
+                        ×ᵢ⁴(∂Ψtorq_∂H(F, ℋ₀, N) + ∂Ψtorq_∂J(F, ℋ₀, N) * F)
+
+
+  ∂Ψtorq_∂ℋ₀H(F, ℋ₀, N) = (mag.μ / (J(F))) * ((I33 ⊗₁₃² Hℋᵣ(F, N)) + (H(F)' ⊗₁₂³ Hℋᵣ(F, N)))*(1+mag.χe)
+  ∂Ψtorq_∂ℋ₀J(F, ℋ₀, N) = (-mag.μ / (J(F))^2.0) * (H(F)' * Hℋᵣ(F, N))*(1+mag.χe)
+                      
+
+  ∂Ψtorq_∂φu(F, ℋ₀, N) = (∂Ψtorq_∂ℋ₀H(F, ℋ₀, N) × F) + (∂Ψtorq_∂ℋ₀J(F, ℋ₀, N) ⊗₁²³ H(F))
+                    
+
+  #-------------------------------------------------------------------------------------
+  #                           TOTAL ENERGY
+  #-------------------------------------------------------------------------------------
+  Ψ(F, ℋ₀, N)=  Ψmm(F, ℋ₀) + mag.βcoup*Ψcoup(F, N) + mag.βmok*Ψmok(F, N) + Ψtorq(F, ℋ₀, N)
+  ∂Ψ_u(F, ℋ₀, N) = ∂Ψmm_∂u(F, ℋ₀) + mag.βcoup*∂Ψcoup_∂u(F, N) + mag.βmok*∂Ψmok_∂u(F, N) + ∂Ψtorq_∂u(F, ℋ₀, N)
+  ∂Ψ_φ(F, ℋ₀, N) = ∂Ψmm_∂φ(F, ℋ₀) + ∂Ψtorq_∂φ(F, ℋ₀, N)
+  ∂Ψ_uu(F, ℋ₀, N) = ∂Ψmm_∂uu(F, ℋ₀) + mag.βcoup*∂Ψcoup_∂uu(F, N) + mag.βmok*∂Ψmok_∂uu(F, N) + ∂Ψtorq_∂uu(F, ℋ₀, N)
+  ∂Ψ_φu(F, ℋ₀, N) = ∂Ψmm_∂φu(F, ℋ₀) + ∂Ψtorq_∂φu(F, ℋ₀, N)
+  ∂Ψ_φφ(F, ℋ₀, N) = ∂Ψmm_∂φφ(F, ℋ₀)  
+
+  return (Ψ, ∂Ψ_u, ∂Ψ_φ, ∂Ψ_uu, ∂Ψ_φu, ∂Ψ_φφ)
+
+end
 
 
 end

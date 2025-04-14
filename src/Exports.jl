@@ -31,6 +31,8 @@ end
 @publish PhysicalModels TransverseIsotropy3D
 @publish PhysicalModels ThermalModel
 @publish PhysicalModels IdealDielectric
+@publish PhysicalModels IdealMagnetic
+@publish PhysicalModels HardMagnetic
 @publish PhysicalModels ElectroMechModel
 @publish PhysicalModels ThermoElectroMechModel
 @publish PhysicalModels ThermoMechModel
@@ -38,12 +40,14 @@ end
 @publish PhysicalModels FlexoElectroModel
 @publish PhysicalModels ThermoElectroMech_Govindjee
 @publish PhysicalModels ThermoElectroMech_PINNs
+@publish PhysicalModels MagnetoMechModel
 
 @publish PhysicalModels Mechano
 @publish PhysicalModels Thermo
 @publish PhysicalModels Electro
 @publish PhysicalModels ThermoMechano
 @publish PhysicalModels ElectroMechano
+@publish PhysicalModels MagnetoMechano
 @publish PhysicalModels ThermoElectro
 @publish PhysicalModels FlexoElectro
 @publish PhysicalModels ThermoElectroMechano

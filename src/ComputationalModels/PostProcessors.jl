@@ -65,6 +65,11 @@ function (obj::PostProcessor{<:StaticLinearModel,<:Any,<:Any})(Λ)
     obj.cache[1](obj, obj.cache[2]...)
 end
 
+function (obj::PostProcessor{<:DynamicNonlinearModel,<:Any,<:Any})(Λ)
+    obj.iter +=1
+    push!(obj.Λ, Λ)
+    obj.cache[1](obj, obj.cache[2]...)
+end
 
 # Mechanical Physics
 

@@ -19,6 +19,12 @@ struct Kinematics{A,B} <: KinematicModel
         new{A,Electro}(metrics)
     end
 
+    function Kinematics(::Type{Magneto}; H::Function=(∇φ) -> -∇φ)
+        metrics = (H)
+        A = typeof(metrics)
+        new{A,Magneto}(metrics)
+    end
+
 end
 
 get_Kinematics(obj::Kinematics; Λ=1.0) = obj.metrics
@@ -62,10 +68,16 @@ struct EvolutiveKinematics{A,B} <: KinematicModel
         B = typeof(metrics)
         new{Electro,B}(metrics)
     end
+    function EvolutiveKinematics(::Type{Magneto}; H::Function=(t) -> ((∇φ) -> -∇φ))
+        metrics = (H)
+        B = typeof(metrics)
+        new{Magneto,B}(metrics)
+    end
 end
 
 get_Kinematics(obj::EvolutiveKinematics{Mechano,<:Any}; Λ=1.0) = (obj.metrics[1](Λ), obj.metrics[2], obj.metrics[3])
 get_Kinematics(obj::EvolutiveKinematics{Electro,<:Any}; Λ=1.0) = obj.metrics(Λ)
+get_Kinematics(obj::EvolutiveKinematics{Magneto,<:Any}; Λ=1.0) = obj.metrics(Λ)
 
 
 
