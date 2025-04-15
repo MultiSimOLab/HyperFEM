@@ -118,7 +118,7 @@ struct IdealMagnetic{A} <: Magneto
   χe::Float64
   Kinematic::A
   function IdealMagnetic(; μ::Float64, χe::Float64=0.0, Kinematic::KinematicModel=Kinematics(Magneto))
-    new{typeof(Kinematic)}(μ, αr, χe, Kinematic)
+    new{typeof(Kinematic)}(μ, χe, Kinematic)
   end
 end
 
