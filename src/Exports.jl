@@ -25,6 +25,7 @@ end
 @publish PhysicalModels LinearElasticity3D
 @publish PhysicalModels LinearElasticity2D
 @publish PhysicalModels NeoHookean3D
+@publish PhysicalModels IncompressibleNeoHookean3D
 @publish PhysicalModels MoneyRivlin3D
 @publish PhysicalModels MoneyRivlin2D
 @publish PhysicalModels NonlinearMoneyRivlin3D
