@@ -115,10 +115,9 @@ end
 
 struct IdealMagnetic{A} <: Magneto
   μ::Float64
-  αr::Float64
   χe::Float64
   Kinematic::A
-  function IdealMagnetic(; μ::Float64, αr::Float64, χe::Float64=0.0, Kinematic::KinematicModel=Kinematics(Magneto))
+  function IdealMagnetic(; μ::Float64, χe::Float64=0.0, Kinematic::KinematicModel=Kinematics(Magneto))
     new{typeof(Kinematic)}(μ, αr, χe, Kinematic)
   end
 end
@@ -764,8 +763,15 @@ function _getCoupling(mec::Mechano, mag::IdealMagnetic, Λ::Float64)
   ∂Ψmm_∂φu(F, ℋ₀) = (∂Ψmm_∂ℋ₀H(F, ℋ₀) × F) + (∂Ψmm_∂ℋ₀J(F, ℋ₀) ⊗₁²³ H(F))
   ∂Ψmm_∂φφ(F, ℋ₀) = (-mag.μ / (J(F))) * (H(F)' * H(F))*(1+mag.χe)
 
+
+  Ψ(F, ℋ₀, N)=  Ψmm(F, ℋ₀)  
+  ∂Ψ_u(F, ℋ₀, N) = ∂Ψmm_∂u(F, ℋ₀)  
+  ∂Ψ_φ(F, ℋ₀, N) = ∂Ψmm_∂φ(F, ℋ₀)  
+  ∂Ψ_uu(F, ℋ₀, N) = ∂Ψmm_∂uu(F, ℋ₀) 
+  ∂Ψ_φu(F, ℋ₀, N) = ∂Ψmm_∂φu(F, ℋ₀)
+  ∂Ψ_φφ(F, ℋ₀, N) = ∂Ψmm_∂φφ(F, ℋ₀)  
  
-  return (Ψmm, ∂Ψmm_∂u, ∂Ψmm_∂φ, ∂Ψmm_∂uu, ∂Ψmm_∂φu, ∂Ψmm_∂φφ)
+  return (Ψ, ∂Ψ_u, ∂Ψ_φ, ∂Ψ_uu, ∂Ψ_φu, ∂Ψ_φφ)
 
 end
 
