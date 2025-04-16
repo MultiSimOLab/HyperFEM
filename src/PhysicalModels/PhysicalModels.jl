@@ -19,6 +19,7 @@ using StaticArrays
 
 export NeoHookean3D
 export IncompressibleNeoHookean3D
+export IncompressibleNeoHookean2D
 export MoneyRivlin3D
 export MoneyRivlin2D
 export NonlinearMoneyRivlin3D
@@ -485,6 +486,33 @@ struct IncompressibleNeoHookean3D{A} <: Mechano
 
 end
 
+
+
+struct IncompressibleNeoHookean2D{A} <: Mechano
+  λ::Float64
+  μ::Float64
+  ρ::Float64
+  Kinematic::A
+  function IncompressibleNeoHookean2D(; λ::Float64, μ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(λ, μ, ρ, Kinematic)
+  end
+
+  function (obj::IncompressibleNeoHookean2D)(Λ::Float64=1.0)
+    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    λ, μ = obj.λ, obj.μ
+    Ψ(F) = μ / 2 * (tr((F)' * F)+1.0) * J(F)^(-2 / 3) + (λ / 2) * (J(F) - 1)^2
+
+    ∂Ψ_∂J(F) = -μ / 3 * tr((F)' * F) * J(F)^(-5 / 3) + λ * (J(F) - 1)
+    ∂Ψu(F) = μ * F * J(F)^(-2 / 3) + ∂Ψ_∂J(F) * H(F)
+    I_ = I4()
+    ∂Ψ2_∂J2(F) = (5 / 9) * μ * J(F)^(-8 / 3) * tr((F)' * F) + λ
+    ∂Ψ2_∂FJ(F) = -(2 / 3) * μ * J(F)^(-5 / 3) * F
+    ∂Ψuu(F) = μ * I_ * J(F)^(-2 / 3) + ∂Ψ2_∂J2(F) * (H(F) ⊗ H(F)) + ∂Ψ2_∂FJ(F) ⊗ H(F) + H(F) ⊗ ∂Ψ2_∂FJ(F) + ∂Ψ_∂J(F) *  _∂H∂F_2D()
+    return (Ψ, ∂Ψu, ∂Ψuu)
+  end
+
+end
+
 # ===================
 # MultiPhysicalModel models
 # ===================
@@ -842,7 +870,6 @@ function _getCoupling(mec::Mechano, mag::IdealMagnetic, Λ::Float64)
 
 end
 
-
 function _getCoupling(mec::Mechano, mag::IdealMagnetic2D, Λ::Float64)
   _, H, J = get_Kinematics(mec.Kinematic; Λ=Λ)
 
@@ -884,8 +911,6 @@ function _getCoupling(mec::Mechano, mag::IdealMagnetic2D, Λ::Float64)
   return (Ψ, ∂Ψ_u, ∂Ψ_φ, ∂Ψ_uu, ∂Ψ_φu, ∂Ψ_φφ)
 
 end
-
-
 
 function _getCoupling(mec::Mechano, mag::HardMagnetic, Λ::Float64)
 
@@ -993,8 +1018,6 @@ function _getCoupling(mec::Mechano, mag::HardMagnetic, Λ::Float64)
   return (Ψ, ∂Ψ_u, ∂Ψ_φ, ∂Ψ_uu, ∂Ψ_φu, ∂Ψ_φφ)
 
 end
-
-
 
 function _getCoupling(mec::Mechano, mag::HardMagnetic2D, Λ::Float64)
 
