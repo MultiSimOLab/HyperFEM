@@ -787,6 +787,10 @@ function Gridap.TensorValues.inner(Ten1::TensorValue{3,9,Float64}, Ten2::TensorV
     Ten1[3] * Ten2[1] + Ten1[6] * Ten2[2] + Ten1[9] * Ten2[3] + Ten1[12] * Ten2[4] + Ten1[15] * Ten2[5] + Ten1[18] * Ten2[6] + Ten1[21] * Ten2[7] + Ten1[24] * Ten2[8] + Ten1[27] * Ten2[9])
 end
 
+function Gridap.TensorValues.inner(Ten1::TensorValue{2,4,Float64}, Ten2::TensorValue{2,2,Float64})
+  VectorValue(Ten1[1] * Ten2[1] + Ten1[3] * Ten2[2] + Ten1[5] * Ten2[3] + Ten1[7] * Ten2[4],
+              Ten1[2] * Ten2[1] + Ten1[4] * Ten2[2] + Ten1[6] * Ten2[3] + Ten1[8] * Ten2[4])
+end
 
 function Gridap.TensorValues.inner(Ten1::TensorValue{3,9,Float64}, Ten2::VectorValue{3,Float64})
   TensorValue(Ten1[1] * Ten2[1] + Ten1[10] * Ten2[2] + Ten1[19] * Ten2[3],
@@ -798,6 +802,13 @@ function Gridap.TensorValues.inner(Ten1::TensorValue{3,9,Float64}, Ten2::VectorV
     Ten1[7] * Ten2[1] + Ten1[16] * Ten2[2] + Ten1[25] * Ten2[3],
     Ten1[8] * Ten2[1] + Ten1[17] * Ten2[2] + Ten1[26] * Ten2[3],
     Ten1[9] * Ten2[1] + Ten1[18] * Ten2[2] + Ten1[27] * Ten2[3])
+end
+
+function Gridap.TensorValues.inner(Ten1::TensorValue{2,4,Float64}, Ten2::VectorValue{2,Float64})
+  TensorValue(Ten1[1] * Ten2[1] + Ten1[5] * Ten2[2],
+              Ten1[2] * Ten2[1] + Ten1[6] * Ten2[2],
+              Ten1[3] * Ten2[1] + Ten1[7] * Ten2[2],
+              Ten1[4] * Ten2[1] + Ten1[8] * Ten2[2])
 end
 
 function Gridap.TensorValues.inner(Ten1::TensorValue{4,4,Float64}, Ten2::TensorValue{2,2,Float64})
