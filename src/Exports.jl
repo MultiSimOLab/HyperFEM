@@ -29,11 +29,14 @@ end
 @publish PhysicalModels MoneyRivlin3D
 @publish PhysicalModels MoneyRivlin2D
 @publish PhysicalModels NonlinearMoneyRivlin3D
+@publish PhysicalModels NonlinearMoneyRivlin2D
 @publish PhysicalModels TransverseIsotropy3D
 @publish PhysicalModels ThermalModel
 @publish PhysicalModels IdealDielectric
 @publish PhysicalModels IdealMagnetic
+@publish PhysicalModels IdealMagnetic2D
 @publish PhysicalModels HardMagnetic
+@publish PhysicalModels HardMagnetic2D
 @publish PhysicalModels ElectroMechModel
 @publish PhysicalModels ThermoElectroMechModel
 @publish PhysicalModels ThermoMechModel

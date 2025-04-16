@@ -18,6 +18,7 @@ export (⊗₁²)
 export I3
 export I9
 export I2
+export I4
 export logreg
 export Tensorize
  
@@ -31,6 +32,9 @@ export Ellipsoid
 # sum +
 # dot ⋅ * 
 
+function _∂H∂F_2D()
+  TensorValue(0.0,0.0,0.0,1.0,0.0,0.0,-1.0,0.0,0.0,-1.0,0.0,0.0,1.0,0.0,0.0,0.0)
+end
 
 function _δδ_μ_2D(μ::Float64)
   TensorValue{4,4,Float64,16}(  
@@ -360,68 +364,28 @@ end
 end
 
 
-function (⊗₁²³)(V::VectorValue{3,Float64},A::TensorValue{3,3,Float64})
-  
-  TensorValue{3,9,Float64,27}(A[1]*V[1],
-  A[1]*V[2],
-  A[1]*V[3],
-  A[2]*V[1],
-  A[2]*V[2],
-  A[2]*V[3],
-  A[3]*V[1],
-  A[3]*V[2],
-  A[3]*V[3],
-  A[4]*V[1],
-  A[4]*V[2],
-  A[4]*V[3],
-  A[5]*V[1],
-  A[5]*V[2],
-  A[5]*V[3],
-  A[6]*V[1],
-  A[6]*V[2],
-  A[6]*V[3],
-  A[7]*V[1],
-  A[7]*V[2],
-  A[7]*V[3],
-  A[8]*V[1],
-  A[8]*V[2],
-  A[8]*V[3],
-  A[9]*V[1],
-  A[9]*V[2],
-  A[9]*V[3])
+@generated function (⊗₁²³)(V::VectorValue{D,Float64},A::TensorValue{D,D,Float64}) where {D}
+  str = ""
+  for iA in 1:D*D
+    for iV in 1:D
+      str *= "A.data[$iA] * V.data[$iV], "
+    end
+  end
+  Meta.parse("TensorValue{D,D*D, Float64, D*D*D}($str)")
+end
 
+
+@generated function (⊗₁₂³)(A::TensorValue{D,D,Float64}, V::VectorValue{D,Float64}) where {D}
+  str = ""
+  for iV in 1:D
+    for iA in 1:D*D
+      str *= "A.data[$iA] * V.data[$iV], "
+    end
+  end
+  Meta.parse("TensorValue{D,D*D, Float64,D*D*D}($str)")
 end
-function (⊗₁₂³)(A::TensorValue{3,3,Float64}, V::VectorValue{3,Float64})
-  
-  TensorValue{3,9,Float64,27}(A[1]*V[1],
-  A[2]*V[1],
-  A[3]*V[1],
-  A[4]*V[1],
-  A[5]*V[1],
-  A[6]*V[1],
-  A[7]*V[1],
-  A[8]*V[1],
-  A[9]*V[1],
-  A[1]*V[2],
-  A[2]*V[2],
-  A[3]*V[2],
-  A[4]*V[2],
-  A[5]*V[2],
-  A[6]*V[2],
-  A[7]*V[2],
-  A[8]*V[2],
-  A[9]*V[2],
-  A[1]*V[3],
-  A[2]*V[3],
-  A[3]*V[3],
-  A[4]*V[3],
-  A[5]*V[3],
-  A[6]*V[3],
-  A[7]*V[3],
-  A[8]*V[3],
-  A[9]*V[3])
-end
-  
+
+
 function (⊗₁₃²)(A::TensorValue{3,3,Float64}, V::VectorValue{3,Float64})
   
   TensorValue{3,9,Float64,27}(A[1]*V[1],
@@ -453,7 +417,19 @@ function (⊗₁₃²)(A::TensorValue{3,3,Float64}, V::VectorValue{3,Float64})
   A[9]*V[3])
 end
 
+
+function (⊗₁₃²)(A::TensorValue{2,2,Float64}, V::VectorValue{2,Float64})
   
+  TensorValue{2,4,Float64,8}(A[1]*V[1],
+  A[2]*V[1],
+  A[1]*V[2],
+  A[2]*V[2],
+  A[3]*V[1],
+  A[4]*V[1],
+  A[3]*V[2],
+  A[4]*V[2])
+end
+
 function (⊗₁₃²⁴)(A::TensorValue{3,3,Float64}, B::TensorValue{3,3,Float64})
 
   TensorValue{9,9,Float64,81}(A[1]*B[1],
@@ -537,6 +513,26 @@ function (⊗₁₃²⁴)(A::TensorValue{3,3,Float64}, B::TensorValue{3,3,Float6
   A[7]*B[9],  
   A[8]*B[9],  
   A[9]*B[9])
+end
+
+function (⊗₁₃²⁴)(A::TensorValue{2,2,Float64}, B::TensorValue{2,2,Float64})
+
+  TensorValue{4,4,Float64,16}(A[1]*B[1],
+  A[2]*B[1],  
+  A[1]*B[2],  
+  A[2]*B[2],  
+  A[3]*B[1],  
+  A[4]*B[1],  
+  A[3]*B[2],  
+  A[4]*B[2],  
+  A[1]*B[3],  
+  A[2]*B[3],  
+  A[1]*B[4],  
+  A[2]*B[4],  
+  A[3]*B[3],  
+  A[4]*B[3],  
+  A[3]*B[4],  
+  A[4]*B[4])
 end
 
 function (×ᵢ⁴)(A::TensorValue{3,3,Float64})
@@ -838,6 +834,10 @@ end
 
 function I3() 
   TensorValue(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
+end 
+
+function I4() 
+  TensorValue(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,0.0,0.0,0.0,0.0,1.0)
 end 
 
 function I9()
