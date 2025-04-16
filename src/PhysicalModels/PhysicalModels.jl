@@ -958,7 +958,7 @@ function _getCoupling(mec::Mechano, mag::HardMagnetic, Λ::Float64)
   # SECOND TERM
   #-------------------------------------------------------------------------------------
 
-  ℋᵣ(N) = mag.μ * mag.αr * N
+  ℋᵣ(N) = mag.αr * N
   Fℋᵣ(F, N) = F * ℋᵣ(N)
   Ψcoup(F, N) = (mag.μ * J(F)) * (Fℋᵣ(F, N) ⋅ Fℋᵣ(F, N) - ℋᵣ(N) ⋅ ℋᵣ(N))
   ∂Ψcoup_∂F(F, N) = 2 * (mag.μ * J(F)) * (Fℋᵣ(F, N) ⊗ ℋᵣ(N))
@@ -1062,7 +1062,7 @@ function _getCoupling(mec::Mechano, mag::HardMagnetic2D, Λ::Float64)
   # SECOND TERM
   #-------------------------------------------------------------------------------------
 
-  ℋᵣ(N) = mag.μ * mag.αr * N
+  ℋᵣ(N) = mag.αr * N
   Fℋᵣ(F, N) = F * ℋᵣ(N)
   Ψcoup(F, N) = (mag.μ * J(F)) * (Fℋᵣ(F, N) ⋅ Fℋᵣ(F, N) - ℋᵣ(N) ⋅ ℋᵣ(N))
   ∂Ψcoup_∂F(F, N) = 2 * (mag.μ * J(F)) * (Fℋᵣ(F, N) ⊗ ℋᵣ(N))
