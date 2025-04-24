@@ -33,3 +33,7 @@ debug/
 .vscode/
 
 *.DS_Store
+
+Staggered_Static_MagnetoMechanical_vacuum_2D.jl
+
+Static_MagnetoMechanical_vacuum_2D.jl

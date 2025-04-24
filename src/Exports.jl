@@ -46,6 +46,7 @@ end
 @publish PhysicalModels ThermoElectroMech_Govindjee
 @publish PhysicalModels ThermoElectroMech_PINNs
 @publish PhysicalModels MagnetoMechModel
+@publish PhysicalModels MagnetoVacuumModel
 
 @publish PhysicalModels Mechano
 @publish PhysicalModels Thermo

@@ -97,6 +97,17 @@ function updateBC!(m::DirichletBC, bc_values)
     m.values .= newfuncs 
 end
 
+function updateBC!(m::DirichletBC, bc_timesteps::Function)
+    _,newfuncs=_get_bc_func(m.tags, m.caches, [bc_timesteps for _ in 1:length(m.caches)])
+    m.values .= newfuncs 
+end
+
+function updateBC!(bc::MultiFieldBC, bc_timesteps::Function)
+    for (i,bc_i) in enumerate(bc.BoundaryCondition)
+        bc_i isa NothingBC ? nothing : updateBC!(bc_i, bc_i.caches, [bc_timesteps for _ in 1:length(bc_i.caches)])
+    end
+end
+
 struct NeumannBC <: BoundaryCondition
     tags::Vector{String}         # tags for boundary conditions
     values::Vector{Function}     # f(x)

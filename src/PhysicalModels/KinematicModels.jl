@@ -13,6 +13,15 @@ struct Kinematics{A,B} <: KinematicModel
         new{A,Mechano}(metrics)
     end
 
+    # function Kinematics(::Type{Mechano}, δ::Float64; F::Function=(∇u) -> one(∇u) + ∇u)
+    #     J_(F) = det(F)
+    #     H(F) = J(F) * inv(F)'
+    #     metrics = (F, H, J)
+    #     A = typeof(metrics)
+    #     new{A,Mechano}(metrics)
+    # end
+
+
     function Kinematics(::Type{Electro}; E::Function=(∇φ) -> -∇φ)
         metrics = (E)
         A = typeof(metrics)
@@ -63,6 +72,19 @@ struct EvolutiveKinematics{A,B} <: KinematicModel
         B = typeof(metrics)
         new{Mechano,B}(metrics)
     end
+
+    function EvolutiveKinematics(::Type{Mechano}, δ::Float64; F::Function=(t) -> ((∇u) -> one(∇u) + ∇u))
+        # F_(∇u) = one(∇u) + ∇u
+        # F(t) = (∇u)->(Fmapping(t) ∘ F_)(∇u) 
+        J_(F) = det(F)
+        J(F) =  0.5*(J_(F)+sqrt(J_(F) ^2+δ^2))
+        H(F) = J(F) * inv(F)'
+        metrics = (F, H, J)
+        B = typeof(metrics)
+        new{Mechano,B}(metrics)
+    end
+
+
     function EvolutiveKinematics(::Type{Electro}; E::Function=(t) -> ((∇φ) -> -∇φ))
         metrics = (E)
         B = typeof(metrics)
