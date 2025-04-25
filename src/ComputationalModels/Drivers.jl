@@ -111,20 +111,24 @@ get_assemblers(m::StaticNonlinearModel) = (m.caches[4])
 #   vtk::WriteVTK.CollectionFile=paraview_collection(datadir("sims", "Temp") * "/Results", append=false)
 
 function solve!(m::StaticNonlinearModel;
-    stepping=(nsteps=20, maxbisec=15), ProjectDirichlet::Bool=true,
+    stepping=(nsteps=20, maxbisec=15), RestartState::Bool=false ,ProjectDirichlet::Bool=true, 
     post=PostProcessor())
-   
+
     reset!(post)
     flagconv = 1 # convergence flag 0 (max bisections) 1 (max steps)
     U, V = m.spaces
     TrialFESpace!(U, m.dirichlet, 0.0)
     nls, nls_cache, x, x⁻, assem_U = m.caches
+
     Λ = 0.0
     ∆Λ = 1.0 / stepping[:nsteps]
     nbisect = 0
     Λ_ = 0
+    if RestartState
     x .*= 0.0
-    x⁻ .*= 0.0
+    end
+    x⁻ .= x
+
     while Λ < 1.0
         Λ += ∆Λ
         Λ = min(1.0, Λ)
