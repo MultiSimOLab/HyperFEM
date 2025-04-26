@@ -467,19 +467,19 @@ struct IncompressibleNeoHookean3D{A} <: Mechano
   λ::Float64
   μ::Float64
   ρ::Float64
+  δ::Float64
   Kinematic::A
-  function IncompressibleNeoHookean3D(; λ::Float64, μ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ, ρ, Kinematic)
+  function IncompressibleNeoHookean3D(; λ::Float64, μ::Float64, ρ::Float64=0.0, δ::Float64=0.1, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(λ, μ, ρ, δ, Kinematic)
   end
 
   function (obj::IncompressibleNeoHookean3D)(Λ::Float64=1.0)
     _, H, J_ = get_Kinematics(obj.Kinematic; Λ=Λ)
-    δ = 0.1
+    λ, μ, δ  = obj.λ, obj.μ, obj.δ
     J(F) = 0.5 * (J_(F) + sqrt(J_(F)^2 + δ^2))
     ∂J(F) = 0.5 * (1.0 + J_(F) / sqrt(J_(F)^2 + δ^2))
     ∂2J(F) = 0.5 * δ^2 / ((J_(F)^2 + δ^2)^(3 / 2))
 
-    λ, μ = obj.λ, obj.μ
 
     J1 = 0.5 * (1.0 + sqrt(1.0 + δ^2))
     ∂J1 = 0.5 * (1.0 + 1.0 / sqrt(1.0^2 + δ^2))
@@ -516,19 +516,19 @@ struct IncompressibleNeoHookean2D{A} <: Mechano
   λ::Float64
   μ::Float64
   ρ::Float64
+  δ::Float64
   Kinematic::A
-  function IncompressibleNeoHookean2D(; λ::Float64, μ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ, ρ, Kinematic)
+  function IncompressibleNeoHookean2D(; λ::Float64, μ::Float64, ρ::Float64=0.0, δ::Float64=0.1, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(λ, μ, ρ, δ,  Kinematic)
   end
 
   function (obj::IncompressibleNeoHookean2D)(Λ::Float64=1.0)
     _, H, J_ = get_Kinematics(obj.Kinematic; Λ=Λ)
-    δ = 0.1
+    λ, μ, δ = obj.λ, obj.μ, obj.δ
+
     J(F) = 0.5 * (J_(F) + sqrt(J_(F)^2 + δ^2))
     ∂J(F) = 0.5 * (1.0 + J_(F) / sqrt(J_(F)^2 + δ^2))
     ∂2J(F) = 0.5 * δ^2 / ((J_(F)^2 + δ^2)^(3 / 2))
-
-    λ, μ = obj.λ, obj.μ
 
     J1 = 0.5 * (1.0 + sqrt(1.0 + δ^2))
     ∂J1 = 0.5 * (1.0 + 1.0 / sqrt(1.0^2 + δ^2))
