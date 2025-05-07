@@ -20,6 +20,8 @@ using StaticArrays
 export NeoHookean3D
 export IncompressibleNeoHookean3D
 export IncompressibleNeoHookean2D
+export ARAP2D
+export ARAP2D_regularized
 export MoneyRivlin3D
 export MoneyRivlin2D
 export NonlinearMoneyRivlin3D
@@ -83,6 +85,32 @@ export EvolutiveKinematics
 export get_Kinematics
 export getIsoInvariants
 
+export HessianRegularization
+
+# ============================================
+# Regularization of Mechanical models
+# ============================================
+struct HessianRegularization{A,B} <: Mechano
+  Mechano::A
+  δ::Float64
+  Kinematic::B
+  function HessianRegularization(; Mechano::Mechano, δ::Float64=1.0e-6)
+    new{typeof(Mechano), typeof(Mechano.Kinematic)}(Mechano, δ, Mechano.Kinematic)
+  end
+
+
+  function (obj::HessianRegularization)(Λ::Float64=1.0)
+    Ψs, ∂Ψs, ∂2Ψs = obj.Mechano()
+    δ = obj.δ
+
+    Ψ(F) = Ψs(F) 
+    ∂Ψ(F) = ∂Ψs(F)
+    λ(F)=eigen(get_array(∂2Ψs(F)))
+    ∂2Ψ(F)=TensorValue(λ(F).vectors*diagm(max.(δ,λ(F).values))*λ(F).vectors')
+
+    return (Ψ, ∂Ψ, ∂2Ψ)
+  end
+end
 
 # ======================
 # Energy interpolations
@@ -555,6 +583,83 @@ struct IncompressibleNeoHookean2D{A} <: Mechano
 
 end
 
+
+
+struct ARAP2D_regularized{A}<: Mechano
+  μ::Float64
+  ρ::Float64
+  δ::Float64
+  Kinematic::A
+  function ARAP2D_regularized(; μ::Float64, ρ::Float64=0.0, δ::Float64=0.1,    Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(μ, ρ, δ, Kinematic)
+  end
+
+
+  function (obj::ARAP2D_regularized)(Λ::Float64=1.0)
+    _, H, J_ = get_Kinematics(obj.Kinematic; Λ=Λ)
+    μ, δ = obj.μ, obj.δ
+
+    J(F) = 0.5 * (J_(F) + sqrt(J_(F)^2 + δ^2))
+    ∂J(F) = 0.5 * (1.0 + J_(F) / sqrt(J_(F)^2 + δ^2))
+    ∂2J(F) = 0.5 * δ^2 / ((J_(F)^2 + δ^2)^(3 / 2))
+    
+
+    J1 = 0.5 * (1.0 + sqrt(1.0 + δ^2))
+    ∂J1 = 0.5 * (1.0 + 1.0 / sqrt(1.0^2 + δ^2))
+    β = μ *(J1^(-1) - J1^(-2) * ∂J1)
+    Ψ(F) = μ * 0.5 * J(F)^(-1) * (tr((F)' * F))- β * log(J_(F))
+
+
+    ∂Ψ1_∂J(F) = -μ / 2 * (tr((F)' * F)) * J(F)^(-2)
+    ∂Ψ2_∂J(F) = -β / J_(F)
+    ∂Ψ_∂J(F) = ∂Ψ1_∂J(F) * ∂J(F) + ∂Ψ2_∂J(F) 
+    ∂Ψ_∂F(F) =  μ * F * J(F)^(-1)
+
+    ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂J(F) * H(F)
+    I_ = I4()
+    ∂Ψ1_∂J2(F) =  μ * J(F)^(-3) * (tr((F)' * F))
+    ∂Ψ2_∂J2(F) = β / J_(F)^2
+    ∂Ψ_∂J2(F) = (∂Ψ1_∂J2(F) * ∂J(F)^2 + ∂Ψ1_∂J(F) * ∂2J(F)) + ∂Ψ2_∂J2(F)  
+    ∂Ψ_∂FJ(F) =  - μ * J(F)^(-2) * F* ∂J(F)
+    ∂Ψ_∂FF(F) = μ * J(F)^(-1) * I_
+
+    ∂Ψuu(F) = ∂Ψ_∂FF(F)  + ∂Ψ_∂J2(F) * (H(F) ⊗ H(F)) + ∂Ψ_∂FJ(F) ⊗ H(F) + H(F) ⊗ ∂Ψ_∂FJ(F) + ∂Ψ_∂J(F) * _∂H∂F_2D()
+    return (Ψ, ∂Ψu, ∂Ψuu)
+  end
+
+end
+
+
+
+struct ARAP2D{A} <: Mechano
+  μ::Float64
+  ρ::Float64
+  Kinematic::A
+  function ARAP2D(; μ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(μ, ρ, Kinematic)
+  end
+
+  function (obj::ARAP2D)(Λ::Float64=1.0)
+    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    μ=  obj.μ 
+    I_ = I4()
+
+    Ψ(F) = μ * 0.5 * J(F)^(-1) * (tr((F)' * F))
+    ∂Ψ_∂F(F) =  μ * F * J(F)^(-1)
+    ∂Ψ_∂J(F) =  -μ / 2 * (tr((F)' * F)) * J(F)^(-2)
+
+    ∂2Ψ_∂J2(F) = μ * J(F)^(-3) * (tr((F)' * F))
+    ∂2Ψ_∂FJ(F) =- μ * J(F)^(-2) * F
+    ∂2Ψ_∂FF(F) = μ * J(F)^(-1) * I_
+
+
+    ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂J(F) * H(F)
+    ∂Ψuu(F) = ∂2Ψ_∂FF(F) + ∂2Ψ_∂J2(F) * (H(F) ⊗ H(F)) + ∂2Ψ_∂FJ(F) ⊗ H(F) + H(F) ⊗ ∂2Ψ_∂FJ(F) + ∂Ψ_∂J(F) * _∂H∂F_2D()
+
+    return (Ψ, ∂Ψu, ∂Ψuu)
+  end
+
+end
 # ===================
 # MultiPhysicalModel models
 # ===================

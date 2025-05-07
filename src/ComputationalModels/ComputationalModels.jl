@@ -1,6 +1,7 @@
 module ComputationalModels
 using DrWatson
 using HyperFEM.PhysicalModels
+using HyperFEM.Solvers
 
 using Gridap
 using Gridap.Helpers
@@ -9,9 +10,7 @@ using Gridap: createvtk
 using Gridap.MultiField
 using Gridap.FESpaces: get_assembly_strategy
 
-
 using BlockArrays
-
 using GridapPETSc, GridapPETSc.PETSC
 using GridapPETSc: PetscScalar, PetscInt, PETSC,  @check_error_code
 

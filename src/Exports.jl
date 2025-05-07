@@ -47,6 +47,10 @@ end
 @publish PhysicalModels ThermoElectroMech_PINNs
 @publish PhysicalModels MagnetoMechModel
 @publish PhysicalModels MagnetoVacuumModel
+@publish PhysicalModels ARAP2D
+@publish PhysicalModels ARAP2D_regularized
+@publish PhysicalModels HessianRegularization
+
 
 @publish PhysicalModels Mechano
 @publish PhysicalModels Thermo
@@ -100,6 +104,7 @@ end
 @publish ComputationalModels  reset!
 
 @publish Solvers IterativeSolver
+@publish Solvers Newton_RaphsonSolver
 
  
 
