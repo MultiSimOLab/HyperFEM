@@ -92,7 +92,7 @@ function _RPlinesearch!(x::AbstractVector, dx::AbstractVector, b::AbstractVector
   while α > αmin && m < maxiter
     residual!(b, op, x + α * dx)
     R = b' * dx
-    if abs(R) <= c * abs(R₀)
+    if R <= c * R₀
       break
     end
     α *= ρ

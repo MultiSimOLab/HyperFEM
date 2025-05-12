@@ -106,7 +106,7 @@ struct HessianRegularization{A,B} <: Mechano
     Ψ(F) = Ψs(F) 
     ∂Ψ(F) = ∂Ψs(F)
     λ(F)=eigen(get_array(∂2Ψs(F)))
-    ∂2Ψ(F)=TensorValue(λ(F).vectors*diagm(max.(δ,λ(F).values))*λ(F).vectors')
+    ∂2Ψ(F)=TensorValue(real(λ(F).vectors)*diagm(max.(δ,real(λ(F).values)))*real(λ(F).vectors)')
 
     return (Ψ, ∂Ψ, ∂2Ψ)
   end
@@ -630,7 +630,6 @@ struct ARAP2D_regularized{A}<: Mechano
 end
 
 
-
 struct ARAP2D{A} <: Mechano
   μ::Float64
   ρ::Float64
@@ -643,12 +642,12 @@ struct ARAP2D{A} <: Mechano
     _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     μ=  obj.μ 
     I_ = I4()
-
-    Ψ(F) = μ * 0.5 * J(F)^(-1) * (tr((F)' * F))
+    k=10.0* μ
+    Ψ(F) = μ * 0.5 * J(F)^(-1) * (tr((F)' * F))+ (k/ 2.0) * (J(F) - 1)^2
     ∂Ψ_∂F(F) =  μ * F * J(F)^(-1)
-    ∂Ψ_∂J(F) =  -μ / 2 * (tr((F)' * F)) * J(F)^(-2)
+    ∂Ψ_∂J(F) =  -μ / 2 * (tr((F)' * F)) * J(F)^(-2)+ (k) * (J(F) - 1)  
 
-    ∂2Ψ_∂J2(F) = μ * J(F)^(-3) * (tr((F)' * F))
+    ∂2Ψ_∂J2(F) = μ * J(F)^(-3) * (tr((F)' * F))+k
     ∂2Ψ_∂FJ(F) =- μ * J(F)^(-2) * F
     ∂2Ψ_∂FF(F) = μ * J(F)^(-1) * I_
 
@@ -660,6 +659,40 @@ struct ARAP2D{A} <: Mechano
   end
 
 end
+
+
+# struct ARAP2D{A} <: Mechano
+#   μ::Float64
+#   ρ::Float64
+#   Kinematic::A
+#   function ARAP2D(; μ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+#     new{typeof(Kinematic)}(μ, ρ, Kinematic)
+#   end
+
+#   function (obj::ARAP2D)(Λ::Float64=1.0)
+#     _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+#     μ=  obj.μ 
+#     I_ = I4()
+
+#     Ψ(F) = μ * 0.5 * J(F)^(-1) * (tr((F)' * F))
+#     ∂Ψ_∂F(F) =  μ * F * J(F)^(-1)
+#     ∂Ψ_∂J(F) =  -μ / 2 * (tr((F)' * F)) * J(F)^(-2)
+
+#     ∂2Ψ_∂J2(F) = μ * J(F)^(-3) * (tr((F)' * F))
+#     ∂2Ψ_∂FJ(F) =- μ * J(F)^(-2) * F
+#     ∂2Ψ_∂FF(F) = μ * J(F)^(-1) * I_
+
+
+#     ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂J(F) * H(F)
+#     ∂Ψuu(F) = ∂2Ψ_∂FF(F) + ∂2Ψ_∂J2(F) * (H(F) ⊗ H(F)) + ∂2Ψ_∂FJ(F) ⊗ H(F) + H(F) ⊗ ∂2Ψ_∂FJ(F) + ∂Ψ_∂J(F) * _∂H∂F_2D()
+
+#     return (Ψ, ∂Ψu, ∂Ψuu)
+#   end
+
+# end
+
+
+
 # ===================
 # MultiPhysicalModel models
 # ===================
