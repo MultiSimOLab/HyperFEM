@@ -86,6 +86,7 @@ export get_Kinematics
 export getIsoInvariants
 
 export HessianRegularization
+export Hessian∇JRegularization
 
 # ============================================
 # Regularization of Mechanical models
@@ -111,6 +112,32 @@ struct HessianRegularization{A,B} <: Mechano
     return (Ψ, ∂Ψ, ∂2Ψ)
   end
 end
+
+
+struct Hessian∇JRegularization{A,B} <: Mechano
+  Mechano::A
+  δ::Float64
+  κ::Float64
+  Kinematic::B
+  function Hessian∇JRegularization(; Mechano::Mechano, δ::Float64=1.0e-6, κ::Float64=1.0)
+    new{typeof(Mechano), typeof(Mechano.Kinematic)}(Mechano, δ, κ, Mechano.Kinematic)
+  end
+
+
+  function (obj::Hessian∇JRegularization)(Λ::Float64=1.0)
+    Ψs, ∂Ψs, ∂2Ψs = obj.Mechano()
+    _, H, J = get_Kinematics(obj.Mechano.Kinematic; Λ=Λ)
+    δ, κ = obj.δ, obj.κ
+
+    Ψ(F, Jh) = Ψs(F) + 0.5* κ*(J(F)-Jh)^2
+    ∂Ψ(F, Jh) = ∂Ψs(F)+ κ*(J(F)-Jh)*H(F)
+    ∂2Ψ_(F, Jh) =∂2Ψs(F)+ κ*(H(F) ⊗ H(F)) + κ*(J(F)-Jh) * _∂H∂F_2D()
+    λ(F, Jh)=eigen(get_array(∂2Ψ_(F, Jh)))
+    ∂2Ψ(F, Jh)=TensorValue(real(λ(F, Jh).vectors)*diagm(max.(δ,real(λ(F, Jh).values)))*real(λ(F, Jh).vectors)')
+    return (Ψ, ∂Ψ, ∂2Ψ)
+  end
+end
+
 
 # ======================
 # Energy interpolations
@@ -630,37 +657,6 @@ struct ARAP2D_regularized{A}<: Mechano
 end
 
 
-struct ARAP2D{A} <: Mechano
-  μ::Float64
-  ρ::Float64
-  Kinematic::A
-  function ARAP2D(; μ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(μ, ρ, Kinematic)
-  end
-
-  function (obj::ARAP2D)(Λ::Float64=1.0)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
-    μ=  obj.μ 
-    I_ = I4()
-    k=10.0* μ
-    Ψ(F) = μ * 0.5 * J(F)^(-1) * (tr((F)' * F))+ (k/ 2.0) * (J(F) - 1)^2
-    ∂Ψ_∂F(F) =  μ * F * J(F)^(-1)
-    ∂Ψ_∂J(F) =  -μ / 2 * (tr((F)' * F)) * J(F)^(-2)+ (k) * (J(F) - 1)  
-
-    ∂2Ψ_∂J2(F) = μ * J(F)^(-3) * (tr((F)' * F))+k
-    ∂2Ψ_∂FJ(F) =- μ * J(F)^(-2) * F
-    ∂2Ψ_∂FF(F) = μ * J(F)^(-1) * I_
-
-
-    ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂J(F) * H(F)
-    ∂Ψuu(F) = ∂2Ψ_∂FF(F) + ∂2Ψ_∂J2(F) * (H(F) ⊗ H(F)) + ∂2Ψ_∂FJ(F) ⊗ H(F) + H(F) ⊗ ∂2Ψ_∂FJ(F) + ∂Ψ_∂J(F) * _∂H∂F_2D()
-
-    return (Ψ, ∂Ψu, ∂Ψuu)
-  end
-
-end
-
-
 # struct ARAP2D{A} <: Mechano
 #   μ::Float64
 #   ρ::Float64
@@ -673,12 +669,12 @@ end
 #     _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
 #     μ=  obj.μ 
 #     I_ = I4()
-
-#     Ψ(F) = μ * 0.5 * J(F)^(-1) * (tr((F)' * F))
+#     k=10.0* μ
+#     Ψ(F) = μ * 0.5 * J(F)^(-1) * (tr((F)' * F))+ (k/ 2.0) * (J(F) - 1)^2
 #     ∂Ψ_∂F(F) =  μ * F * J(F)^(-1)
-#     ∂Ψ_∂J(F) =  -μ / 2 * (tr((F)' * F)) * J(F)^(-2)
+#     ∂Ψ_∂J(F) =  -μ / 2 * (tr((F)' * F)) * J(F)^(-2)+ (k) * (J(F) - 1)  
 
-#     ∂2Ψ_∂J2(F) = μ * J(F)^(-3) * (tr((F)' * F))
+#     ∂2Ψ_∂J2(F) = μ * J(F)^(-3) * (tr((F)' * F))+k
 #     ∂2Ψ_∂FJ(F) =- μ * J(F)^(-2) * F
 #     ∂2Ψ_∂FF(F) = μ * J(F)^(-1) * I_
 
@@ -690,6 +686,37 @@ end
 #   end
 
 # end
+
+
+struct ARAP2D{A} <: Mechano
+  μ::Float64
+  ρ::Float64
+  Kinematic::A
+  function ARAP2D(; μ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(μ, ρ, Kinematic)
+  end
+
+  function (obj::ARAP2D)(Λ::Float64=1.0)
+    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    μ=  obj.μ 
+    I_ = I4()
+
+    Ψ(F) = μ * 0.5 * J(F)^(-1) * (tr((F)' * F))
+    ∂Ψ_∂F(F) =  μ * F * J(F)^(-1)
+    ∂Ψ_∂J(F) =  -μ / 2 * (tr((F)' * F)) * J(F)^(-2)
+
+    ∂2Ψ_∂J2(F) = μ * J(F)^(-3) * (tr((F)' * F))
+    ∂2Ψ_∂FJ(F) =- μ * J(F)^(-2) * F
+    ∂2Ψ_∂FF(F) = μ * J(F)^(-1) * I_
+
+
+    ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂J(F) * H(F)
+    ∂Ψuu(F) = ∂2Ψ_∂FF(F) + ∂2Ψ_∂J2(F) * (H(F) ⊗ H(F)) + ∂2Ψ_∂FJ(F) ⊗ H(F) + H(F) ⊗ ∂2Ψ_∂FJ(F) + ∂Ψ_∂J(F) * _∂H∂F_2D()
+
+    return (Ψ, ∂Ψu, ∂Ψuu)
+  end
+
+end
 
 
 

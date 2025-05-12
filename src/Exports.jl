@@ -50,7 +50,7 @@ end
 @publish PhysicalModels ARAP2D
 @publish PhysicalModels ARAP2D_regularized
 @publish PhysicalModels HessianRegularization
-
+@publish PhysicalModels Hessian∇JRegularization
 
 @publish PhysicalModels Mechano
 @publish PhysicalModels Thermo
