@@ -58,9 +58,13 @@ function _get_bc_func(tags_::Vector{String}, values_,  bc_timesteps)
     @assert(length(tags_) == length(values_))
 
     @inbounds for i in eachindex(tags_)
+        if isnothing(bc_timesteps[i])
+        bc_func_[i] = values_[i]
+        else
         # get funcion generators for boundary conditions
         u_bc(Λ::Float64) = (x) -> ϝ(values_[i])(x) * bc_timesteps[i](Λ)
         bc_func_[i] = u_bc
+        end
     end
     return (bc_tags=tags_, bc_func=bc_func_,)
 end
@@ -68,12 +72,10 @@ end
  
 
 
- 
-
 struct DirichletBC{A} <: BoundaryCondition
     tags::Vector{String}         # tags for boundary conditions
     values::Vector{Function}     # f(x)
-    timesteps::Vector{Function}  # f(Λ)
+    timesteps::Vector{Union{Function, Nothing}}  # f(Λ)
     caches::A
 
     function DirichletBC(bc_tags::Vector{String}, bc_values, bc_timesteps)  
