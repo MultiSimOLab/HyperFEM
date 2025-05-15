@@ -26,6 +26,7 @@ export MoneyRivlin3D
 export MoneyRivlin2D
 export NonlinearMoneyRivlin3D
 export NonlinearMoneyRivlin2D
+export NonlinearMoneyRivlin2D_v2
 export TransverseIsotropy3D
 export LinearElasticity3D
 export LinearElasticity2D
@@ -468,6 +469,48 @@ struct NonlinearMoneyRivlin2D{A} <: Mechano
     ∂Ψ2_∂FJ(F) = (2 * μ2 * (β - 1) / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 2)) * J(F) * F
     ∂Ψ2_∂JJ(F) = μ2 / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 1) + (2 * μ2 * (β - 1) / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 2)) * J(F)^2 - (μ1 + 2.0 * μ2) * ∂log2∂J2(J(F)) + λ
 
+
+    ∂Ψuu(F) = ∂Ψ2_∂FF(F) + (∂Ψ2_∂FJ(F) ⊗ H(F) + H(F) ⊗ ∂Ψ2_∂FJ(F)) + ∂Ψ2_∂JJ(F) * (H(F) ⊗ H(F)) + ∂Ψ_∂J(F) * _∂H∂F_2D()
+
+    return (Ψ, ∂Ψu, ∂Ψuu)
+
+  end
+
+
+end
+
+
+
+struct NonlinearMoneyRivlin2D_v2{A} <: Mechano
+  λ::Float64
+  μ1::Float64
+  μ2::Float64
+  α::Float64
+  β::Float64
+  γ::Float64
+  ρ::Float64
+  Kinematic::A
+  function NonlinearMoneyRivlin2D_v2(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, γ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(λ, μ1, μ2, α, β, γ, ρ, Kinematic)
+  end
+
+  function (obj::NonlinearMoneyRivlin2D_v2)(Λ::Float64=1.0; Threshold=0.01)
+    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    λ, μ1, μ2, α, β, γ = obj.λ, obj.μ1, obj.μ2, obj.α, obj.β, obj.γ
+
+    Ψ(F) = μ1 / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F) + 1.0)^α + μ2 / (2.0 * β * 3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^β - (μ1 + 2.0 * μ2) * log(J(F)) +
+           (λ ) * (J(F)^(γ) + J(F)^(-γ))
+
+    ∂Ψ_∂F(F) = ((μ1 / (3.0^(α - 1)) * (tr((F)' * F) + 1.0)^(α - 1)) + μ2 / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 1)) * F
+    ∂Ψ_∂J(F) = μ2 / (3.0^(β - 1)) * J(F) * (tr((F)' * F) + J(F)^2)^(β - 1) - (μ1 + 2.0 * μ2) * (1.0/J(F)) + λ * γ *  (J(F)^(γ-1) - J(F)^(-γ-1))
+
+    ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂J(F) * H(F)
+    I_ = I4()
+
+    ∂Ψ2_∂FF(F) = ((μ1 / (3.0^(α - 1)) * (tr((F)' * F) + 1.0)^(α - 1)) + μ2 / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 1)) * I_ +
+                 2 * ((μ1 * (α - 1) / (3.0^(α - 1)) * (tr((F)' * F) + 1.0)^(α - 2)) + μ2 * (β - 1) / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 2)) * (F ⊗ F)
+    ∂Ψ2_∂FJ(F) = (2 * μ2 * (β - 1) / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 2)) * J(F) * F
+    ∂Ψ2_∂JJ(F) = μ2 / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 1) + (2 * μ2 * (β - 1) / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 2)) * J(F)^2 + (μ1 + 2.0 * μ2) * (1.0/(J(F))^2) + λ * γ  *  ((γ-1)*J(F)^(γ-2) + (γ+1)*J(F)^(-γ-2))
 
     ∂Ψuu(F) = ∂Ψ2_∂FF(F) + (∂Ψ2_∂FJ(F) ⊗ H(F) + H(F) ⊗ ∂Ψ2_∂FJ(F)) + ∂Ψ2_∂JJ(F) * (H(F) ⊗ H(F)) + ∂Ψ_∂J(F) * _∂H∂F_2D()
 

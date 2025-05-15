@@ -31,6 +31,7 @@ end
 @publish PhysicalModels MoneyRivlin2D
 @publish PhysicalModels NonlinearMoneyRivlin3D
 @publish PhysicalModels NonlinearMoneyRivlin2D
+@publish PhysicalModels NonlinearMoneyRivlin2D_v2
 @publish PhysicalModels TransverseIsotropy3D
 @publish PhysicalModels ThermalModel
 @publish PhysicalModels IdealDielectric
@@ -102,6 +103,7 @@ end
 @publish ComputationalModels  Entropy
 @publish ComputationalModels  D0
 @publish ComputationalModels  reset!
+@publish ComputationalModels  DirichletCoupling
 
 @publish Solvers IterativeSolver
 @publish Solvers Newton_RaphsonSolver

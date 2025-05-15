@@ -9,6 +9,8 @@ end
  
 function Gridap.FESpaces.TrialFESpace!(space::SingleFieldFESpace, bc::DirichletBC, Λ::Float64)
     TrialFESpace!(space, map(f -> f(Λ), bc.values))
+        ## actualizar DirichletCoupling
+
 end
 
 function Gridap.FESpaces.TrialFESpace!(space::SingleFieldFESpace, ::NothingBC, Λ::Float64)
@@ -27,6 +29,8 @@ end
 
 function Gridap.FESpaces.TrialFESpace(space::SingleFieldFESpace, bc::DirichletBC, Λ::Float64)
     TrialFESpace(space, map(f -> f(Λ), bc.values))
+    ## actualizar DirichletCoupling
+    ## idea si bc.timesteps[i] isa DirichletCoupling entonces meto valor zero y a posteriori machaco
 end
   
 function Gridap.FESpaces.TrialFESpace(space::MultiFieldFESpace, bc::MultiFieldBC, Λ::Float64)

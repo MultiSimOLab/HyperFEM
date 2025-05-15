@@ -49,6 +49,7 @@ export SingleFieldTC
 export MultiFieldTC
 export residual_Neumann
 export updateBC!
+export DirichletCoupling
 
 include("FESpaces.jl")
 export TrialFESpace

@@ -2,6 +2,7 @@
 
 abstract type BoundaryCondition end
 abstract type TimedependentCondition end
+abstract type DirichletCoupling end
 
 struct NothingBC<: BoundaryCondition end
  
@@ -58,7 +59,7 @@ function _get_bc_func(tags_::Vector{String}, values_,  bc_timesteps)
     @assert(length(tags_) == length(values_))
 
     @inbounds for i in eachindex(tags_)
-        if isnothing(bc_timesteps[i])
+        if isnothing(bc_timesteps[i]) || bc_timesteps[i] isa DirichletCoupling
         bc_func_[i] = values_[i]
         else
         # get funcion generators for boundary conditions
@@ -75,7 +76,7 @@ end
 struct DirichletBC{A} <: BoundaryCondition
     tags::Vector{String}         # tags for boundary conditions
     values::Vector{Function}     # f(x)
-    timesteps::Vector{Union{Function, Nothing}}  # f(Λ)
+    timesteps::Vector{Union{Function, Nothing, DirichletCoupling}}  # f(Λ)
     caches::A
 
     function DirichletBC(bc_tags::Vector{String}, bc_values, bc_timesteps)  
