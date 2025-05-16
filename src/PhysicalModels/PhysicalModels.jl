@@ -20,13 +20,14 @@ using StaticArrays
 export NeoHookean3D
 export IncompressibleNeoHookean3D
 export IncompressibleNeoHookean2D
+export IncompressibleNeoHookean2D_CV
 export ARAP2D
 export ARAP2D_regularized
 export MoneyRivlin3D
 export MoneyRivlin2D
 export NonlinearMoneyRivlin3D
 export NonlinearMoneyRivlin2D
-export NonlinearMoneyRivlin2D_v2
+export NonlinearMoneyRivlin2D_CV
 export TransverseIsotropy3D
 export LinearElasticity3D
 export LinearElasticity2D
@@ -476,12 +477,11 @@ struct NonlinearMoneyRivlin2D{A} <: Mechano
 
   end
 
-
 end
 
 
 
-struct NonlinearMoneyRivlin2D_v2{A} <: Mechano
+struct NonlinearMoneyRivlin2D_CV{A} <: Mechano
   λ::Float64
   μ1::Float64
   μ2::Float64
@@ -490,11 +490,11 @@ struct NonlinearMoneyRivlin2D_v2{A} <: Mechano
   γ::Float64
   ρ::Float64
   Kinematic::A
-  function NonlinearMoneyRivlin2D_v2(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, γ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+  function NonlinearMoneyRivlin2D_CV(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, γ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
     new{typeof(Kinematic)}(λ, μ1, μ2, α, β, γ, ρ, Kinematic)
   end
 
-  function (obj::NonlinearMoneyRivlin2D_v2)(Λ::Float64=1.0; Threshold=0.01)
+  function (obj::NonlinearMoneyRivlin2D_CV)(Λ::Float64=1.0)
     _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ1, μ2, α, β, γ = obj.λ, obj.μ1, obj.μ2, obj.α, obj.β, obj.γ
 
@@ -653,7 +653,41 @@ struct IncompressibleNeoHookean2D{A} <: Mechano
 
 end
 
+struct IncompressibleNeoHookean2D_CV{A} <: Mechano
+  λ::Float64
+  μ::Float64
+  γ::Float64
+  ρ::Float64
+  Kinematic::A
+  function IncompressibleNeoHookean2D_CV(; λ::Float64, μ::Float64,  γ::Float64,  ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(λ, μ, γ, ρ,  Kinematic)
+  end
 
+  function (obj::IncompressibleNeoHookean2D_CV)(Λ::Float64=1.0)
+    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    λ, μ, γ = obj.λ, obj.μ, obj.γ
+
+
+    Ψ1(F) = μ / 2 * (tr((F)' * F) + 1.0) * J(F)^(-2 / 3)
+    Ψ2(F) = (λ ) * (J(F)^(γ) + J(F)^(-γ))
+    Ψ(F) = Ψ1(F) + Ψ2(F) 
+
+    ∂Ψ1_∂J(F) = -μ / 3 * (tr((F)' * F) + 1.0) * J(F)^(-5 / 3)
+    ∂Ψ2_∂J(F) = λ * γ *  (J(F)^(γ-1) - J(F)^(-γ-1))
+    ∂Ψ_∂J(F) = ∂Ψ1_∂J(F) + ∂Ψ2_∂J(F)
+    ∂Ψu(F) = μ * F * J(F)^(-2 / 3) + ∂Ψ_∂J(F) * H(F)
+
+    I_ = I4()
+    ∂Ψ1_∂J2(F) = (5 / 9) * μ * J(F)^(-8 / 3) * (tr((F)' * F) + 1.0)
+    ∂Ψ2_∂J2(F) = λ * γ  *  ((γ-1)*J(F)^(γ-2) + (γ+1)*J(F)^(-γ-2))
+    ∂Ψ_∂J2(F) = ∂Ψ1_∂J2(F)  + ∂Ψ2_∂J2(F)
+    ∂Ψ_∂FJ(F) = -(2 / 3) * μ * J(F)^(-5 / 3) *  F
+    ∂Ψuu(F) = μ * I_ * J(F)^(-2 / 3) + ∂Ψ_∂J2(F) * (H(F) ⊗ H(F)) + ∂Ψ_∂FJ(F) ⊗ H(F) + H(F) ⊗ ∂Ψ_∂FJ(F) + ∂Ψ_∂J(F) * _∂H∂F_2D()
+    return (Ψ, ∂Ψu, ∂Ψuu)
+
+  end
+
+end
 
 struct ARAP2D_regularized{A}<: Mechano
   μ::Float64
