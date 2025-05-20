@@ -28,7 +28,6 @@ end
 @publish PhysicalModels IncompressibleNeoHookean3D
 @publish PhysicalModels IncompressibleNeoHookean2D
 @publish PhysicalModels IncompressibleNeoHookean2D_CV
-@publish PhysicalModels HessReg_Inc_NeoHook2D_CV
 @publish PhysicalModels MoneyRivlin3D
 @publish PhysicalModels MoneyRivlin2D
 @publish PhysicalModels NonlinearMoneyRivlin3D

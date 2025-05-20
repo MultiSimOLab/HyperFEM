@@ -21,7 +21,6 @@ export NeoHookean3D
 export IncompressibleNeoHookean3D
 export IncompressibleNeoHookean2D
 export IncompressibleNeoHookean2D_CV
-export HessReg_Inc_NeoHook2D_CV
 export ARAP2D
 export ARAP2D_regularized
 export MoneyRivlin3D
@@ -108,20 +107,14 @@ struct HessianRegularization{A,B} <: Mechano
     Ψs, ∂Ψs, ∂2Ψs = obj.Mechano()
     δ = obj.δ
 
-    Ψ(F) = Ψs(F)
-    ∂Ψ(F) = ∂Ψs(F)
-    λ(F) = eigen(get_array(∂2Ψs(F)))
-
-     ∂2Ψ(F) = begin
-      vecval= eigen(get_array(∂2Ψs(F)))
+    ∂2Ψ(F) = begin
+      vecval = eigen(get_array(∂2Ψs(F)))
       vec = real(vecval.vectors)
       val = real(vecval.values)
-      [
-        TensorValue(vec * diagm(max.(δ, val)) * vec')
-      ]
-     end
+      TensorValue(vec * diagm(max.(δ, val)) * vec')
+    end
 
-    return (Ψ, ∂Ψ, ∂2Ψ)
+    return (Ψs, ∂Ψs, ∂2Ψ)
   end
 end
 
@@ -144,8 +137,15 @@ struct Hessian∇JRegularization{A,B} <: Mechano
     Ψ(F, Jh) = Ψs(F) + 0.5 * κ * (J(F) - Jh)^2
     ∂Ψ(F, Jh) = ∂Ψs(F) + κ * (J(F) - Jh) * H(F)
     ∂2Ψ_(F, Jh) = ∂2Ψs(F) + κ * (H(F) ⊗ H(F)) + κ * (J(F) - Jh) * _∂H∂F_2D()
-    λ(F, Jh) = eigen(get_array(∂2Ψ_(F, Jh)))
-    ∂2Ψ(F, Jh) = TensorValue(real(λ(F, Jh).vectors) * diagm(max.(δ, real(λ(F, Jh).values))) * real(λ(F, Jh).vectors)')
+
+    ∂2Ψ(F) = begin
+      vecval = eigen(get_array(∂2Ψ_(F, Jh)))
+      vec = real(vecval.vectors)
+      val = real(vecval.values)
+      TensorValue(vec * diagm(max.(δ, val)) * vec')
+    end
+
+    # ∂2Ψ(F, Jh) = TensorValue(real(λ(F, Jh).vectors) * diagm(max.(δ, real(λ(F, Jh).values))) * real(λ(F, Jh).vectors)')
     return (Ψ, ∂Ψ, ∂2Ψ)
   end
 end
@@ -612,7 +612,7 @@ struct IncompressibleNeoHookean3D{A} <: Mechano
     ∂Ψ_∂J2(F) = (∂Ψ1_∂J2(F) * ∂J(F)^2 + ∂Ψ1_∂J(F) * ∂2J(F)) + ∂Ψ2_∂J2(F) + ∂Ψ3_∂J2(F)
     ∂Ψ_∂FJ(F) = -(2 / 3) * μ * J(F)^(-5 / 3) * ∂J(F) * F
 
-    ∂Ψuu(F) = μ * I_ * J(F)^(-2 / 3) + ∂Ψ2_∂J2(F) * (H(F) ⊗ H(F)) + ∂Ψ2_∂FJ(F) ⊗ H(F) + H(F) ⊗ ∂Ψ2_∂FJ(F) + ∂Ψ_∂J(F) * ×ᵢ⁴(F)
+    ∂Ψuu(F) = μ * I_ * J(F)^(-2 / 3) + ∂Ψ2_∂J2(F) * (H(F) ⊗ H(F)) + ∂Ψ_∂FJ(F) ⊗ H(F) + H(F) ⊗ ∂Ψ_∂FJ(F) + ∂Ψ_∂J(F) * ×ᵢ⁴(F)
     return (Ψ, ∂Ψu, ∂Ψuu)
   end
 
@@ -698,80 +698,139 @@ struct IncompressibleNeoHookean2D_CV{A} <: Mechano
 end
 
 
-struct HessReg_Inc_NeoHook2D_CV{A} <: Mechano
-  λ::Float64
-  μ::Float64
-  γ::Float64
-  ρ::Float64
-  Kinematic::A
-  function HessReg_Inc_NeoHook2D_CV(; λ::Float64, μ::Float64, γ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ, γ, ρ, Kinematic)
-  end
+# struct HessReg_Inc_NeoHook2D_CV{A} <: Mechano
+#   λ::Float64
+#   μ::Float64
+#   γ::Float64
+#   ρ::Float64
+#   Kinematic::A
+#   function HessReg_Inc_NeoHook2D_CV(; λ::Float64, μ::Float64, γ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+#     new{typeof(Kinematic)}(λ, μ, γ, ρ, Kinematic)
+#   end
 
-  function (obj::HessReg_Inc_NeoHook2D_CV)(Λ::Float64=1.0)
-    _, _, J = get_Kinematics(obj.Kinematic; Λ=Λ)
-    λ, μ, γ = obj.λ, obj.μ, obj.γ
-
- 
-
-    S(F) = svd(get_array(F))
-
-    I1(F) = sum(S(F).S .^ 2)
-    Ψ1(F) = μ / 2 * (J(F)^(-2 / 3)) * (1 + I1(F))
-    Ψ2(F) = λ * (J(F)^(γ) + J(F)^(-γ))
-    Ψ(F) = Ψ1(F) + Ψ2(F)
-
-    λ1(F) = S(F).S[1]
-    λ2(F) = S(F).S[2]
-
-    ∂J_∂λ1(F) = λ2(F)
-    ∂J_∂λ2(F) = λ1(F)
-
-    ∂Ψ1_∂λ1(F) = -(μ / 3) * J(F)^(-5 / 3) * ∂J_∂λ1(F) * (1.0 + I1(F)) + (μ / 2) * J(F)^(-2 / 3) * 2.0 * ∂J_∂λ2(F)
-    ∂Ψ1_∂λ2(F) = -(μ / 3) * J(F)^(-5 / 3) * ∂J_∂λ2(F) * (1.0 + I1(F)) + (μ / 2) * J(F)^(-2 / 3) * 2.0 * ∂J_∂λ1(F)
-
-    ∂Ψ2_∂λ1(F) = λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1)) * ∂J_∂λ1(F)
-    ∂Ψ2_∂λ2(F) = λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1)) * ∂J_∂λ2(F)
-
-    ∂Ψ_∂λ1(F) = ∂Ψ1_∂λ1(F) + ∂Ψ2_∂λ1(F)
-    ∂Ψ_∂λ2(F) = ∂Ψ1_∂λ2(F) + ∂Ψ2_∂λ2(F)
-
-    ∂Ψu_(F) = ∂Ψ_∂λ1(F) * S(F).U[:, 1] * S(F).Vt[1, :]' + ∂Ψ_∂λ2(F) * S(F).U[:, 2] * S(F).Vt[2, :]'
-    ∂Ψu(F) = TensorValue(∂Ψu_(F))
+#   function (obj::HessReg_Inc_NeoHook2D_CV)(Λ::Float64=1.0)
+#     _, _, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+#     λ, μ, γ = obj.λ, obj.μ, obj.γ
 
 
-    ∂∂Ψ1_∂∂λ1(F) = (μ / 2) * ((10 / 9) * ∂J_∂λ1(F)^2 * J(F)^(-8 / 3) * (1.0 + I1(F)) - (2 / 3) * J(F)^(-2 / 3))
-    ∂∂Ψ1_∂∂λ2(F) = (μ / 2) * ((10 / 9) * ∂J_∂λ2(F)^2 * J(F)^(-8 / 3) * (1.0 + I1(F)) - (2 / 3) * J(F)^(-2 / 3))
-    ∂∂Ψ1_∂∂λ1λ2(F) = (μ / 9) * J(F)^(-5 / 3) * (5.0 + I1(F))
+#     Ψ(F) = begin
+#       S = svd(get_array(F))
+#       I1 = sum(S.S .^ 2)
+#       Ψ1(F) = μ / 2 * (J(F)^(-2 / 3)) * (1 + I1)
+#       Ψ2(F) = λ * (J(F)^(γ) + J(F)^(-γ))
+#       [
+#         Ψ1(F) + Ψ2(F)
+#       ]
+#     end
 
-    ∂∂Ψ2_∂∂λ1(F) = λ * γ * ((γ - 1) * J(F)^(γ - 2) + (γ + 1) * J(F)^(-γ - 2)) * ∂J_∂λ1(F)^2
-    ∂∂Ψ2_∂∂λ2(F) = λ * γ * ((γ - 1) * J(F)^(γ - 2) + (γ + 1) * J(F)^(-γ - 2)) * ∂J_∂λ2(F)^2
-    ∂∂Ψ2_∂∂λ1λ2(F) = λ * γ * ((γ - 1) * J(F)^(γ - 2) + (γ + 1) * J(F)^(-γ - 2)) * ∂J_∂λ1(F) * ∂J_∂λ2(F) + λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1))
+#     # S(F) = svd(get_array(F))
 
-    ∂∂Ψ_∂∂λ1(F) = ∂∂Ψ1_∂∂λ1(F) + ∂∂Ψ2_∂∂λ1(F)
-    ∂∂Ψ_∂∂λ2(F) = ∂∂Ψ2_∂∂λ1(F) + ∂∂Ψ2_∂∂λ2(F)
-    ∂∂Ψ_∂∂λ1λ2(F) = ∂∂Ψ1_∂∂λ1λ2(F) + ∂∂Ψ2_∂∂λ1λ2(F)
+#     # I1(F) = sum(S(F).S .^ 2)
+#     # Ψ1(F) = μ / 2 * (J(F)^(-2 / 3)) * (1 + I1(F))
+#     # Ψ2(F) = λ * (J(F)^(γ) + J(F)^(-γ))
+#     # Ψ(F) = Ψ1(F) + Ψ2(F)
 
-    Hess(F) = [∂∂Ψ_∂∂λ1(F)^2 ∂∂Ψ_∂∂λ1λ2(F); ∂∂Ψ_∂∂λ1λ2(F) ∂∂Ψ_∂∂λ2(F)^2]
-    ∂λ_∂F(F) = [(S(F).U[:, 1]*S(F).Vt[1, :]')[:] (S(F).U[:, 2]*S(F).Vt[2, :]')[:]]
+#     ∂Ψu(F) = begin
+#       S = svd(get_array(F))
+#       λ1 = S.S[1]
+#       λ2 = S.S[2]
+#       U= S.U
+#       Vt= S.Vt
+#       I1 = sum(S.S .^ 2)
 
-    Cp(F) = TensorValue{4,4,Float64}(∂λ_∂F(F) * Hess(F) * ∂λ_∂F(F)')
+#       ∂J_∂λ1(F) = λ2
+#       ∂J_∂λ2(F) = λ1
+  
+#       ∂Ψ1_∂λ1(F) = -(μ / 3) * J(F)^(-5 / 3) * ∂J_∂λ1(F) * (1.0 + I1) + (μ / 2) * J(F)^(-2 / 3) * 2.0 * ∂J_∂λ2(F)
+#       ∂Ψ1_∂λ2(F) = -(μ / 3) * J(F)^(-5 / 3) * ∂J_∂λ2(F) * (1.0 + I1) + (μ / 2) * J(F)^(-2 / 3) * 2.0 * ∂J_∂λ1(F)
+  
+#       ∂Ψ2_∂λ1(F) = λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1)) * ∂J_∂λ1(F)
+#       ∂Ψ2_∂λ2(F) = λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1)) * ∂J_∂λ2(F)
+  
+#       ∂Ψ_∂λ1(F) = ∂Ψ1_∂λ1(F) + ∂Ψ2_∂λ1(F)
+#       ∂Ψ_∂λ2(F) = ∂Ψ1_∂λ2(F) + ∂Ψ2_∂λ2(F)
+  
+#       ∂Ψu_(F) = ∂Ψ_∂λ1(F) * U[:, 1] * Vt[1, :]' + ∂Ψ_∂λ2(F) * U[:, 2] * Vt[2, :]'
+#       [
+#        TensorValue(∂Ψu_(F))
+#       ]
+#     end
 
-    # L1(F) = VectorValue((2^(-1 / 2) * S(F).U * [0.0 1.0; 1.0 0.0] * S(F).Vt)[:])
-    # T1(F) = VectorValue((2^(-1 / 2) * S(F).U * [0.0 -1.0; 1.0 0.0] * S(F).Vt)[:])
 
-    # β1_Ψ1(F) = (μ / 2) * ((2 / 3) * J(F)^(-5 / 3) * (1.0 + I1(F)) + 2 * J(F)^(-2 / 3))
-    # β1_Ψ2(F) = -λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1))
-    # β1(F) = max(β1_Ψ1(F) + β1_Ψ2(F), 1e-6)
-    # β2(F) = max((∂Ψ_∂λ1(F) + ∂Ψ_∂λ2(F)) / (λ1(F) + λ2(F)), 1e-6)
 
-    # Ck(F) = β1(F) * (L1(F) ⊗ L1(F)) + β2(F) * (T1(F) ⊗ T1(F))
-    # ∂Ψuu(F) = Cp(F) + Ck(F)
-    return (Ψ, ∂Ψu, Cp)
 
-  end
+#     # λ1(F) = S(F).S[1]
+#     # λ2(F) = S(F).S[2]
 
-end
+#     # ∂J_∂λ1(F) = λ2(F)
+#     # ∂J_∂λ2(F) = λ1(F)
+
+#     # ∂Ψ1_∂λ1(F) = -(μ / 3) * J(F)^(-5 / 3) * ∂J_∂λ1(F) * (1.0 + I1(F)) + (μ / 2) * J(F)^(-2 / 3) * 2.0 * ∂J_∂λ2(F)
+#     # ∂Ψ1_∂λ2(F) = -(μ / 3) * J(F)^(-5 / 3) * ∂J_∂λ2(F) * (1.0 + I1(F)) + (μ / 2) * J(F)^(-2 / 3) * 2.0 * ∂J_∂λ1(F)
+
+#     # ∂Ψ2_∂λ1(F) = λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1)) * ∂J_∂λ1(F)
+#     # ∂Ψ2_∂λ2(F) = λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1)) * ∂J_∂λ2(F)
+
+#     # ∂Ψ_∂λ1(F) = ∂Ψ1_∂λ1(F) + ∂Ψ2_∂λ1(F)
+#     # ∂Ψ_∂λ2(F) = ∂Ψ1_∂λ2(F) + ∂Ψ2_∂λ2(F)
+
+#     # ∂Ψu_(F) = ∂Ψ_∂λ1(F) * S(F).U[:, 1] * S(F).Vt[1, :]' + ∂Ψ_∂λ2(F) * S(F).U[:, 2] * S(F).Vt[2, :]'
+#     # ∂Ψu(F) = TensorValue(∂Ψu_(F))
+
+#     ∂Ψuu(F)= begin
+#       S = svd(get_array(F))
+#       λ1 = S.S[1]
+#       λ2 = S.S[2]
+#       U= S.U
+#       Vt= S.Vt
+#       I1 = sum(S.S .^ 2)
+#       ∂J_∂λ1 = λ2
+#       ∂J_∂λ2 = λ1
+#       J_=J(F)
+
+#     ∂∂Ψ1_∂∂λ1(F) = (μ / 2) * ((10 / 9) * ∂J_∂λ1^2 * J_^(-8 / 3) * (1.0 + I1) - (2 / 3) * J_^(-2 / 3))
+#     ∂∂Ψ1_∂∂λ2(F) = (μ / 2) * ((10 / 9) * ∂J_∂λ2^2 * J_^(-8 / 3) * (1.0 + I1) - (2 / 3) * J_^(-2 / 3))
+#     ∂∂Ψ1_∂∂λ1λ2(F) = (μ / 9) * J_^(-5 / 3) * (5.0 + I1)
+
+#     ∂∂Ψ2_∂∂λ1(F) = λ * γ * ((γ - 1) * J_^(γ - 2) + (γ + 1) * J_^(-γ - 2)) * ∂J_∂λ1^2
+#     ∂∂Ψ2_∂∂λ2(F) = λ * γ * ((γ - 1) * J_^(γ - 2) + (γ + 1) * J_^(-γ - 2)) * ∂J_∂λ2^2
+#     ∂∂Ψ2_∂∂λ1λ2(F) = λ * γ * ((γ - 1) * J_^(γ - 2) + (γ + 1) * J_^(-γ - 2)) * ∂J_∂λ1 * ∂J_∂λ2 + λ * γ * (J_^(γ - 1) - J_^(-γ - 1))
+
+#     ∂∂Ψ_∂∂λ1(F) = ∂∂Ψ1_∂∂λ1(F) + ∂∂Ψ2_∂∂λ1(F)
+#     ∂∂Ψ_∂∂λ2(F) = ∂∂Ψ2_∂∂λ1(F) + ∂∂Ψ2_∂∂λ2(F)
+#     ∂∂Ψ_∂∂λ1λ2(F) = ∂∂Ψ1_∂∂λ1λ2(F) + ∂∂Ψ2_∂∂λ1λ2(F)
+
+#     Hess(F) = [∂∂Ψ_∂∂λ1(F)^2 ∂∂Ψ_∂∂λ1λ2(F); ∂∂Ψ_∂∂λ1λ2(F) ∂∂Ψ_∂∂λ2(F)^2]
+#     ∂λ_∂F = [(U[:, 1]*Vt[1, :]')[:] (U[:, 2]*Vt[2, :]')[:]]
+
+#     Cp(F) = TensorValue{4,4,Float64}(∂λ_∂F * Hess(F) * ∂λ_∂F')
+
+#     L1 = VectorValue((2^(-1 / 2) * U * [0.0 1.0; 1.0 0.0] * Vt)[:])
+#     T1 = VectorValue((2^(-1 / 2) * U * [0.0 -1.0; 1.0 0.0] * Vt)[:])
+
+#     ∂Ψ1_∂λ1(F) = -(μ / 3) * J_^(-5 / 3) * ∂J_∂λ1 * (1.0 + I1) + (μ / 2) * J_^(-2 / 3) * 2.0 * ∂J_∂λ2
+#     ∂Ψ1_∂λ2(F) = -(μ / 3) * J_^(-5 / 3) * ∂J_∂λ2 * (1.0 + I1) + (μ / 2) * J_^(-2 / 3) * 2.0 * ∂J_∂λ1
+
+#     ∂Ψ2_∂λ1(F) = λ * γ * (J_^(γ - 1) - J_^(-γ - 1)) * ∂J_∂λ1
+#     ∂Ψ2_∂λ2(F) = λ * γ * (J_^(γ - 1) - J_^(-γ - 1)) * ∂J_∂λ2
+
+#     ∂Ψ_∂λ1(F) = ∂Ψ1_∂λ1(F) + ∂Ψ2_∂λ1(F)
+#     ∂Ψ_∂λ2(F) = ∂Ψ1_∂λ2(F) + ∂Ψ2_∂λ2(F)
+
+#     β1_Ψ1(F) = (μ / 2) * ((2 / 3) * J_^(-5 / 3) * (1.0 + I1) + 2 * J_^(-2 / 3))
+#     β1_Ψ2(F) = -λ * γ * (J_^(γ - 1) - J_^(-γ - 1))
+#     β1(F) = max(β1_Ψ1(F) + β1_Ψ2(F), 1e-6)
+#     β2(F) = max((∂Ψ_∂λ1(F) + ∂Ψ_∂λ2(F)) / (λ1 + λ2), 1e-6)
+
+#     Ck(F) = β1(F) * (L1 ⊗ L1) + β2(F) * (T1 ⊗ T1)
+#     Cp(F) + Ck(F)
+#     end
+
+#     return (Ψ, ∂Ψu, ∂Ψuu)
+
+#   end
+
+# end
 
 
 struct ARAP2D_regularized{A} <: Mechano
