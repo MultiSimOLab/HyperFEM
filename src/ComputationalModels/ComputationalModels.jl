@@ -67,7 +67,7 @@ export DynamicNonlinearModel
 export StaticLinearModel
 export solve!
 # export evaluate!
-export project_dirichlet!
+export dirichlet_preconditioning!
 export get_state
 export get_measure
 export get_spaces

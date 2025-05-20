@@ -28,6 +28,7 @@ end
 @publish PhysicalModels IncompressibleNeoHookean3D
 @publish PhysicalModels IncompressibleNeoHookean2D
 @publish PhysicalModels IncompressibleNeoHookean2D_CV
+@publish PhysicalModels HessReg_Inc_NeoHook2D_CV
 @publish PhysicalModels MoneyRivlin3D
 @publish PhysicalModels MoneyRivlin2D
 @publish PhysicalModels NonlinearMoneyRivlin3D
@@ -95,7 +96,7 @@ end
 @publish ComputationalModels  DynamicNonlinearModel
 @publish ComputationalModels  StaticLinearModel
 @publish ComputationalModels  solve!
-@publish ComputationalModels  project_dirichlet!
+@publish ComputationalModels  dirichlet_preconditioning!
 @publish ComputationalModels  GmshDiscreteModel
 @publish ComputationalModels  updateBC!
 @publish ComputationalModels  PostProcessor

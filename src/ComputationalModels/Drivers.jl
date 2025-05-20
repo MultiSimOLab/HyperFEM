@@ -80,11 +80,12 @@ struct StaticNonlinearModel{A,B,C,D,E} <: ComputationalModel
         xh::FEFunction=FEFunction(U, zero_free_values(U)))
 
         ∆U = TrialFESpace(U, dirbc, 0.0)
+        TrialFESpace!(U, dirbc, 0.0)
         spaces = (U, V, ∆U)
         x = get_free_dof_values(xh)
         x⁻ = zero_free_values(U)
-        _res = res(1.0)
-        _jac = jac(1.0)
+        _res = res(0.0)
+        _jac = jac(0.0)
         op = get_algebraic_operator(FEOperator(_res, _jac, U, V, assem_U))
         nls_cache = instantiate_caches(x, nls, op)
         caches = (nls, nls_cache, x, x⁻, assem_U)
@@ -129,7 +130,7 @@ function solve!(m::StaticNonlinearModel;
         Λ += ∆Λ
         Λ = min(1.0, Λ)
         if ProjectDirichlet
-            project_dirichlet!(x, m, Λ, ∆Λ)
+            dirichlet_preconditioning!(x, m, Λ, ∆Λ)
         end
         TrialFESpace!(U, m.dirichlet, Λ)
         res = m.res(Λ)
@@ -181,7 +182,12 @@ function post_solve!(pvd, x, Λ, Λ_, m, filePath)
     return pvd
 end
 
-function project_dirichlet!(x::Vector{Float64}, m::StaticNonlinearModel, Λ::Float64, ∆Λ::Float64)
+function dirichlet_preconditioning!(x::Vector{Float64}, m::StaticNonlinearModel, Λ::Float64, ∆Λ::Float64)
+    duh = get_dirichlet_preconditioner(m::StaticNonlinearModel, Λ::Float64, ∆Λ::Float64)
+    x .+= get_free_dof_values(duh)
+end
+
+function get_dirichlet_preconditioner(m::StaticNonlinearModel, Λ::Float64, ∆Λ::Float64)
     _, V, ∆U = m.spaces
     uh = get_state(m)
     TrialFESpace!(∆U, m.dirichlet, ∆Λ)
@@ -192,9 +198,8 @@ function project_dirichlet!(x::Vector{Float64}, m::StaticNonlinearModel, Λ::Flo
     op = AffineFEOperator(a, l, ∆U, V)
     ls = m.caches[1].ls
     duh = solve(ls, op)
-    x .+= get_free_dof_values(duh)
+    return duh
 end
-
 #*******************************************************************************	
 #    					 DynamicNonlinearModel
 #*******************************************************************************	

@@ -21,6 +21,7 @@ export NeoHookean3D
 export IncompressibleNeoHookean3D
 export IncompressibleNeoHookean2D
 export IncompressibleNeoHookean2D_CV
+export HessReg_Inc_NeoHook2D_CV
 export ARAP2D
 export ARAP2D_regularized
 export MoneyRivlin3D
@@ -93,12 +94,13 @@ export Hessian∇JRegularization
 # ============================================
 # Regularization of Mechanical models
 # ============================================
+
 struct HessianRegularization{A,B} <: Mechano
   Mechano::A
   δ::Float64
   Kinematic::B
   function HessianRegularization(; Mechano::Mechano, δ::Float64=1.0e-6)
-    new{typeof(Mechano), typeof(Mechano.Kinematic)}(Mechano, δ, Mechano.Kinematic)
+    new{typeof(Mechano),typeof(Mechano.Kinematic)}(Mechano, δ, Mechano.Kinematic)
   end
 
 
@@ -106,10 +108,18 @@ struct HessianRegularization{A,B} <: Mechano
     Ψs, ∂Ψs, ∂2Ψs = obj.Mechano()
     δ = obj.δ
 
-    Ψ(F) = Ψs(F) 
+    Ψ(F) = Ψs(F)
     ∂Ψ(F) = ∂Ψs(F)
-    λ(F)=eigen(get_array(∂2Ψs(F)))
-    ∂2Ψ(F)=TensorValue(real(λ(F).vectors)*diagm(max.(δ,real(λ(F).values)))*real(λ(F).vectors)')
+    λ(F) = eigen(get_array(∂2Ψs(F)))
+
+     ∂2Ψ(F) = begin
+      vecval= eigen(get_array(∂2Ψs(F)))
+      vec = real(vecval.vectors)
+      val = real(vecval.values)
+      [
+        TensorValue(vec * diagm(max.(δ, val)) * vec')
+      ]
+     end
 
     return (Ψ, ∂Ψ, ∂2Ψ)
   end
@@ -122,7 +132,7 @@ struct Hessian∇JRegularization{A,B} <: Mechano
   κ::Float64
   Kinematic::B
   function Hessian∇JRegularization(; Mechano::Mechano, δ::Float64=1.0e-6, κ::Float64=1.0)
-    new{typeof(Mechano), typeof(Mechano.Kinematic)}(Mechano, δ, κ, Mechano.Kinematic)
+    new{typeof(Mechano),typeof(Mechano.Kinematic)}(Mechano, δ, κ, Mechano.Kinematic)
   end
 
 
@@ -131,11 +141,11 @@ struct Hessian∇JRegularization{A,B} <: Mechano
     _, H, J = get_Kinematics(obj.Mechano.Kinematic; Λ=Λ)
     δ, κ = obj.δ, obj.κ
 
-    Ψ(F, Jh) = Ψs(F) + 0.5* κ*(J(F)-Jh)^2
-    ∂Ψ(F, Jh) = ∂Ψs(F)+ κ*(J(F)-Jh)*H(F)
-    ∂2Ψ_(F, Jh) =∂2Ψs(F)+ κ*(H(F) ⊗ H(F)) + κ*(J(F)-Jh) * _∂H∂F_2D()
-    λ(F, Jh)=eigen(get_array(∂2Ψ_(F, Jh)))
-    ∂2Ψ(F, Jh)=TensorValue(real(λ(F, Jh).vectors)*diagm(max.(δ,real(λ(F, Jh).values)))*real(λ(F, Jh).vectors)')
+    Ψ(F, Jh) = Ψs(F) + 0.5 * κ * (J(F) - Jh)^2
+    ∂Ψ(F, Jh) = ∂Ψs(F) + κ * (J(F) - Jh) * H(F)
+    ∂2Ψ_(F, Jh) = ∂2Ψs(F) + κ * (H(F) ⊗ H(F)) + κ * (J(F) - Jh) * _∂H∂F_2D()
+    λ(F, Jh) = eigen(get_array(∂2Ψ_(F, Jh)))
+    ∂2Ψ(F, Jh) = TensorValue(real(λ(F, Jh).vectors) * diagm(max.(δ, real(λ(F, Jh).values))) * real(λ(F, Jh).vectors)')
     return (Ψ, ∂Ψ, ∂2Ψ)
   end
 end
@@ -499,10 +509,10 @@ struct NonlinearMoneyRivlin2D_CV{A} <: Mechano
     λ, μ1, μ2, α, β, γ = obj.λ, obj.μ1, obj.μ2, obj.α, obj.β, obj.γ
 
     Ψ(F) = μ1 / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F) + 1.0)^α + μ2 / (2.0 * β * 3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^β - (μ1 + 2.0 * μ2) * log(J(F)) +
-           (λ ) * (J(F)^(γ) + J(F)^(-γ))
+           (λ) * (J(F)^(γ) + J(F)^(-γ))
 
     ∂Ψ_∂F(F) = ((μ1 / (3.0^(α - 1)) * (tr((F)' * F) + 1.0)^(α - 1)) + μ2 / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 1)) * F
-    ∂Ψ_∂J(F) = μ2 / (3.0^(β - 1)) * J(F) * (tr((F)' * F) + J(F)^2)^(β - 1) - (μ1 + 2.0 * μ2) * (1.0/J(F)) + λ * γ *  (J(F)^(γ-1) - J(F)^(-γ-1))
+    ∂Ψ_∂J(F) = μ2 / (3.0^(β - 1)) * J(F) * (tr((F)' * F) + J(F)^2)^(β - 1) - (μ1 + 2.0 * μ2) * (1.0 / J(F)) + λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1))
 
     ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂J(F) * H(F)
     I_ = I4()
@@ -510,7 +520,7 @@ struct NonlinearMoneyRivlin2D_CV{A} <: Mechano
     ∂Ψ2_∂FF(F) = ((μ1 / (3.0^(α - 1)) * (tr((F)' * F) + 1.0)^(α - 1)) + μ2 / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 1)) * I_ +
                  2 * ((μ1 * (α - 1) / (3.0^(α - 1)) * (tr((F)' * F) + 1.0)^(α - 2)) + μ2 * (β - 1) / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 2)) * (F ⊗ F)
     ∂Ψ2_∂FJ(F) = (2 * μ2 * (β - 1) / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 2)) * J(F) * F
-    ∂Ψ2_∂JJ(F) = μ2 / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 1) + (2 * μ2 * (β - 1) / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 2)) * J(F)^2 + (μ1 + 2.0 * μ2) * (1.0/(J(F))^2) + λ * γ  *  ((γ-1)*J(F)^(γ-2) + (γ+1)*J(F)^(-γ-2))
+    ∂Ψ2_∂JJ(F) = μ2 / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 1) + (2 * μ2 * (β - 1) / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 2)) * J(F)^2 + (μ1 + 2.0 * μ2) * (1.0 / (J(F))^2) + λ * γ * ((γ - 1) * J(F)^(γ - 2) + (γ + 1) * J(F)^(-γ - 2))
 
     ∂Ψuu(F) = ∂Ψ2_∂FF(F) + (∂Ψ2_∂FJ(F) ⊗ H(F) + H(F) ⊗ ∂Ψ2_∂FJ(F)) + ∂Ψ2_∂JJ(F) * (H(F) ⊗ H(F)) + ∂Ψ_∂J(F) * _∂H∂F_2D()
 
@@ -573,7 +583,7 @@ struct IncompressibleNeoHookean3D{A} <: Mechano
 
   function (obj::IncompressibleNeoHookean3D)(Λ::Float64=1.0)
     _, H, J_ = get_Kinematics(obj.Kinematic; Λ=Λ)
-    λ, μ, δ  = obj.λ, obj.μ, obj.δ
+    λ, μ, δ = obj.λ, obj.μ, obj.δ
     J(F) = 0.5 * (J_(F) + sqrt(J_(F)^2 + δ^2))
     ∂J(F) = 0.5 * (1.0 + J_(F) / sqrt(J_(F)^2 + δ^2))
     ∂2J(F) = 0.5 * δ^2 / ((J_(F)^2 + δ^2)^(3 / 2))
@@ -608,8 +618,6 @@ struct IncompressibleNeoHookean3D{A} <: Mechano
 
 end
 
-
-
 struct IncompressibleNeoHookean2D{A} <: Mechano
   λ::Float64
   μ::Float64
@@ -617,7 +625,7 @@ struct IncompressibleNeoHookean2D{A} <: Mechano
   δ::Float64
   Kinematic::A
   function IncompressibleNeoHookean2D(; λ::Float64, μ::Float64, ρ::Float64=0.0, δ::Float64=0.1, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ, ρ, δ,  Kinematic)
+    new{typeof(Kinematic)}(λ, μ, ρ, δ, Kinematic)
   end
 
   function (obj::IncompressibleNeoHookean2D)(Λ::Float64=1.0)
@@ -659,42 +667,119 @@ struct IncompressibleNeoHookean2D_CV{A} <: Mechano
   γ::Float64
   ρ::Float64
   Kinematic::A
-  function IncompressibleNeoHookean2D_CV(; λ::Float64, μ::Float64,  γ::Float64,  ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ, γ, ρ,  Kinematic)
+  function IncompressibleNeoHookean2D_CV(; λ::Float64, μ::Float64, γ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(λ, μ, γ, ρ, Kinematic)
   end
 
   function (obj::IncompressibleNeoHookean2D_CV)(Λ::Float64=1.0)
     _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ, γ = obj.λ, obj.μ, obj.γ
 
-
     Ψ1(F) = μ / 2 * (tr((F)' * F) + 1.0) * J(F)^(-2 / 3)
-    Ψ2(F) = (λ ) * (J(F)^(γ) + J(F)^(-γ))
-    Ψ(F) = Ψ1(F) + Ψ2(F) 
+    Ψ2(F) = λ * (J(F)^(γ) + J(F)^(-γ))
+    Ψ(F) = Ψ1(F) + Ψ2(F)
 
     ∂Ψ1_∂J(F) = -μ / 3 * (tr((F)' * F) + 1.0) * J(F)^(-5 / 3)
-    ∂Ψ2_∂J(F) = λ * γ *  (J(F)^(γ-1) - J(F)^(-γ-1))
+    ∂Ψ2_∂J(F) = λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1))
     ∂Ψ_∂J(F) = ∂Ψ1_∂J(F) + ∂Ψ2_∂J(F)
     ∂Ψu(F) = μ * F * J(F)^(-2 / 3) + ∂Ψ_∂J(F) * H(F)
 
     I_ = I4()
     ∂Ψ1_∂J2(F) = (5 / 9) * μ * J(F)^(-8 / 3) * (tr((F)' * F) + 1.0)
-    ∂Ψ2_∂J2(F) = λ * γ  *  ((γ-1)*J(F)^(γ-2) + (γ+1)*J(F)^(-γ-2))
-    ∂Ψ_∂J2(F) = ∂Ψ1_∂J2(F)  + ∂Ψ2_∂J2(F)
-    ∂Ψ_∂FJ(F) = -(2 / 3) * μ * J(F)^(-5 / 3) *  F
+    ∂Ψ2_∂J2(F) = λ * γ * ((γ - 1) * J(F)^(γ - 2) + (γ + 1) * J(F)^(-γ - 2))
+    ∂Ψ_∂J2(F) = ∂Ψ1_∂J2(F) + ∂Ψ2_∂J2(F)
+    ∂Ψ_∂FJ(F) = -(2 / 3) * μ * J(F)^(-5 / 3) * F
     ∂Ψuu(F) = μ * I_ * J(F)^(-2 / 3) + ∂Ψ_∂J2(F) * (H(F) ⊗ H(F)) + ∂Ψ_∂FJ(F) ⊗ H(F) + H(F) ⊗ ∂Ψ_∂FJ(F) + ∂Ψ_∂J(F) * _∂H∂F_2D()
     return (Ψ, ∂Ψu, ∂Ψuu)
+
 
   end
 
 end
 
-struct ARAP2D_regularized{A}<: Mechano
+
+struct HessReg_Inc_NeoHook2D_CV{A} <: Mechano
+  λ::Float64
+  μ::Float64
+  γ::Float64
+  ρ::Float64
+  Kinematic::A
+  function HessReg_Inc_NeoHook2D_CV(; λ::Float64, μ::Float64, γ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(λ, μ, γ, ρ, Kinematic)
+  end
+
+  function (obj::HessReg_Inc_NeoHook2D_CV)(Λ::Float64=1.0)
+    _, _, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    λ, μ, γ = obj.λ, obj.μ, obj.γ
+
+ 
+
+    S(F) = svd(get_array(F))
+
+    I1(F) = sum(S(F).S .^ 2)
+    Ψ1(F) = μ / 2 * (J(F)^(-2 / 3)) * (1 + I1(F))
+    Ψ2(F) = λ * (J(F)^(γ) + J(F)^(-γ))
+    Ψ(F) = Ψ1(F) + Ψ2(F)
+
+    λ1(F) = S(F).S[1]
+    λ2(F) = S(F).S[2]
+
+    ∂J_∂λ1(F) = λ2(F)
+    ∂J_∂λ2(F) = λ1(F)
+
+    ∂Ψ1_∂λ1(F) = -(μ / 3) * J(F)^(-5 / 3) * ∂J_∂λ1(F) * (1.0 + I1(F)) + (μ / 2) * J(F)^(-2 / 3) * 2.0 * ∂J_∂λ2(F)
+    ∂Ψ1_∂λ2(F) = -(μ / 3) * J(F)^(-5 / 3) * ∂J_∂λ2(F) * (1.0 + I1(F)) + (μ / 2) * J(F)^(-2 / 3) * 2.0 * ∂J_∂λ1(F)
+
+    ∂Ψ2_∂λ1(F) = λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1)) * ∂J_∂λ1(F)
+    ∂Ψ2_∂λ2(F) = λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1)) * ∂J_∂λ2(F)
+
+    ∂Ψ_∂λ1(F) = ∂Ψ1_∂λ1(F) + ∂Ψ2_∂λ1(F)
+    ∂Ψ_∂λ2(F) = ∂Ψ1_∂λ2(F) + ∂Ψ2_∂λ2(F)
+
+    ∂Ψu_(F) = ∂Ψ_∂λ1(F) * S(F).U[:, 1] * S(F).Vt[1, :]' + ∂Ψ_∂λ2(F) * S(F).U[:, 2] * S(F).Vt[2, :]'
+    ∂Ψu(F) = TensorValue(∂Ψu_(F))
+
+
+    ∂∂Ψ1_∂∂λ1(F) = (μ / 2) * ((10 / 9) * ∂J_∂λ1(F)^2 * J(F)^(-8 / 3) * (1.0 + I1(F)) - (2 / 3) * J(F)^(-2 / 3))
+    ∂∂Ψ1_∂∂λ2(F) = (μ / 2) * ((10 / 9) * ∂J_∂λ2(F)^2 * J(F)^(-8 / 3) * (1.0 + I1(F)) - (2 / 3) * J(F)^(-2 / 3))
+    ∂∂Ψ1_∂∂λ1λ2(F) = (μ / 9) * J(F)^(-5 / 3) * (5.0 + I1(F))
+
+    ∂∂Ψ2_∂∂λ1(F) = λ * γ * ((γ - 1) * J(F)^(γ - 2) + (γ + 1) * J(F)^(-γ - 2)) * ∂J_∂λ1(F)^2
+    ∂∂Ψ2_∂∂λ2(F) = λ * γ * ((γ - 1) * J(F)^(γ - 2) + (γ + 1) * J(F)^(-γ - 2)) * ∂J_∂λ2(F)^2
+    ∂∂Ψ2_∂∂λ1λ2(F) = λ * γ * ((γ - 1) * J(F)^(γ - 2) + (γ + 1) * J(F)^(-γ - 2)) * ∂J_∂λ1(F) * ∂J_∂λ2(F) + λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1))
+
+    ∂∂Ψ_∂∂λ1(F) = ∂∂Ψ1_∂∂λ1(F) + ∂∂Ψ2_∂∂λ1(F)
+    ∂∂Ψ_∂∂λ2(F) = ∂∂Ψ2_∂∂λ1(F) + ∂∂Ψ2_∂∂λ2(F)
+    ∂∂Ψ_∂∂λ1λ2(F) = ∂∂Ψ1_∂∂λ1λ2(F) + ∂∂Ψ2_∂∂λ1λ2(F)
+
+    Hess(F) = [∂∂Ψ_∂∂λ1(F)^2 ∂∂Ψ_∂∂λ1λ2(F); ∂∂Ψ_∂∂λ1λ2(F) ∂∂Ψ_∂∂λ2(F)^2]
+    ∂λ_∂F(F) = [(S(F).U[:, 1]*S(F).Vt[1, :]')[:] (S(F).U[:, 2]*S(F).Vt[2, :]')[:]]
+
+    Cp(F) = TensorValue{4,4,Float64}(∂λ_∂F(F) * Hess(F) * ∂λ_∂F(F)')
+
+    # L1(F) = VectorValue((2^(-1 / 2) * S(F).U * [0.0 1.0; 1.0 0.0] * S(F).Vt)[:])
+    # T1(F) = VectorValue((2^(-1 / 2) * S(F).U * [0.0 -1.0; 1.0 0.0] * S(F).Vt)[:])
+
+    # β1_Ψ1(F) = (μ / 2) * ((2 / 3) * J(F)^(-5 / 3) * (1.0 + I1(F)) + 2 * J(F)^(-2 / 3))
+    # β1_Ψ2(F) = -λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1))
+    # β1(F) = max(β1_Ψ1(F) + β1_Ψ2(F), 1e-6)
+    # β2(F) = max((∂Ψ_∂λ1(F) + ∂Ψ_∂λ2(F)) / (λ1(F) + λ2(F)), 1e-6)
+
+    # Ck(F) = β1(F) * (L1(F) ⊗ L1(F)) + β2(F) * (T1(F) ⊗ T1(F))
+    # ∂Ψuu(F) = Cp(F) + Ck(F)
+    return (Ψ, ∂Ψu, Cp)
+
+  end
+
+end
+
+
+struct ARAP2D_regularized{A} <: Mechano
   μ::Float64
   ρ::Float64
   δ::Float64
   Kinematic::A
-  function ARAP2D_regularized(; μ::Float64, ρ::Float64=0.0, δ::Float64=0.1,    Kinematic::KinematicModel=Kinematics(Mechano))
+  function ARAP2D_regularized(; μ::Float64, ρ::Float64=0.0, δ::Float64=0.1, Kinematic::KinematicModel=Kinematics(Mechano))
     new{typeof(Kinematic)}(μ, ρ, δ, Kinematic)
   end
 
@@ -706,28 +791,28 @@ struct ARAP2D_regularized{A}<: Mechano
     J(F) = 0.5 * (J_(F) + sqrt(J_(F)^2 + δ^2))
     ∂J(F) = 0.5 * (1.0 + J_(F) / sqrt(J_(F)^2 + δ^2))
     ∂2J(F) = 0.5 * δ^2 / ((J_(F)^2 + δ^2)^(3 / 2))
-    
+
 
     J1 = 0.5 * (1.0 + sqrt(1.0 + δ^2))
     ∂J1 = 0.5 * (1.0 + 1.0 / sqrt(1.0^2 + δ^2))
-    β = μ *(J1^(-1) - J1^(-2) * ∂J1)
-    Ψ(F) = μ * 0.5 * J(F)^(-1) * (tr((F)' * F))- β * log(J_(F))
+    β = μ * (J1^(-1) - J1^(-2) * ∂J1)
+    Ψ(F) = μ * 0.5 * J(F)^(-1) * (tr((F)' * F)) - β * log(J_(F))
 
 
     ∂Ψ1_∂J(F) = -μ / 2 * (tr((F)' * F)) * J(F)^(-2)
     ∂Ψ2_∂J(F) = -β / J_(F)
-    ∂Ψ_∂J(F) = ∂Ψ1_∂J(F) * ∂J(F) + ∂Ψ2_∂J(F) 
-    ∂Ψ_∂F(F) =  μ * F * J(F)^(-1)
+    ∂Ψ_∂J(F) = ∂Ψ1_∂J(F) * ∂J(F) + ∂Ψ2_∂J(F)
+    ∂Ψ_∂F(F) = μ * F * J(F)^(-1)
 
     ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂J(F) * H(F)
     I_ = I4()
-    ∂Ψ1_∂J2(F) =  μ * J(F)^(-3) * (tr((F)' * F))
+    ∂Ψ1_∂J2(F) = μ * J(F)^(-3) * (tr((F)' * F))
     ∂Ψ2_∂J2(F) = β / J_(F)^2
-    ∂Ψ_∂J2(F) = (∂Ψ1_∂J2(F) * ∂J(F)^2 + ∂Ψ1_∂J(F) * ∂2J(F)) + ∂Ψ2_∂J2(F)  
-    ∂Ψ_∂FJ(F) =  - μ * J(F)^(-2) * F* ∂J(F)
+    ∂Ψ_∂J2(F) = (∂Ψ1_∂J2(F) * ∂J(F)^2 + ∂Ψ1_∂J(F) * ∂2J(F)) + ∂Ψ2_∂J2(F)
+    ∂Ψ_∂FJ(F) = -μ * J(F)^(-2) * F * ∂J(F)
     ∂Ψ_∂FF(F) = μ * J(F)^(-1) * I_
 
-    ∂Ψuu(F) = ∂Ψ_∂FF(F)  + ∂Ψ_∂J2(F) * (H(F) ⊗ H(F)) + ∂Ψ_∂FJ(F) ⊗ H(F) + H(F) ⊗ ∂Ψ_∂FJ(F) + ∂Ψ_∂J(F) * _∂H∂F_2D()
+    ∂Ψuu(F) = ∂Ψ_∂FF(F) + ∂Ψ_∂J2(F) * (H(F) ⊗ H(F)) + ∂Ψ_∂FJ(F) ⊗ H(F) + H(F) ⊗ ∂Ψ_∂FJ(F) + ∂Ψ_∂J(F) * _∂H∂F_2D()
     return (Ψ, ∂Ψu, ∂Ψuu)
   end
 
@@ -775,15 +860,15 @@ struct ARAP2D{A} <: Mechano
 
   function (obj::ARAP2D)(Λ::Float64=1.0)
     _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
-    μ=  obj.μ 
+    μ = obj.μ
     I_ = I4()
 
     Ψ(F) = μ * 0.5 * J(F)^(-1) * (tr((F)' * F))
-    ∂Ψ_∂F(F) =  μ * F * J(F)^(-1)
-    ∂Ψ_∂J(F) =  -μ / 2 * (tr((F)' * F)) * J(F)^(-2)
+    ∂Ψ_∂F(F) = μ * F * J(F)^(-1)
+    ∂Ψ_∂J(F) = -μ / 2 * (tr((F)' * F)) * J(F)^(-2)
 
     ∂2Ψ_∂J2(F) = μ * J(F)^(-3) * (tr((F)' * F))
-    ∂2Ψ_∂FJ(F) =- μ * J(F)^(-2) * F
+    ∂2Ψ_∂FJ(F) = -μ * J(F)^(-2) * F
     ∂2Ψ_∂FF(F) = μ * J(F)^(-1) * I_
 
 
@@ -1033,7 +1118,7 @@ struct MagnetoMechModel{A,B} <: MagnetoMechano
     A, B = typeof(Mechano), typeof(Magneto)
     new{A,B}(Mechano, Magneto)
   end
- 
+
   function (obj::MagnetoMechModel)(Λ::Float64=1.0)
     Ψm, ∂Ψm_u, ∂Ψm_uu = obj.Mechano(Λ)
     Ψmm, ∂Ψmm_u, ∂Ψmm_φ, ∂Ψmm_uu, ∂Ψmm_φu, ∂Ψmm_φφ = _getCoupling(obj.Mechano, obj.Magneto, Λ)
@@ -1048,7 +1133,7 @@ struct MagnetoMechModel{A,B} <: MagnetoMechano
     return (Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ)
   end
 
- 
+
 
 end
 
@@ -1059,9 +1144,9 @@ struct MagnetoVacuumModel{A} <: MagnetoMechano
     A = typeof(Magneto)
     new{A}(Magneto)
   end
- 
+
   function (obj::MagnetoVacuumModel)(Λ::Float64=1.0)
- 
+
     _, H, J = get_Kinematics(Kinematics(Mechano); Λ=Λ)
 
     μ, χe = obj.Magneto.μ, obj.Magneto.χe
@@ -1070,7 +1155,7 @@ struct MagnetoVacuumModel{A} <: MagnetoMechano
     Hℋ₀(F, ℋ₀) = H(F) * ℋ₀
     Hℋ₀Hℋ₀(F, ℋ₀) = Hℋ₀(F, ℋ₀) ⋅ Hℋ₀(F, ℋ₀)
     Ψmm(F, ℋ₀) = (-μ / (2.0 * J(F))) * Hℋ₀Hℋ₀(F, ℋ₀) * (1 + χe)
-  
+
     # First Derivatives #
     I2_ = I2()
     ∂Ψmm_∂H(F, ℋ₀) = (-μ / (J(F))) * (Hℋ₀(F, ℋ₀) ⊗ ℋ₀) * (1 + χe)
@@ -1078,25 +1163,25 @@ struct MagnetoVacuumModel{A} <: MagnetoMechano
     ∂Ψmm_∂ℋ₀(F, ℋ₀) = (-μ / (J(F))) * (H(F)' * Hℋ₀(F, ℋ₀)) * (1 + χe)
     ∂Ψmm_∂u(F, ℋ₀) = (tr(∂Ψmm_∂H(F, ℋ₀)) * I2_) - ∂Ψmm_∂H(F, ℋ₀)' + ∂Ψmm_∂J(F, ℋ₀) * H(F)
     ∂Ψmm_∂φ(F, ℋ₀) = ∂Ψmm_∂ℋ₀(F, ℋ₀)
-  
+
     # Second Derivatives #
     ∂Ψmm_∂HH(F, ℋ₀) = (-μ / (J(F))) * (I2_ ⊗₁₃²⁴ (ℋ₀ ⊗ ℋ₀)) * (1 + χe)
     ∂Ψmm_∂HJ(F, ℋ₀) = (+μ / (J(F))^2.0) * (Hℋ₀(F, ℋ₀) ⊗ ℋ₀) * (1 + χe)
     ∂Ψmm_∂JJ(F, ℋ₀) = (-μ / (J(F))^3.0) * Hℋ₀Hℋ₀(F, ℋ₀) * (1 + χe)
     ∂Ψmm_∂uu(F, ℋ₀) = _∂H∂F_2D()' * ∂Ψmm_∂HH(F, ℋ₀) * _∂H∂F_2D() + _∂H∂F_2D()' * (∂Ψmm_∂HJ(F, ℋ₀) ⊗ H(F)) +
                       (H(F) ⊗ ∂Ψmm_∂HJ(F, ℋ₀)) * _∂H∂F_2D() + ∂Ψmm_∂JJ(F, ℋ₀) * (H(F) ⊗ H(F)) + ∂Ψmm_∂J(F, ℋ₀) * _∂H∂F_2D()
-  
-  
+
+
     ∂Ψmm_∂ℋ₀H(F, ℋ₀) = (-μ / (J(F))) * ((I2_ ⊗₁₃² Hℋ₀(F, ℋ₀)) + (H(F)' ⊗₁₂³ ℋ₀)) * (1 + χe)
     ∂Ψmm_∂ℋ₀J(F, ℋ₀) = (+μ / (J(F))^2.0) * (H(F)' * Hℋ₀(F, ℋ₀)) * (1 + χe)
     ∂Ψmm_∂φu(F, ℋ₀) = ∂Ψmm_∂ℋ₀H(F, ℋ₀) * _∂H∂F_2D() + (∂Ψmm_∂ℋ₀J(F, ℋ₀) ⊗₁²³ H(F))
     ∂Ψmm_∂φφ(F, ℋ₀) = (-μ / (J(F))) * (H(F)' * H(F)) * (1 + χe)
-  
+
 
     return (Ψmm, ∂Ψmm_∂u, ∂Ψmm_∂φ, ∂Ψmm_∂uu, ∂Ψmm_∂φu, ∂Ψmm_∂φφ)
   end
 
- 
+
 
 end
 
