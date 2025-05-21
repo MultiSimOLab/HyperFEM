@@ -33,6 +33,7 @@ end
 @publish PhysicalModels NonlinearMoneyRivlin3D
 @publish PhysicalModels NonlinearMoneyRivlin2D
 @publish PhysicalModels NonlinearMoneyRivlin2D_CV
+@publish PhysicalModels NonlinearIncompressibleMoneyRivlin2D_CV
 @publish PhysicalModels TransverseIsotropy3D
 @publish PhysicalModels ThermalModel
 @publish PhysicalModels IdealDielectric

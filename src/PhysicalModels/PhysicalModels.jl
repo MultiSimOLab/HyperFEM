@@ -28,6 +28,7 @@ export MoneyRivlin2D
 export NonlinearMoneyRivlin3D
 export NonlinearMoneyRivlin2D
 export NonlinearMoneyRivlin2D_CV
+export NonlinearIncompressibleMoneyRivlin2D_CV
 export TransverseIsotropy3D
 export LinearElasticity3D
 export LinearElasticity2D
@@ -138,7 +139,7 @@ struct Hessian∇JRegularization{A,B} <: Mechano
     ∂Ψ(F, Jh) = ∂Ψs(F) + κ * (J(F) - Jh) * H(F)
     ∂2Ψ_(F, Jh) = ∂2Ψs(F) + κ * (H(F) ⊗ H(F)) + κ * (J(F) - Jh) * _∂H∂F_2D()
 
-    ∂2Ψ(F) = begin
+    ∂2Ψ(F,Jh) = begin
       vecval = eigen(get_array(∂2Ψ_(F, Jh)))
       vec = real(vecval.vectors)
       val = real(vecval.values)
@@ -532,6 +533,61 @@ struct NonlinearMoneyRivlin2D_CV{A} <: Mechano
 end
 
 
+
+
+
+
+struct NonlinearIncompressibleMoneyRivlin2D_CV{A} <: Mechano
+  λ::Float64
+  μ::Float64
+  α::Float64
+  γ::Float64
+  ρ::Float64
+  Kinematic::A
+  function NonlinearIncompressibleMoneyRivlin2D_CV(; λ::Float64, μ::Float64, α::Float64, γ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(λ, μ, α, γ, ρ, Kinematic)
+  end
+
+
+  function (obj::NonlinearIncompressibleMoneyRivlin2D_CV)(Λ::Float64=1.0)
+    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    λ, μ, α, γ = obj.λ, obj.μ, obj.α, obj.γ
+
+    I_           =  I4()
+    e(F)         =  (tr((F)' * F) + 1.0) * J(F)^(-2 / 3)
+    ∂e_∂F(F)     =  2 * J(F)^(-2 / 3) * F
+    ∂e_∂J(F)     =  -(2 / 3) * (tr((F)' * F) + 1.0) * J(F)^(-5 / 3)    
+    ∂e2_∂F2(F)   =  2 * J(F)^(-2 / 3) * I_
+    ∂e2_∂J2(F)   =  (10 / 9)*J(F)^(-8 / 3) * (tr((F)' * F) + 1.0)
+    ∂e2_∂FJ(F)   =  -(4 / 3)*J(F)^(-5 / 3) * F
+
+    Ψ1(F)        =  μ / (2* α) * (e(F))^α
+    Ψ2(F)        =  (λ ) * (J(F)^(γ) + J(F)^(-γ))
+    Ψ(F)         =  Ψ1(F) + Ψ2(F) 
+
+    ∂Ψ1_∂F(F)    =  (μ / 2) * (((e(F))^(α - 1.0)) * ∂e_∂F(F))
+    ∂Ψ1_∂J(F)    =  (μ / 2) * (((e(F))^(α - 1.0)) * ∂e_∂J(F))
+    ∂Ψ2_∂J(F)    =  λ * γ *  (J(F)^(γ-1) - J(F)^(-γ-1))    
+    ∂Ψ_∂F(F)     =  ∂Ψ1_∂F(F)
+    ∂Ψ_∂J(F)     =  ∂Ψ1_∂J(F) + ∂Ψ2_∂J(F)
+    ∂Ψu(F)       =  ∂Ψ_∂F(F)  + ∂Ψ_∂J(F) * H(F)
+
+    ∂Ψ1_∂F2(F)   =  (μ / 2) * ((e(F)^(α - 1)) * ∂e2_∂F2(F) + (α - 1) * (e(F)^(α - 2)) * ∂e_∂F(F) ⊗ ∂e_∂F(F))
+    ∂Ψ1_∂J2(F)   =  (μ / 2) * ((e(F)^(α - 1)) * ∂e2_∂J2(F) + (α - 1) * (e(F)^(α - 2)) * ∂e_∂J(F) * ∂e_∂J(F))
+    ∂Ψ1_∂FJ(F)   =  (μ / 2) * ((e(F)^(α - 1)) * ∂e2_∂FJ(F) + (α - 1) * (e(F)^(α - 2)) * ∂e_∂F(F) * ∂e_∂J(F))
+    ∂Ψ2_∂J2(F)   =  λ * γ  *  ((γ-1)*J(F)^(γ-2) + (γ+1)*J(F)^(-γ-2))
+
+    ∂Ψ_∂F2(F)    =  ∂Ψ1_∂F2(F)
+    ∂Ψ_∂FJ(F)    =  ∂Ψ1_∂FJ(F)
+    ∂Ψ_∂J2(F)    =  ∂Ψ1_∂J2(F)  + ∂Ψ2_∂J2(F)
+
+    ∂Ψuu(F)      =  ∂Ψ_∂F2(F) + ∂Ψ_∂J2(F) * (H(F) ⊗ H(F)) + ∂Ψ_∂FJ(F) ⊗ H(F) + H(F) ⊗ ∂Ψ_∂FJ(F) + ∂Ψ_∂J(F) * _∂H∂F_2D()
+    
+    return (Ψ, ∂Ψu, ∂Ψuu)
+  end
+
+end
+
 struct TransverseIsotropy3D{A} <: Mechano
   μ::Float64
   α::Float64
@@ -759,23 +815,23 @@ end
 
 
 
-#     # λ1(F) = S(F).S[1]
-#     # λ2(F) = S(F).S[2]
+# #     # λ1(F) = S(F).S[1]
+# #     # λ2(F) = S(F).S[2]
 
-#     # ∂J_∂λ1(F) = λ2(F)
-#     # ∂J_∂λ2(F) = λ1(F)
+# #     # ∂J_∂λ1(F) = λ2(F)
+# #     # ∂J_∂λ2(F) = λ1(F)
 
-#     # ∂Ψ1_∂λ1(F) = -(μ / 3) * J(F)^(-5 / 3) * ∂J_∂λ1(F) * (1.0 + I1(F)) + (μ / 2) * J(F)^(-2 / 3) * 2.0 * ∂J_∂λ2(F)
-#     # ∂Ψ1_∂λ2(F) = -(μ / 3) * J(F)^(-5 / 3) * ∂J_∂λ2(F) * (1.0 + I1(F)) + (μ / 2) * J(F)^(-2 / 3) * 2.0 * ∂J_∂λ1(F)
+# #     # ∂Ψ1_∂λ1(F) = -(μ / 3) * J(F)^(-5 / 3) * ∂J_∂λ1(F) * (1.0 + I1(F)) + (μ / 2) * J(F)^(-2 / 3) * 2.0 * ∂J_∂λ2(F)
+# #     # ∂Ψ1_∂λ2(F) = -(μ / 3) * J(F)^(-5 / 3) * ∂J_∂λ2(F) * (1.0 + I1(F)) + (μ / 2) * J(F)^(-2 / 3) * 2.0 * ∂J_∂λ1(F)
 
-#     # ∂Ψ2_∂λ1(F) = λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1)) * ∂J_∂λ1(F)
-#     # ∂Ψ2_∂λ2(F) = λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1)) * ∂J_∂λ2(F)
+# #     # ∂Ψ2_∂λ1(F) = λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1)) * ∂J_∂λ1(F)
+# #     # ∂Ψ2_∂λ2(F) = λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1)) * ∂J_∂λ2(F)
 
-#     # ∂Ψ_∂λ1(F) = ∂Ψ1_∂λ1(F) + ∂Ψ2_∂λ1(F)
-#     # ∂Ψ_∂λ2(F) = ∂Ψ1_∂λ2(F) + ∂Ψ2_∂λ2(F)
+# #     # ∂Ψ_∂λ1(F) = ∂Ψ1_∂λ1(F) + ∂Ψ2_∂λ1(F)
+# #     # ∂Ψ_∂λ2(F) = ∂Ψ1_∂λ2(F) + ∂Ψ2_∂λ2(F)
 
-#     # ∂Ψu_(F) = ∂Ψ_∂λ1(F) * S(F).U[:, 1] * S(F).Vt[1, :]' + ∂Ψ_∂λ2(F) * S(F).U[:, 2] * S(F).Vt[2, :]'
-#     # ∂Ψu(F) = TensorValue(∂Ψu_(F))
+# #     # ∂Ψu_(F) = ∂Ψ_∂λ1(F) * S(F).U[:, 1] * S(F).Vt[1, :]' + ∂Ψ_∂λ2(F) * S(F).U[:, 2] * S(F).Vt[2, :]'
+# #     # ∂Ψu(F) = TensorValue(∂Ψu_(F))
 
 #     ∂Ψuu(F)= begin
 #       S = svd(get_array(F))
