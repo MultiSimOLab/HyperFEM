@@ -69,16 +69,7 @@ struct Injectivity_Preserving_LS{A} <: AbstractLineSearch
     caches = (U, V)
     new{typeof(caches)}(α, maxiter, αmin, ρ, c, caches)
   end
-
-
-  function InjectivityCheck(α, ∇u, ∇du)
-    ε = 1e-6
-    F = ∇u + one(∇u)
-    J = det(F)
-    H = J * inv(F)'
-    return true, min(abs((ε - J) / (det(∇du) + tr(H' * ∇du) + ε)), 1.0)
-  end
-
+ 
 
   function (obj::Injectivity_Preserving_LS)(x::AbstractVector, dx::AbstractVector, b::AbstractVector, op::NonlinearOperator)
 
@@ -108,6 +99,17 @@ struct Injectivity_Preserving_LS{A} <: AbstractLineSearch
   end
 
 end
+
+
+
+function InjectivityCheck(α, ∇u, ∇du)
+  ε = 1e-6
+  F = ∇u + one(∇u)
+  J = det(F)
+  H = J * inv(F)'
+  return true, min(abs((ε - J) / (det(∇du) + tr(H' * ∇du) + ε)), 1.0)
+end
+
 
 function update_cellstate!(obj::Injectivity_Preserving_LS, xh, dxh)
   update_state!(InjectivityCheck, obj.α, ∇(xh)', ∇(dxh)')
