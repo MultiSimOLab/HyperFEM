@@ -1,4 +1,3 @@
-
 """
     struct Newton_RaphsonSolver <: Algebra.NonlinearSolver
   
@@ -7,12 +6,13 @@
 struct Newton_RaphsonSolver <: Algebra.NonlinearSolver
   ls::Algebra.LinearSolver
   log::ConvergenceLog{Float64}
+  linesearch::AbstractLineSearch
 end
 
-function Newton_RaphsonSolver(ls; maxiter=100, atol=1e-12, rtol=1.e-6, verbose=0, name="Newton-Raphson")
+function Newton_RaphsonSolver(ls; maxiter=100, atol=1e-12, rtol=1.e-6, verbose=0, name="Newton-Raphson", linesearch::AbstractLineSearch=LineSearch())
   tols = SolverTolerances{Float64}(; maxiter=maxiter, atol=atol, rtol=rtol)
   log = ConvergenceLog(name, tols; verbose=verbose)
-  return Newton_RaphsonSolver(ls, log)
+  return Newton_RaphsonSolver(ls, log, linesearch)
 end
 
 AbstractTrees.children(s::Newton_RaphsonSolver) = [s.ls]
@@ -46,6 +46,7 @@ end
 
 function _solve_nr!(x, A, b, dx, ns, nls, op)
   log = nls.log
+  linesearch = nls.linesearch
 
   # Check for convergence on the initial residual
   res = norm(b)
@@ -62,9 +63,10 @@ function _solve_nr!(x, A, b, dx, ns, nls, op)
     # if abs(b' * dx) < 1e-6
     #   break
     # end
-      # x .+= dx
+    # x .+= dx
 
-      _RPlinesearch!(x, dx, b, op)
+    α = linesearch(x, dx, b, op)
+    x .+= α * dx
 
     # Check convergence for the current residual
     residual!(b, op, x)
@@ -82,23 +84,24 @@ function _solve_nr!(x, A, b, dx, ns, nls, op)
   finalize!(log, res)
   return x
 end
+ 
 
-function _RPlinesearch!(x::AbstractVector, dx::AbstractVector, b::AbstractVector, op::NonlinearOperator; maxiter=50, αmin=1e-16, ρ=0.5, c=0.95)
+# function _RPlinesearch!(x::AbstractVector, dx::AbstractVector, b::AbstractVector, op::NonlinearOperator; maxiter=50, αmin=1e-16, ρ=0.5, c=0.95)
 
-  m = 0
-  α = 1.0
-  R₀ = b' * dx
+#   m = 0
+#   α = 1.0
+#   R₀ = b' * dx
 
-  while α > αmin && m < maxiter
-    residual!(b, op, x + α * dx)
-    R = b' * dx
-    if R <= c * R₀
-      break
-    end
-    α *= ρ
-    m += 1
-  end
-  @show α
+#   while α > αmin && m < maxiter
+#     residual!(b, op, x + α * dx)
+#     R = b' * dx
+#     if R <= c * R₀
+#       break
+#     end
+#     α *= ρ
+#     m += 1
+#   end
+#   @show α
 
-  x .+= α * dx
-end
+#   x .+= α * dx
+# end

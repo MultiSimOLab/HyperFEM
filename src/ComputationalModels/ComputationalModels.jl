@@ -59,7 +59,8 @@ export TestFESpace!
 
 include("GridapExtras.jl")
 export GmshDiscreteModel
- 
+export evaluate!
+
 include("Drivers.jl")
 export StaggeredModel
 export StaticNonlinearModel

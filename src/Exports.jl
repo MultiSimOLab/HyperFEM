@@ -106,9 +106,12 @@ end
 @publish ComputationalModels  D0
 @publish ComputationalModels  reset!
 @publish ComputationalModels  DirichletCoupling
+@publish ComputationalModels  evaluate!
 
 @publish Solvers IterativeSolver
 @publish Solvers Newton_RaphsonSolver
+@publish Solvers Injectivity_Preserving_LS
+@publish Solvers Roman_LS
 
  
 
