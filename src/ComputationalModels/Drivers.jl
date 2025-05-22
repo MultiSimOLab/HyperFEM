@@ -183,8 +183,10 @@ function post_solve!(pvd, x, Λ, Λ_, m, filePath)
 end
 
 function dirichlet_preconditioning!(x::Vector{Float64}, m::StaticNonlinearModel, Λ::Float64, ∆Λ::Float64)
-    duh = get_dirichlet_preconditioner(m::StaticNonlinearModel, Λ::Float64, ∆Λ::Float64)
-    x .+= get_free_dof_values(duh)
+   duh = get_dirichlet_preconditioner(m::StaticNonlinearModel, Λ::Float64, ∆Λ::Float64)
+   # update step
+   α = update_cellstate!(m.caches[1].linesearch, get_state(m),duh)
+   x .+= α*get_free_dof_values(duh)
 end
 
 function get_dirichlet_preconditioner(m::StaticNonlinearModel, Λ::Float64, ∆Λ::Float64)

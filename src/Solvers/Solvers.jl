@@ -13,6 +13,7 @@ export Newton_RaphsonCache
 export solve!
 export Injectivity_Preserving_LS
 export Roman_LS
+export update_cellstate!
 
 include("LinearSolvers.jl")
 include("LineSearches.jl")

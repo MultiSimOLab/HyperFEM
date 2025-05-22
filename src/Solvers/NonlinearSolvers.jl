@@ -67,9 +67,8 @@ function _solve_nr!(x, A, b, dx, ns, nls, op)
 
     α = linesearch(x, dx, b, op)
     x .+= α * dx
-
     # Check convergence for the current residual
-    residual!(b, op, x)
+    # residual!(b, op, x)
     res = norm(b)
     done = update!(log, res)
 
@@ -85,23 +84,4 @@ function _solve_nr!(x, A, b, dx, ns, nls, op)
   return x
 end
  
-
-# function _RPlinesearch!(x::AbstractVector, dx::AbstractVector, b::AbstractVector, op::NonlinearOperator; maxiter=50, αmin=1e-16, ρ=0.5, c=0.95)
-
-#   m = 0
-#   α = 1.0
-#   R₀ = b' * dx
-
-#   while α > αmin && m < maxiter
-#     residual!(b, op, x + α * dx)
-#     R = b' * dx
-#     if R <= c * R₀
-#       break
-#     end
-#     α *= ρ
-#     m += 1
-#   end
-#   @show α
-
-#   x .+= α * dx
-# end
+ 

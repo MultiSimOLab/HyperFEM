@@ -112,6 +112,7 @@ end
 @publish Solvers Newton_RaphsonSolver
 @publish Solvers Injectivity_Preserving_LS
 @publish Solvers Roman_LS
+@publish Solvers update_cellstate!
 
  
 

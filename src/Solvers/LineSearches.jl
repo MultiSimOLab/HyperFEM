@@ -1,15 +1,25 @@
- 
-
 abstract type AbstractLineSearch end
+
+
 
 struct LineSearch <: AbstractLineSearch
   function LineSearch()
     new()
   end
   function (obj::LineSearch)(x::AbstractVector, dx::AbstractVector, b::AbstractVector, op::NonlinearOperator)
-    return 1.0
+    α = 1.0
+    residual!(b, op, x + α * dx)
+    return α
   end
+
 end
+
+
+function update_cellstate!(obj::LineSearch, xh, dxh)
+  return 1.0
+end
+
+
 
 struct Roman_LS <: AbstractLineSearch
   maxiter::Int
@@ -19,6 +29,7 @@ struct Roman_LS <: AbstractLineSearch
   function Roman_LS(; maxiter::Int64=50, αmin::Float64=1e-16, ρ::Float64=0.5, c::Float64=0.95)
     new(maxiter, αmin, ρ, c)
   end
+
 
   function (obj::Roman_LS)(x::AbstractVector, dx::AbstractVector, b::AbstractVector, op::NonlinearOperator)
 
@@ -42,6 +53,11 @@ struct Roman_LS <: AbstractLineSearch
   end
 end
 
+function update_cellstate!(obj::Roman_LS, xh, dxh)
+  return 1.0
+end
+
+
 struct Injectivity_Preserving_LS{A} <: AbstractLineSearch
   α::CellState
   maxiter::Int
@@ -62,7 +78,6 @@ struct Injectivity_Preserving_LS{A} <: AbstractLineSearch
     H = J * inv(F)'
     return true, min(abs((ε - J) / (det(∇du) + tr(H' * ∇du) + ε)), 1.0)
   end
-
 
 
   function (obj::Injectivity_Preserving_LS)(x::AbstractVector, dx::AbstractVector, b::AbstractVector, op::NonlinearOperator)
@@ -94,3 +109,7 @@ struct Injectivity_Preserving_LS{A} <: AbstractLineSearch
 
 end
 
+function update_cellstate!(obj::Injectivity_Preserving_LS, xh, dxh)
+  update_state!(InjectivityCheck, obj.α, ∇(xh)', ∇(dxh)')
+  return minimum(minimum((obj.α.values)))
+end
