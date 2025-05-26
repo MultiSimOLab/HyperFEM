@@ -108,7 +108,7 @@ get_assemblers(m::StaticNonlinearModel) = (m.caches[4])
 #   vtk::WriteVTK.CollectionFile=paraview_collection(datadir("sims", "Temp") * "/Results", append=false)
 
 function solve!(m::StaticNonlinearModel;
-    stepping=(nsteps=20, maxbisec=15), RestartState::Bool=false ,ProjectDirichlet::Bool=true, 
+    stepping=(nsteps=20, maxbisec=15), RestartState::Bool=false, ProjectDirichlet::Bool=true,
     post=PostProcessor())
 
     reset!(post)
@@ -122,16 +122,19 @@ function solve!(m::StaticNonlinearModel;
     nbisect = 0
     Λ_ = 0
     if RestartState
-    x .*= 0.0
+        x .*= 0.0
     end
     x⁻ .= x
+    α = 1.0
 
     while Λ < 1.0
         Λ += ∆Λ
         Λ = min(1.0, Λ)
         if ProjectDirichlet
-            dirichlet_preconditioning!(x, m, Λ, ∆Λ)
+            α = dirichlet_preconditioning!(x, m, Λ, ∆Λ, nls)
         end
+        Λ -= ∆Λ
+        Λ += α * ∆Λ
         TrialFESpace!(U, m.dirichlet, Λ)
         res = m.res(Λ)
         jac = m.jac(Λ)
@@ -142,7 +145,7 @@ function solve!(m::StaticNonlinearModel;
         if !converged(nls.log.tols, nls.log.num_iters, r_abs, r_rel)
             @warn "Bisection performed!"
             x .= x⁻
-            Λ -= ∆Λ
+            Λ -= α * ∆Λ
             ∆Λ = ∆Λ / 2
             nbisect += 1
             # @assert(nbisect <= stepping[:maxbisec], "Maximum number of bisections reached")
@@ -163,7 +166,7 @@ function solve!(m::StaticNonlinearModel;
 
     end
 
-     vtk_save(post)
+    vtk_save(post)
 
     return x, flagconv
 end
@@ -182,17 +185,26 @@ function post_solve!(pvd, x, Λ, Λ_, m, filePath)
     return pvd
 end
 
-function dirichlet_preconditioning!(x::Vector{Float64}, m::StaticNonlinearModel, Λ::Float64, ∆Λ::Float64)
-   duh = get_dirichlet_preconditioner(m::StaticNonlinearModel, Λ::Float64, ∆Λ::Float64)
-   # update step
-   α = update_cellstate!(m.caches[1].linesearch, get_state(m),duh)
-   x .+= α*get_free_dof_values(duh)
+function dirichlet_preconditioning!(x::Vector{Float64}, m::StaticNonlinearModel, Λ::Float64, ∆Λ::Float64, ::Newton_RaphsonSolver)
+    duh = get_dirichlet_preconditioner(m::StaticNonlinearModel, Λ::Float64, ∆Λ::Float64)
+    # update step
+    α = update_cellstate!(m.caches[1].linesearch, get_state(m), duh)
+    x .+= α * get_free_dof_values(duh)
+    return α
 end
+
+function dirichlet_preconditioning!(x::Vector{Float64}, m::StaticNonlinearModel, Λ::Float64, ∆Λ::Float64, ::Any)
+    duh = get_dirichlet_preconditioner(m::StaticNonlinearModel, Λ::Float64, ∆Λ::Float64)
+    x .+= get_free_dof_values(duh)
+    return 1.0
+end
+
 
 function get_dirichlet_preconditioner(m::StaticNonlinearModel, Λ::Float64, ∆Λ::Float64)
     _, V, ∆U = m.spaces
     uh = get_state(m)
-    TrialFESpace!(∆U, m.dirichlet, ∆Λ)
+    # TrialFESpace!(∆U, m.dirichlet, ∆Λ)
+    TrialFESpace!(∆U, m.dirichlet, Λ, ∆Λ)
     res = m.res(Λ - ∆Λ)
     jac = m.jac(Λ - ∆Λ)
     l(v) = -1.0 * res(uh, v)
@@ -406,12 +418,12 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
         return x
     end
 
-    function (m::StaticLinearModel)(xh::SingleFieldFEFunction; Measure=nothing,  Assembly=false, kwargs ...)
+    function (m::StaticLinearModel)(xh::SingleFieldFEFunction; Measure=nothing, Assembly=false, kwargs...)
         x_ = get_free_dof_values(xh)
         _, V = m.spaces
         jac = m.jac
         ns, K, b, _, assem_U = m.caches
-        assemble_vector!((v)->∫(xh*v)Measure, b, assem_U, V)
+        assemble_vector!((v) -> ∫(xh * v)Measure, b, assem_U, V)
         if Assembly
             assemble_matrix!(jac, K, assem_U, U, V)
         end
@@ -420,13 +432,13 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
         return x_
     end
 
- 
+
 
 end
 
 
 function solve!(m::StaticLinearModel; Assembly=true, post=PostProcessor())
-    
+
     reset!(post)
     U, V = m.spaces
     jac = m.jac
@@ -448,7 +460,7 @@ end
 
 
 function solve!(m::StaticLinearModel, b::Vector{Float64}; Assembly=true, post=PostProcessor())
-   
+
     reset!(post)
     U, V = m.spaces
     jac = m.jac

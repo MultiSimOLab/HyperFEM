@@ -13,8 +13,20 @@ function Gridap.FESpaces.TrialFESpace!(space::SingleFieldFESpace, bc::DirichletB
 
 end
 
+ 
+function Gridap.FESpaces.TrialFESpace!(space::SingleFieldFESpace, bc::DirichletBC, Λ::Float64, ΔΛ::Float64)
+  TrialFESpace!(space, map(f -> ((x)->f(Λ)(x)-f(Λ-ΔΛ)(x)), bc.values))
+      ## actualizar DirichletCoupling
+
+end
+
+
 function Gridap.FESpaces.TrialFESpace!(space::SingleFieldFESpace, ::NothingBC, Λ::Float64)
     space
+end
+
+function Gridap.FESpaces.TrialFESpace!(space::SingleFieldFESpace, ::NothingBC, Λ::Float64, ΔΛ::Float64)
+  space
 end
 
 function Gridap.FESpaces.TrialFESpace!(space::MultiFieldFESpace, bc::MultiFieldBC, Λ::Float64)
@@ -22,6 +34,13 @@ function Gridap.FESpaces.TrialFESpace!(space::MultiFieldFESpace, bc::MultiFieldB
     TrialFESpace!(space, bc.BoundaryCondition[i], Λ)
   end
 end
+
+function Gridap.FESpaces.TrialFESpace!(space::MultiFieldFESpace, bc::MultiFieldBC, Λ::Float64, ΔΛ::Float64)
+  @inbounds for (i, space) in enumerate(space.spaces)
+    TrialFESpace!(space, bc.BoundaryCondition[i], Λ, ΔΛ)
+  end
+end
+
 
 function Gridap.FESpaces.TrialFESpace(space::SingleFieldFESpace,::NothingBC, Λ::Float64)
   space

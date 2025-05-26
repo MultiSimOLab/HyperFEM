@@ -47,9 +47,7 @@ struct Roman_LS <: AbstractLineSearch
       α *= ρ
       m += 1
     end
-    @show α
     return α
-    # x .+= α * dx
   end
 end
 
@@ -73,15 +71,13 @@ struct Injectivity_Preserving_LS{A} <: AbstractLineSearch
 
   function (obj::Injectivity_Preserving_LS)(x::AbstractVector, dx::AbstractVector, b::AbstractVector, op::NonlinearOperator)
 
-    αstate, maxiter, αmin, ρ, c = obj.α, obj.maxiter, obj.αmin, obj.ρ, obj.c
+    _, maxiter, αmin, ρ, c = obj.α, obj.maxiter, obj.αmin, obj.ρ, obj.c
     #update cell state
     U, V = obj.caches
     xh = FEFunction(U, x)
     dxh = FEFunction(V, dx)
-    update_state!(InjectivityCheck, αstate, ∇(xh)', ∇(dxh)')
-
+    α = update_cellstate!(obj, xh, dxh)
     m = 0
-    α = minimum(minimum((αstate.values)))
     R₀ = b' * dx
 
     while α > αmin && m < maxiter
@@ -93,9 +89,7 @@ struct Injectivity_Preserving_LS{A} <: AbstractLineSearch
       α *= ρ
       m += 1
     end
-    println("α = ", α)
     return α
-    # x .+= α * dx
   end
 
 end
@@ -107,7 +101,8 @@ function InjectivityCheck(α, ∇u, ∇du)
   F = ∇u + one(∇u)
   J = det(F)
   H = J * inv(F)'
-  return true, min(abs((ε - J) / (det(∇du) + tr(H' * ∇du) + ε)), 1.0)
+  return true, min(0.95*abs(( -J) / (det(∇du) + tr(H' * ∇du) )), 1.0)
+
 end
 
 
