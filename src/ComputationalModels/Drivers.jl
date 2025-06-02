@@ -113,7 +113,7 @@ function solve!(m::StaticNonlinearModel;
 
     reset!(post)
     flagconv = 1 # convergence flag 0 (max bisections) 1 (max steps)
-    U, V = m.spaces
+    U, V, ∆U = m.spaces
     TrialFESpace!(U, m.dirichlet, 0.0)
     nls, nls_cache, x, x⁻, assem_U = m.caches
 
@@ -129,13 +129,22 @@ function solve!(m::StaticNonlinearModel;
 
     while Λ < 1.0
         Λ += ∆Λ
+        if Λ > 1.0
+        ∆Λ = 1.0 - (Λ - ∆Λ)
         Λ = min(1.0, Λ)
+        end
         if ProjectDirichlet
             α = dirichlet_preconditioning!(x, m, Λ, ∆Λ, nls)
         end
+        @show α
         Λ -= ∆Λ
-        Λ += α * ∆Λ
+        ∆Λ= α*∆Λ
+        Λ += ∆Λ
+
+        # U.dirichlet_values .+= α*∆U.dirichlet_values
+ 
         TrialFESpace!(U, m.dirichlet, Λ)
+        
         res = m.res(Λ)
         jac = m.jac(Λ)
         op = get_algebraic_operator(FEOperator(res, jac, U, V, assem_U))
@@ -145,7 +154,7 @@ function solve!(m::StaticNonlinearModel;
         if !converged(nls.log.tols, nls.log.num_iters, r_abs, r_rel)
             @warn "Bisection performed!"
             x .= x⁻
-            Λ -= α * ∆Λ
+            Λ -= α*∆Λ 
             ∆Λ = ∆Λ / 2
             nbisect += 1
             # @assert(nbisect <= stepping[:maxbisec], "Maximum number of bisections reached")
@@ -189,7 +198,7 @@ function dirichlet_preconditioning!(x::Vector{Float64}, m::StaticNonlinearModel,
     duh = get_dirichlet_preconditioner(m::StaticNonlinearModel, Λ::Float64, ∆Λ::Float64)
     # update step
     α = update_cellstate!(m.caches[1].linesearch, get_state(m), duh)
-    x .+= α * get_free_dof_values(duh)
+     x .+= α * get_free_dof_values(duh)
     return α
 end
 
