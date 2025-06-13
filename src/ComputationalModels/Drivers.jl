@@ -136,7 +136,7 @@ function solve!(m::StaticNonlinearModel;
         if ProjectDirichlet
             α = dirichlet_preconditioning!(x, m, Λ, ∆Λ, nls)
         end
-        @show α
+       #@show α
         Λ -= ∆Λ
         ∆Λ= α*∆Λ
         Λ += ∆Λ
