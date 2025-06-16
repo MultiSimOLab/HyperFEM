@@ -107,6 +107,8 @@ end
 @publish ComputationalModels  reset!
 @publish ComputationalModels  DirichletCoupling
 @publish ComputationalModels  evaluate!
+@publish ComputationalModels  InterpolableBC
+@publish ComputationalModels  InterpolableBC!
 
 @publish Solvers IterativeSolver
 @publish Solvers Newton_RaphsonSolver

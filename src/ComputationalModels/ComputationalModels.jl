@@ -50,6 +50,9 @@ export MultiFieldTC
 export residual_Neumann
 export updateBC!
 export DirichletCoupling
+export InterpolableBC
+export InterpolableBC!
+
 
 include("FESpaces.jl")
 export TrialFESpace
