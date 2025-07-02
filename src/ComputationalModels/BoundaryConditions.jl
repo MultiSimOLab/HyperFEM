@@ -61,7 +61,7 @@ function _get_bc_func(tags_::Vector{String}, values_, bc_timesteps)
     @inbounds for i in eachindex(tags_)
 
         if values_[i] === DirichletCoupling
-            bc_func_[i] = (Λ) -> (x) -> x * 0.0
+            bc_func_[i] = (Λ) -> (x) -> x 
         else
             if isnothing(bc_timesteps[i])
                 bc_func_[i] = values_[i]
@@ -189,7 +189,7 @@ struct InterpolableBC{A,B,C} <: DirichletCoupling
         dim = length(U.space.fe_dof_basis.trian.model.grid.node_coordinates[1])
         mask = U.space.dirichlet_dof_tag .== dcmask[1]
         vals = U.dirichlet_values[mask]
-        Interface_coords_ = reshape(vals, :, dim)
+        Interface_coords_ = reshape(vals, dim,:)'
         coords = VectorValue.(eachrow(Interface_coords_))
         v = evaluate(Interpolable(1.0), coords)
         bc_values = reduce(vcat, map(x -> get_array(x), v))

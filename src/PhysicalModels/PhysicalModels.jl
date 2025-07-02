@@ -117,6 +117,9 @@ struct HessianRegularization{A,B} <: Mechano
 
     return (Ψs, ∂Ψs, ∂2Ψ)
   end
+
+
+
 end
 
 

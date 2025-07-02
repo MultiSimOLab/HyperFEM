@@ -60,7 +60,7 @@ function Gridap.FESpaces.TrialFESpace(space::SingleFieldFESpace, ::NothingBC, Λ
 end
 
 function Gridap.FESpaces.TrialFESpace(space::SingleFieldFESpace, bc::DirichletBC, Λ::Float64)
-  trialspace= TrialFESpace(space, map(f -> f(Λ), bc.values))
+    trialspace= TrialFESpace(space, map(f -> f(Λ), bc.values))
    @inbounds for i in eachindex(bc.tags)
     if bc.caches[i] isa InterpolableBC
       bc.caches[i](Λ)
