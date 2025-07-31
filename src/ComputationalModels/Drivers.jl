@@ -53,8 +53,9 @@ function solve!(m::StaggeredModel;
     for time in 0:stepping[:nsteps]-1
         println("Time step: $time")
         stevol(Λ) = ∆Λ * (Λ + time)
-        # map(x -> updateBC!(x.dirichlet, x.dirichlet.caches, [stevol for _ in 1:length(x.dirichlet.caches)]), m.compmodels)
-        map(x -> updateBC!(x.dirichlet, stevol), m.compmodels)
+         map(x -> updateBC!(x.dirichlet, x.dirichlet.caches, [stevol for _ in 1:length(x.dirichlet.caches)]), m.compmodels)
+        # map(x -> updateBC!(x.dirichlet, stevol), m.compmodels)
+ 
         map((x) -> TrialFESpace!(x.spaces[1], x.dirichlet, 1.0), m.compmodels)
         _, flag = map((x, y) -> solve!(x; y...), m.compmodels, kargsolve)
         map((x, y) -> TrialFESpace!(x.fe_space, y.dirichlet, 1.0), m.state⁻, m.compmodels)

@@ -27,3 +27,6 @@ using HyperFEM
 src="https://github.com/jmartfrut/HyperFEM/blob/main/docs/imgs/aei.png?raw=true" width="70%">
 </p>
  
+#  Contact
+
+Contact the project administrator [Jesús Martínez-Frutos](jesus.martinez@upct.es) for further questions about licenses and terms of use.

@@ -28,11 +28,13 @@ end
 @publish PhysicalModels IncompressibleNeoHookean3D
 @publish PhysicalModels IncompressibleNeoHookean2D
 @publish PhysicalModels IncompressibleNeoHookean2D_CV
+@publish PhysicalModels IncompressibleNeoHookean3D_2dP
 @publish PhysicalModels MoneyRivlin3D
 @publish PhysicalModels MoneyRivlin2D
 @publish PhysicalModels NonlinearMoneyRivlin3D
 @publish PhysicalModels NonlinearMoneyRivlin2D
 @publish PhysicalModels NonlinearMoneyRivlin2D_CV
+@publish PhysicalModels NonlinearNeoHookean_CV
 @publish PhysicalModels NonlinearIncompressibleMoneyRivlin2D_CV
 @publish PhysicalModels TransverseIsotropy3D
 @publish PhysicalModels ThermalModel
