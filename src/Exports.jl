@@ -51,7 +51,6 @@ end
 @publish PhysicalModels ThermoElectroMech_Govindjee
 @publish PhysicalModels ThermoElectroMech_PINNs
 @publish PhysicalModels MagnetoMechModel
-@publish PhysicalModels MagnetoVacuumModel
 @publish PhysicalModels ARAP2D
 @publish PhysicalModels ARAP2D_regularized
 @publish PhysicalModels HessianRegularization
