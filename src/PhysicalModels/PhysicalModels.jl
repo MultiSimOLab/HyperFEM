@@ -30,6 +30,7 @@ export NonlinearMoneyRivlin3D
 export NonlinearMoneyRivlin2D
 export NonlinearMoneyRivlin2D_CV
 export NonlinearNeoHookean_CV
+export NonlinearMooneyRivlin_CV
 export NonlinearIncompressibleMoneyRivlin2D_CV
 export TransverseIsotropy3D
 export LinearElasticity3D
@@ -336,7 +337,6 @@ struct HardMagnetic{A} <: Magneto
   end
 
 end
-
 
 struct HardMagnetic2D{A} <: Magneto
   μ::Float64
@@ -688,6 +688,55 @@ struct NonlinearMoneyRivlin2D_CV{A} <: Mechano
 end
 
 
+
+struct NonlinearMooneyRivlin_CV{A} <: Mechano
+  λ::Float64
+  μ1::Float64
+  μ2::Float64
+  α::Float64
+  β::Float64
+  γ::Float64
+  ρ::Float64
+  Kinematic::A
+  function NonlinearMooneyRivlin_CV(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, γ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(λ, μ1, μ2, α, β, γ, ρ, Kinematic)
+  end
+
+  function (obj::NonlinearMooneyRivlin_CV)(Λ::Float64=1.0)
+    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    λ, μ1, μ2, α, β, γ = obj.λ, obj.μ1, obj.μ2, obj.α, obj.β, obj.γ
+
+    Ψ(F) = μ1 / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F))^α + 
+           μ2 / (2.0 * β * 3.0^(β - 1)) * (tr((H(F))' * H(F)))^β - 
+           (μ1 + 2*μ2) * log(J(F)) + λ * (J(F)^(γ) + J(F)^(-γ))
+
+    ∂Ψ_∂F(F) = ((μ1 / (3.0^(α - 1)) * (tr((F)' * F))^(α - 1))) * F
+    ∂Ψ_∂H(F) = ((μ2 / (3.0^(β - 1)) * (tr((H(F))' * H(F)))^(β - 1))) * H(F)
+    ∂Ψ_∂J(F) = -(μ1 + 2*μ2) * (1.0 / J(F)) + λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1))
+
+    ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂H(F) × F + ∂Ψ_∂J(F) * H(F)
+    I_ = I9()
+
+    ∂Ψ2_∂FF(F) = ((μ1 / (3.0^(α - 1)) * (tr((F)' * F))^(α - 1))) * I_ +
+                 2 * ((μ1 * (α - 1) / (3.0^(α - 1)) * (tr((F)' * F))^(α - 2))) * (F ⊗ F)
+    ∂Ψ2_∂HH(F) = ((μ2 / (3.0^(β - 1)) * (tr((H(F))' * H(F)))^(β - 1))) * I_ +
+                 2 * ((μ2 * (β - 1) / (3.0^(β - 1)) * (tr((H(F))' * H(F)))^(β - 2))) * (H(F) ⊗ H(F))
+    ∂Ψ2_∂JJ(F) = (μ1 + 2*μ2) * (1.0 / (J(F))^2) + λ * γ * ((γ - 1) * J(F)^(γ - 2) + (γ + 1) * J(F)^(-γ - 2))
+
+    ∂Ψuu(F) = ∂Ψ2_∂FF(F) + (F × (∂Ψ2_∂HH(F) × F)) + 
+              ∂Ψ2_∂JJ(F) * (H(F) ⊗ H(F)) + ×ᵢ⁴(∂Ψ_∂H(F) + ∂Ψ_∂J(F) * F)
+
+    return (Ψ, ∂Ψu, ∂Ψuu)
+
+  end
+
+
+end
+
+
+
+
+
 struct NonlinearNeoHookean_CV{A} <: Mechano
   λ::Float64
   μ::Float64
@@ -703,16 +752,16 @@ struct NonlinearNeoHookean_CV{A} <: Mechano
     _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ, α, γ = obj.λ, obj.μ, obj.α, obj.γ
 
-    Ψ(F) = μ / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F) + 1.0)^α - μ * log(J(F)) + λ * (J(F)^(γ) + J(F)^(-γ))
+    Ψ(F) = μ / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F))^α - μ * log(J(F)) + λ * (J(F)^(γ) + J(F)^(-γ))
 
-    ∂Ψ_∂F(F) = ((μ / (3.0^(α - 1)) * (tr((F)' * F) + 1.0)^(α - 1))) * F
+    ∂Ψ_∂F(F) = ((μ / (3.0^(α - 1)) * (tr((F)' * F))^(α - 1))) * F
     ∂Ψ_∂J(F) = -μ * (1.0 / J(F)) + λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1))
 
     ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂J(F) * H(F)
     I_ = I9()
 
-    ∂Ψ2_∂FF(F) = ((μ / (3.0^(α - 1)) * (tr((F)' * F) + 1.0)^(α - 1))) * I_ +
-                 2 * ((μ * (α - 1) / (3.0^(α - 1)) * (tr((F)' * F) + 1.0)^(α - 2))) * (F ⊗ F)
+    ∂Ψ2_∂FF(F) = ((μ / (3.0^(α - 1)) * (tr((F)' * F))^(α - 1))) * I_ +
+                 2 * ((μ * (α - 1) / (3.0^(α - 1)) * (tr((F)' * F))^(α - 2))) * (F ⊗ F)
     ∂Ψ2_∂JJ(F) = μ * (1.0 / (J(F))^2) + λ * γ * ((γ - 1) * J(F)^(γ - 2) + (γ + 1) * J(F)^(-γ - 2))
 
     ∂Ψuu(F) = ∂Ψ2_∂FF(F) + ∂Ψ2_∂JJ(F) * (H(F) ⊗ H(F)) + ∂Ψ_∂J(F) * ×ᵢ⁴(F)
@@ -723,6 +772,7 @@ struct NonlinearNeoHookean_CV{A} <: Mechano
 
 
 end
+
 
 
 struct NonlinearIncompressibleMoneyRivlin2D_CV{A} <: Mechano
