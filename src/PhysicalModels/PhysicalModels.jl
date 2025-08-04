@@ -17,6 +17,7 @@ using ..TensorAlgebra: I9
 using StaticArrays
 
 
+export Yeoh3D
 export NeoHookean3D
 export IncompressibleNeoHookean3D
 export IncompressibleNeoHookean2D
@@ -426,6 +427,46 @@ end
 # ===================
 # Mechanical models
 # ===================
+
+
+
+
+struct Yeoh3D{A} <: Mechano
+    λ::Float64
+    C10::Float64
+    C20::Float64
+    C30::Float64
+    Kinematic::A
+    function Yeoh3D(; λ::Float64, C10::Float64, C20::Float64, C30::Float64, Kinematic::KinematicModel=Kinematics(Mechano))
+        new{typeof(Kinematic)}(λ, C10, C20, C30, Kinematic)
+    end
+
+    function (obj::Yeoh3D)(Λ::Float64=1.0; Threshold=0.01)
+        _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+        λ, C10, C20, C30 = obj.λ, obj.C10, obj.C20, obj.C30
+
+        # Free energy
+        I1(F) = tr((F)' * F)
+        ψ(F)  = C10 * (I1(F) - 3) + C20 * (I1(F) - 3)^2 + C30 * (I1(F) - 3)^3 -2*C10*log(J(F)) + 0.5*λ*(J(F)-1)^2
+
+        # First Piola-Kirchhoff
+        ∂ψ_∂I1(F) = C10 + 2*C20*(I1(F) - 3) + 3*C30*(I1(F) - 3)^2
+        ∂log∂J(J) = J >= Threshold ? 1 / J : (2 / Threshold - J / (Threshold^2))
+        ∂ψ_∂J(F)  = -2*C10 * ∂log∂J(J(F)) + λ*(J(F) - 1)
+        ∂ψu(F)    = 2*∂ψ_∂I1(F)*F + ∂ψ_∂J(F)*H(F)
+        
+        # Elasticity
+        I_           = I9()
+        ∂2ψ_∂I1I1(F) = 2*C20 + 6*C30*(I1(F)-3)
+        ∂log2∂J2(J)  = J >= Threshold ? -1 / (J^2) : (-1 / (Threshold^2))
+        ∂2ψ_∂JJ(F)   = -2*C10*∂log2∂J2(J(F)) + λ
+        ∂ψuu(F)      = 4*∂2ψ_∂I1I1(F)*(F ⊗ F) + 2*∂ψ_∂I1(F)*I_ + ∂2ψ_∂JJ(F)*(H(F) ⊗ H(F)) + ∂ψ_∂J(F)*(I_ × F)
+
+
+        return (ψ, ∂ψu, ∂ψuu)
+    end
+end
+
 
 struct LinearElasticity2D{A} <: Mechano
   λ::Float64
