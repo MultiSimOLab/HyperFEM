@@ -125,7 +125,6 @@ struct HessianRegularization{A,B} <: Mechano
 
 end
 
-
 struct Hessian∇JRegularization{A,B} <: Mechano
   Mechano::A
   δ::Float64
@@ -157,7 +156,6 @@ struct Hessian∇JRegularization{A,B} <: Mechano
   end
 end
 
-
 # ======================
 # Energy interpolations
 # ======================
@@ -186,8 +184,6 @@ struct EnergyInterpolationScheme{A,B} <: PhysicalModel
     return (Ψ, ∂Ψ, ∂2Ψ, DΨ_Dρ, D∂Ψ_Dρ, D∂2Ψ_Dρ)
   end
 end
-
-
 
 # ===================
 # Magneto models
@@ -428,9 +424,6 @@ end
 # Mechanical models
 # ===================
 
-
-
-
 struct Yeoh3D{A} <: Mechano
     λ::Float64
     C10::Float64
@@ -466,7 +459,6 @@ struct Yeoh3D{A} <: Mechano
         return (ψ, ∂ψu, ∂ψuu)
     end
 end
-
 
 struct LinearElasticity2D{A} <: Mechano
   λ::Float64
@@ -687,7 +679,6 @@ struct NonlinearMoneyRivlin2D{A} <: Mechano
 end
 
 
-
 struct NonlinearMoneyRivlin2D_CV{A} <: Mechano
   λ::Float64
   μ1::Float64
@@ -727,7 +718,6 @@ struct NonlinearMoneyRivlin2D_CV{A} <: Mechano
 
 
 end
-
 
 
 struct NonlinearMooneyRivlin_CV{A} <: Mechano
@@ -775,9 +765,6 @@ struct NonlinearMooneyRivlin_CV{A} <: Mechano
 end
 
 
-
-
-
 struct NonlinearNeoHookean_CV{A} <: Mechano
   λ::Float64
   μ::Float64
@@ -813,8 +800,6 @@ struct NonlinearNeoHookean_CV{A} <: Mechano
 
 
 end
-
-
 
 struct NonlinearIncompressibleMoneyRivlin2D_CV{A} <: Mechano
   λ::Float64
@@ -904,7 +889,6 @@ struct TransverseIsotropy3D{A} <: Mechano
 
 
 end
-
 
 struct IncompressibleNeoHookean3D{A} <: Mechano
   λ::Float64
@@ -1124,23 +1108,28 @@ struct IncompressibleNeoHookean3D_2dP{A} <: Mechano
     _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     μ = obj.μ
     I3_ = I3()
+    # Ψ(Ce) = μ / 2 * tr(Ce) * (det(Ce))^(-1 / 3)
+    # ∂Ψ∂Ce(Ce) = μ / 2 * I3_ * (det(Ce))^(-1 / 3)
+    # ∂Ψ∂dCe(Ce) = -μ / 6 * tr(Ce) * (det(Ce))^(-4 / 3)
+    # Se(Ce) = 2 * (∂Ψ∂Ce(Ce) + ∂Ψ∂dCe(Ce) * H(Ce))
+    # ∂2Ψ∂CedCe(Ce) = -μ / 6 * I3_ * (det(Ce))^(-4 / 3)
+    # ∂2Ψ∂2dCe(Ce) = 2 * μ / 9 * tr(Ce) * (det(Ce))^(-7 / 3)
+    # ∂Se∂Ce(Ce) = 2 * (∂2Ψ∂2dCe(Ce) * (H(Ce) ⊗ H(Ce)) + ∂2Ψ∂CedCe(Ce) ⊗ H(Ce) + H(Ce) ⊗ ∂2Ψ∂CedCe(Ce) + ∂Ψ∂dCe(Ce) * ×ᵢ⁴(Ce))
+ 
     Ψ(Ce) = μ / 2 * tr(Ce) * (det(Ce))^(-1 / 3)
     ∂Ψ∂Ce(Ce) = μ / 2 * I3_ * (det(Ce))^(-1 / 3)
     ∂Ψ∂dCe(Ce) = -μ / 6 * tr(Ce) * (det(Ce))^(-4 / 3)
-    Se(Ce) = 2 * (∂Ψ∂Ce(Ce) + ∂Ψ∂dCe(Ce) * H(Ce))
+    Se(Ce) = 2 * (∂Ψ∂Ce(Ce) + ∂Ψ∂dCe(Ce) * HCe)
     ∂2Ψ∂CedCe(Ce) = -μ / 6 * I3_ * (det(Ce))^(-4 / 3)
     ∂2Ψ∂2dCe(Ce) = 2 * μ / 9 * tr(Ce) * (det(Ce))^(-7 / 3)
-    ∂Se∂Ce(Ce) = 2 * (∂2Ψ∂2dCe(Ce) * (H(Ce) ⊗ H(Ce)) + ∂2Ψ∂CedCe(Ce) ⊗ H(Ce) + H(Ce) ⊗ ∂2Ψ∂CedCe(Ce) + ∂Ψ∂dCe(Ce) * ×ᵢ⁴(Ce))
-
+    ∂Se∂Ce(Ce) = let HCe=H(Ce); 2 * (∂2Ψ∂2dCe(Ce) * (HCe ⊗ HCe) + ∂2Ψ∂CedCe(Ce) ⊗ HCe + HCe ⊗ ∂2Ψ∂CedCe(Ce) + ∂Ψ∂dCe(Ce) * ×ᵢ⁴(Ce)) end
+    
     return (Ψ, Se, ∂Se∂Ce)
 
   end
 
 
 end
-
-
-
 
 
 # ===================

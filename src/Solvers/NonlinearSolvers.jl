@@ -3,6 +3,10 @@
   
   Newton-Raphson solver. Same as `NewtonSolver` in GridapSolvers,
 """
+
+# LinearSolvers that depend on the non-linear solution
+ 
+
 struct Newton_RaphsonSolver <: Algebra.NonlinearSolver
   ls::Algebra.LinearSolver
   log::ConvergenceLog{Float64}
@@ -39,7 +43,7 @@ function Algebra.solve!(x::AbstractVector, nls::Newton_RaphsonSolver, op::Nonlin
   A, b, dx, ns = cache.A, cache.b, cache.dx, cache.ns
   residual!(b, op, x)
   jacobian!(A, op, x)
-  numerical_setup!(ns, A, x)
+  numerical_setup!(ns, A,x)
   _solve_nr!(x, A, b, dx, ns, nls, op)
   return cache
 end
@@ -78,7 +82,7 @@ function _solve_nr!(x, A, b, dx, ns, nls, op)
     if !done
       # Update jacobian and solver
       jacobian!(A, op, x)
-      numerical_setup!(ns, A, x)
+      numerical_setup!(ns, A,x)
     end
 
   end
