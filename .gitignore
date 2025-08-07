@@ -23,17 +23,52 @@ docs/site/
 # environment.
 Manifest.toml
 
-test/
+test_admin/
 data/sims/
 data/models/
-scripts/serial/
-scripts/MPI/
-test/
-debug/
 .vscode/
 
 *.DS_Store
 
+ 
+Dirichlet_Problem_Stabilization_v3.jl
+
+gmsh_model_vacuum_3D.jl
+
+gmsh_model_vacuum.jl
+
+rectangle_in_vacuum_3D.msh
+
+Staggered_Static_MagnetoMechanical_novacuum_2D_v5_S.jl
+
+Staggered_Static_MagnetoMechanical_vacuum_2D_copy.jl
+
+Staggered_Static_MagnetoMechanical_vacuum_2D_v4.jl
+
+Staggered_Static_MagnetoMechanical_vacuum_2D_v5_S.jl
+
+Staggered_Static_MagnetoMechanical_vacuum_2D_v5.jl
+
 Staggered_Static_MagnetoMechanical_vacuum_2D.jl
 
+Staggered_Static_MagnetoMechanical_vacuum_3D_rogelio.jl
+
+Staggered_Static_MagnetoMechanical_vacuum_3D.jl
+
 Static_MagnetoMechanical_vacuum_2D.jl
+
+test.jl
+
+src/Solvers/NonlinearSolvers copy.jl
+
+test/compile/compile.jl
+
+test/compile/compile.sh
+
+test_embedded.jl
+
+test2.jl
+
+wrinkles (2).jl
+
+Staggered_Static_MagnetoMechanical_vacuum_2D copy.jl
