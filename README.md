@@ -1,3 +1,10 @@
+ <p align="center"> 
+&nbsp; &nbsp; &nbsp; &nbsp;
+<img alt="Dark"
+src="https://github.com/jmartfrut/HyperFEM/blob/main/docs/imgs/logo.png?raw=true" width="70%">
+</p>
+ 
+
 # HyperFEM :construction: :construction: :construction: **Work in progress** :construction: :construction: :construction:
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://jmartfrut.github.io/HyperFEM.jl/stable/)
@@ -15,9 +22,7 @@ First, include the main HyperFEM module:
 using HyperFEM
 ```
 
-In order to give credit to the HyperFEM contributors, we ask that you please reference the paper 
-
-See the documentation and following publication for further details:
+In order to give credit to the HyperFEM contributors, we ask that you please reference the paper:
 
 > ------
 
