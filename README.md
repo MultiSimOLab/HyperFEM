@@ -28,6 +28,9 @@ First, include the main HyperFEM module:
 using HyperFEM
 ```
 
+Example of a Monolithic implementation for the simulation of Nonlinear ElectroMechanical deformation of dielectric elastomers
+
+
 ```julia
 using HyperFEM
 using HyperFEM: jacobian, solve!
@@ -127,7 +130,7 @@ x = solve!(comp_model; stepping=(nsteps=5, maxbisec=5), post=post_model)
 
 In order to give credit to the HyperFEM contributors, we ask that you please reference the paper:
 
-> ------
+> Exploiting Residual Anisotropies for Optimization in Ultra-Soft Magneto-Active Structures. Advanced Materials. 2025
 
 along with the required citations for [Gridap](https://github.com/gridap/Gridap.jl).
 
