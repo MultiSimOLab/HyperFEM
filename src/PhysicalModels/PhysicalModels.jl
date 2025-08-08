@@ -1119,7 +1119,7 @@ struct IncompressibleNeoHookean3D_2dP{A} <: Mechano
     Ψ(Ce) = μ / 2 * tr(Ce) * (det(Ce))^(-1 / 3)
     ∂Ψ∂Ce(Ce) = μ / 2 * I3_ * (det(Ce))^(-1 / 3)
     ∂Ψ∂dCe(Ce) = -μ / 6 * tr(Ce) * (det(Ce))^(-4 / 3)
-    Se(Ce) = 2 * (∂Ψ∂Ce(Ce) + ∂Ψ∂dCe(Ce) * HCe)
+    Se(Ce) = let HCe=H(Ce); 2 * (∂Ψ∂Ce(Ce) + ∂Ψ∂dCe(Ce) * HCe) end
     ∂2Ψ∂CedCe(Ce) = -μ / 6 * I3_ * (det(Ce))^(-4 / 3)
     ∂2Ψ∂2dCe(Ce) = 2 * μ / 9 * tr(Ce) * (det(Ce))^(-7 / 3)
     ∂Se∂Ce(Ce) = let HCe=H(Ce); 2 * (∂2Ψ∂2dCe(Ce) * (HCe ⊗ HCe) + ∂2Ψ∂CedCe(Ce) ⊗ HCe + HCe ⊗ ∂2Ψ∂CedCe(Ce) + ∂Ψ∂dCe(Ce) * ×ᵢ⁴(Ce)) end

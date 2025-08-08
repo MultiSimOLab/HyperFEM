@@ -19,8 +19,8 @@ using Gridap
   #  norm(∂Ψuu_(F(∇u))) -norm(∂Ψuu(F(∇u)))
 
   @test Ψ(F(∇u)) == 8.274742322531269
-  @test norm(∂Ψu(F(∇u))) == 5.647570016731429
-  @test norm(∂Ψuu(F(∇u))) == 653.1484437383995
+  @test norm(∂Ψu(F(∇u))) == 5.647570016731348
+  @test norm(∂Ψuu(F(∇u))) == 653.1484437383998
 
 end
 

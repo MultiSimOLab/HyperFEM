@@ -14,14 +14,17 @@ using ForwardDiff
 using BenchmarkTools
 
 
+@testset "HyperFEMTests" verbose = true begin
 
-@time begin
-    include("TensorAlgebra.jl")
-end
-@time begin
-    include("PhysicalModels.jl")
-end
-@time begin
-    include("WeakForms.jl")
+    @time begin
+        include("../test/TestConstitutiveModels/runtests.jl")
+    end
+    @time begin
+        include("./TestTensorAlgebra/runtests.jl")
+    end
+    @time begin
+        include("../test/TestWeakForms/runtests.jl")
+    end
+
 end
 
