@@ -1,11 +1,11 @@
  <p align="center"> 
 &nbsp; &nbsp; &nbsp; &nbsp;
 <img alt="Dark"
-src="https://github.com/jmartfrut/HyperFEM/blob/main/docs/imgs/logo.png?raw=true" width="40%">
+src="https://github.com/jmartfrut/HyperFEM/blob/main/docs/imgs/logo.png?raw=true" width="30%">
 </p>
  
 
-# HyperFEM :construction: :construction: :construction: **Work in progress** :construction: :construction: :construction:
+<!-- # HyperFEM :construction: :construction: :construction: **Work in progress** :construction: :construction: :construction: -->
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://jmartfrut.github.io/HyperFEM.jl/stable/)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://jmartfrut.github.io/HyperFEM.jl/dev/)
