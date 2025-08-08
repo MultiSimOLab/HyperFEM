@@ -16,6 +16,12 @@ src="https://github.com/jmartfrut/HyperFEM/blob/main/docs/imgs/logo.png?raw=true
 
 This is an application repository with a collection of drivers for the simulation of Thermo-Electro-Magneto-Mechanical problems. It is based on [Gridap](https://github.com/gridap/Gridap.jl), a package for grid-based approximation of PDEs with Finite Element.
 
+## Installation
+Open the Julia REPL, type `]` to enter package mode, and install as follows
+```julia
+pkg> add https://github.com/jmartfrut/HyperFEM
+```
+
 ## Usage
 First, include the main HyperFEM module:
 ```julia
