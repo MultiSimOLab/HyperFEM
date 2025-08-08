@@ -28,6 +28,8 @@ First, include the main HyperFEM module:
 using HyperFEM
 ```
 
+## How to cite HyperFEM
+
 In order to give credit to the HyperFEM contributors, we ask that you please reference the paper:
 
 > ------
