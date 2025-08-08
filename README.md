@@ -28,7 +28,7 @@ First, include the main HyperFEM module:
 using HyperFEM
 ```
 
-``` 
+```julia
 using HyperFEM
 using HyperFEM: jacobian, solve!
 using Gridap, GridapGmsh, GridapSolvers, DrWatson
