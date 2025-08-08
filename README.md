@@ -1,7 +1,7 @@
  <p align="center"> 
 &nbsp; &nbsp; &nbsp; &nbsp;
 <img alt="Dark"
-src="https://github.com/jmartfrut/HyperFEM/blob/main/docs/imgs/logo.png?raw=true" width="70%">
+src="https://github.com/jmartfrut/HyperFEM/blob/main/docs/imgs/logo.png?raw=true" width="40%">
 </p>
  
 
