@@ -14,11 +14,19 @@ First, include the main HyperFEM module:
 ```julia
 using HyperFEM
 ```
+
+In order to give credit to the HyperFEM contributors, we ask that you please reference the paper 
+
+See the documentation and following publication for further details:
+
+> ------
+
+along with the required citations for [Gridap](https://github.com/gridap/Gridap.jl).
+
+
 # Project funded by:
  
-- Grant PID2022-141957OA-C22 funded by MCIN/AEI/ 10.13039/501100011033  and by ''ERDF A way of making Europe''
-
-- Grant PID2022-141957OB-C22 funded by MCIN/AEI/ 10.13039/501100011033  and by ''ERDF A way of making Europe''
+- Grants PID2022-141957OA-C22/PID2022-141957OB-C22  funded by MCIN/AEI/ 10.13039/501100011033  and by ''ERDF A way of making Europe''
 
 
  <p align="center"> 
