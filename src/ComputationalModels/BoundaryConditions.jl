@@ -60,7 +60,7 @@ function _get_bc_func(tags_::Vector{String}, values_, bc_timesteps)
 
     @inbounds for i in eachindex(tags_)
 
-        if values_[i] === DirichletCoupling
+        if values_[i] === DirichletCoupling || typeof(values_[i]) <: DirichletCoupling
             bc_func_[i] = (Λ) -> (x) -> x 
         else
             if isnothing(bc_timesteps[i])

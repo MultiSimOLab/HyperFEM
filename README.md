@@ -43,8 +43,9 @@ using WriteVTK
 simdir = datadir("sims", "Static_ElectroMechanical")
 setupfolder(simdir)
 
-geomodel = GmshDiscreteModel(datadir("models", "ex2_mesh.msh"))
+geomodel = GmshDiscreteModel("./test/models/test_static_EM.msh")
 
+# Constitutive model
 physmodel_mec = NeoHookean3D(λ=10.0, μ=1.0)
 physmodel_elec = IdealDielectric(ε=1.0)
 physmodel = ElectroMechModel(Mechano=physmodel_mec, Electro=physmodel_elec)
@@ -97,13 +98,10 @@ nls_ = NewtonSolver(ls; maxiter=20, atol=1.e-10, rtol=1.e-8, verbose=true)
 # Computational model
 comp_model = StaticNonlinearModel(res, jac, U, V, D_bc; nls=nls_)
 
-
 # Postprocessor to save results
 function driverpost(post; Ω=Ω, U=U)
-    # get from postprocessor 
     state = post.comp_model.caches[3]
     Λ_ = post.iter
-    Λ = post.Λ[Λ_]
 
     xh = FEFunction(U, state)
     uh = xh[1]
@@ -112,11 +110,7 @@ function driverpost(post; Ω=Ω, U=U)
     filePath = post.cachevtk[2]
 
     if post.cachevtk[1]
-        Λstring = replace(string(round(Λ, digits=2)), "." => "_")
-        pvd[Λ_] = createvtk(Ω,
-            filePath * "/_Λ_" * Λstring * "_TIME_$Λ_" * ".vtu",
-            cellfields=["u" => uh, "φ" => φh]
-        )
+        pvd[Λ_] = createvtk(Ω,filePath * "/TIME_$Λ_" * ".vtu",cellfields=["u" => uh, "φ" => φh])
     end
 end
 

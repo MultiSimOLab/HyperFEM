@@ -71,7 +71,7 @@ function _solve_nr!(x, A, b, dx, ns, nls, op)
 
     α = linesearch(x, dx, b, op)
     x .+= α * dx
-    if α < 1.0 && log.verbose
+    if α < 1.0 && Int(log.verbose)>0
     println("Activated line-search: $α")
     end
     # Check convergence for the current residual

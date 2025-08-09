@@ -12,6 +12,8 @@ using Gridap
   Ψ, ∂Ψu, ∂Ψuu = model()
   F, _, _ = get_Kinematics(model.Kinematic)
 
+  # @benchmark norm(∂Ψuu(F(∇u)))
+
   #  ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
   #  ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
 
