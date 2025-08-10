@@ -81,13 +81,15 @@ struct StaticNonlinearModel{A,B,C,D,E} <: ComputationalModel
         res::Function, jac::Function, U, V, dirbc;
         assem_U=SparseMatrixAssembler(U, V),
         nls::NonlinearSolver=NewtonSolver(LUSolver(); maxiter=10, rtol=1.e-8, verbose=true),
-        xh::FEFunction=FEFunction(U, zero_free_values(U)))
+        xh::FEFunction=FEFunction(U, zero_free_values(U)),
+        xh⁻::FEFunction=FEFunction(U, zero_free_values(U)))
 
         ∆U = TrialFESpace(U, dirbc, 0.0)
         TrialFESpace!(U, dirbc, 0.0)
         spaces = (U, V, ∆U)
         x = get_free_dof_values(xh)
-        x⁻ = zero_free_values(U)
+        x⁻ = get_free_dof_values(xh⁻)
+        # x⁻ = zero_free_values(U)
         _res = res(0.0)
         _jac = jac(0.0)
         op = get_algebraic_operator(FEOperator(_res, _jac, U, V, assem_U))
