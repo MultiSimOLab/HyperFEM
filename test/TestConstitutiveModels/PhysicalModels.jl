@@ -83,6 +83,7 @@ end
   model = LinearElasticity3D(λ=3.0, μ=1.0)
   Ψ, ∂Ψu, ∂Ψuu = model()
   F, _, _ = get_Kinematics(model.Kinematic)
+ 
   @test (Ψ(F(∇u))) == 0.0006104999999999824
   @test norm(∂Ψu(F(∇u))) == 0.09933277404764056
   @test norm(∂Ψuu(F(∇u))) == 11.874342087037917
@@ -100,9 +101,9 @@ end
 end
 
 
-@testset "MoneyRivlin2D" begin
+@testset "MooneyRivlin2D" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
-  model = MoneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
+  model = MooneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
   Ψ, ∂Ψu, ∂Ψuu = model()
   F, _, _ = get_Kinematics(model.Kinematic)
   @test Ψ(F(∇u)) == 4.000175692713462
@@ -110,9 +111,9 @@ end
   @test norm(∂Ψuu(F(∇u))) == 21.74472726344396
 end
 
-@testset "MoneyRivlin3D" begin
+@testset "MooneyRivlin3D" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
-  model = MoneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
+  model = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
   Ψ, ∂Ψu, ∂Ψuu = model()
   F, _, _ = get_Kinematics(model.Kinematic)
   @test Ψ(F(∇u)) == 0.001598259078230413
@@ -121,7 +122,7 @@ end
 end
 
 
-@testset "NonlinearMoneyRivlin2D" begin
+@testset "NonlinearMooneyRivlin2D" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
   ∇u0 = TensorValue(0.0, 0.0, 0.0, 0.0) * 1e-3
 
@@ -130,7 +131,7 @@ end
     1.9999960497608036,
     11747.646562400318,
     0.7841068624959612, 1.5386288924587603]
-  model = NonlinearMoneyRivlin2D(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α=μParams[3], β=μParams[4])
+  model = NonlinearMooneyRivlin2D(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α=μParams[3], β=μParams[4])
 
   Ψ, ∂Ψu, ∂Ψuu = model()
   F, _, _ = get_Kinematics(model.Kinematic)
@@ -175,7 +176,7 @@ end
 
 
 
-@testset "NonlinearMoneyRivlin2D_CV" begin
+@testset "NonlinearMooneyRivlin2D_CV" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
   ∇u0 = TensorValue(0.0, 0.0, 0.0, 0.0) * 1e-3
 
@@ -184,7 +185,7 @@ end
     1.9999960497608036,
     11747.646562400318,
     0.7841068624959612, 1.5386288924587603]
-  model = NonlinearMoneyRivlin2D_CV(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α=μParams[3], β=μParams[4], γ=μParams[4])
+  model = NonlinearMooneyRivlin2D_CV(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α=μParams[3], β=μParams[4], γ=μParams[4])
 
   Ψ, ∂Ψu, ∂Ψuu = model()
   F, _, _ = get_Kinematics(model.Kinematic)
@@ -204,7 +205,7 @@ end
 
 
 
-@testset "NonlinearMoneyRivlin3D" begin
+@testset "NonlinearMooneyRivlin3D" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
 
   μParams = [6456.9137547089595, 896.4633794151492,
@@ -212,7 +213,7 @@ end
     1.9999960497608036,
     11747.646562400318,
     0.7841068624959612, 1.5386288924587603]
-  model = NonlinearMoneyRivlin3D(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α=μParams[3], β=μParams[4])
+  model = NonlinearMooneyRivlin3D(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α=μParams[3], β=μParams[4])
 
   Ψ, ∂Ψu, ∂Ψuu = model()
   F, _, _ = get_Kinematics(model.Kinematic)
@@ -281,7 +282,7 @@ end
 end
 
 
-@testset "NonlinearIncompressibleMoneyRivlin2D_CV" begin
+@testset "NonlinearIncompressibleMooneyRivlin2D_CV" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
   ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
 
@@ -290,7 +291,7 @@ end
     1.9999960497608036,
     11747.646562400318,
     0.7841068624959612, 1.5386288924587603]
-  model = NonlinearIncompressibleMoneyRivlin2D_CV(λ=(μParams[1] + μParams[2]) * 1e2, μ=μParams[1], α=μParams[3], γ=3.0)
+  model = NonlinearIncompressibleMooneyRivlin2D_CV(λ=(μParams[1] + μParams[2]) * 1e2, μ=μParams[1], α=μParams[3], γ=3.0)
 
   Ψ, ∂Ψu, ∂Ψuu = model()
   F, _, J_ = get_Kinematics(model.Kinematic)
@@ -334,7 +335,7 @@ end
 @testset "ElectroMechano" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   ∇φ = VectorValue(1.0, 2.0, 3.0)
-  modelMR = MoneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
+  modelMR = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
   modelID = IdealDielectric(ε=4.0)
   modelelectro = ElectroMechModel(Mechano=modelMR, Electro=modelID)
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelelectro()
@@ -354,7 +355,7 @@ end
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   ∇φ = VectorValue(1.0, 2.0, 3.0)
   θt = 3.4 - 1.0
-  modelMR = MoneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
+  modelMR = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
   modelID = IdealDielectric(ε=4.0)
   modelT = ThermalModel(Cv=1.0, θr=1.0, α=2.0)
   f(δθ::Float64)::Float64 = (δθ + 1.0) / 1.0
@@ -379,7 +380,7 @@ end
 @testset "TermoMech" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   θt = 3.4 - 1.0
-  modelMR = MoneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
+  modelMR = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
   modelT = ThermalModel(Cv=1.0, θr=1.0, α=2.0)
   f(δθ::Float64)::Float64 = (δθ + 1.0) / 1.0
   df(δθ::Float64)::Float64 = 1.0
@@ -402,7 +403,7 @@ end
 
   ∇u = 1e-1 * TensorValue(1, 2, 3, 4, 5, 6, 7, 8, 9)
   θt = 21.6
-  modmec = MoneyRivlin3D(λ=10.0, μ1=1.0, μ2=1.0, ρ=1.0)
+  modmec = MooneyRivlin3D(λ=10.0, μ1=1.0, μ2=1.0, ρ=1.0)
   modterm = ThermalModel(Cv=3.4, θr=2.2, α=1.2, κ=1.0)
   β = 0.7
   G(x) = x * (log(x) - 1.0) - 4 / 3 * x^(3 / 2) + 2 * x + 1 / 3
@@ -444,7 +445,7 @@ end
   Kin_mec = EvolutiveKinematics(Mechano; F=(t) -> ((∇u, x) -> ∇u + one(∇u) + t * ∇umacro + t * (A ⊙ x)))
   Kin_elec = EvolutiveKinematics(Electro; E=(t) -> ((∇φ) -> -∇φ + t * Emacro))
 
-  physmec = MoneyRivlin3D(λ=10.0, μ1=1.0, μ2=1.0, Kinematic=Kin_mec)
+  physmec = MooneyRivlin3D(λ=10.0, μ1=1.0, μ2=1.0, Kinematic=Kin_mec)
   physelec = IdealDielectric(ε=1.0, Kinematic=Kin_elec)
   physmodel = FlexoElectroModel(Mechano=physmec, Electro=physelec, κ=1000.0)
 
@@ -470,7 +471,7 @@ end
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   ∇φ = VectorValue(1.0, 2.0, 3.0)
   θt = 3.4 - 1.0
-  modelMR = MoneyRivlin3D(λ=5.0, μ1=0.5, μ2=0.5)
+  modelMR = MooneyRivlin3D(λ=5.0, μ1=0.5, μ2=0.5)
   modelID = IdealDielectric(ε=1.0)
   modelT = ThermalModel(Cv=17.385, θr=293.0, α=0.00156331)
   f(δθ) = (δθ + 293.0) / 293.0
@@ -558,7 +559,7 @@ end
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
   ∇φ = VectorValue(1.0, 2.0)
 
-  modelMR = MoneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
+  modelMR = MooneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
 
   modelID = IdealMagnetic2D(μ=1.2566e-6, χe=0.0)
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelID()
@@ -595,7 +596,7 @@ end
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   ∇φ = VectorValue(1.0, 2.0, 3.0)
 
-  modelMR = MoneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
+  modelMR = MooneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
 
   modelID = IdealMagnetic(μ=1.2566e-6, χe=0.0)
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelID()
@@ -631,7 +632,7 @@ end
   ∇φ = VectorValue(1.0, 2.0, 3.0)
   N = VectorValue(0.0, 0.0, 1.0)
 
-  modelMR = MoneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
+  modelMR = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
   modelID = HardMagnetic(μ=1.2566e-6, αr=40e-3, χe=0.0, χr=8.0)
   modelmagneto = MagnetoMechModel(Mechano=modelMR, Magneto=modelID)
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelmagneto()
@@ -672,7 +673,7 @@ end
   ∇φ = VectorValue(1.0, 2.0)
   N = VectorValue(0.0, 1.0)
 
-  modelMR = MoneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
+  modelMR = MooneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
   modelID = IdealMagnetic2D(μ=1.2566e-6, χe=0.0)
   modelmagneto = MagnetoMechModel(Mechano=modelMR, Magneto=modelID)
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelmagneto()
@@ -714,7 +715,7 @@ end
   ∇φ = VectorValue(1.0, 2.0)
   N = VectorValue(0.0, 1.0)
 
-  modelMR = MoneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
+  modelMR = MooneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
   modelID = HardMagnetic2D(μ=1.2566e-6, αr=40e-3, χe=0.0, χr=8.0)
   modelmagneto = MagnetoMechModel(Mechano=modelMR, Magneto=modelID)
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelmagneto()

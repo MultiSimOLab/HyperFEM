@@ -25,14 +25,14 @@ export IncompressibleNeoHookean2D_CV
 export IncompressibleNeoHookean3D_2dP
 export ARAP2D
 export ARAP2D_regularized
-export MoneyRivlin3D
-export MoneyRivlin2D
-export NonlinearMoneyRivlin3D
-export NonlinearMoneyRivlin2D
-export NonlinearMoneyRivlin2D_CV
+export MooneyRivlin3D
+export MooneyRivlin2D
+export NonlinearMooneyRivlin3D
+export NonlinearMooneyRivlin2D
+export NonlinearMooneyRivlin2D_CV
 export NonlinearNeoHookean_CV
 export NonlinearMooneyRivlin_CV
-export NonlinearIncompressibleMoneyRivlin2D_CV
+export NonlinearIncompressibleMooneyRivlin2D_CV
 export TransverseIsotropy3D
 export LinearElasticity3D
 export LinearElasticity2D
@@ -493,7 +493,8 @@ mutable struct LinearElasticity3D{A} <: Mechano
   function (obj::LinearElasticity3D)(Λ::Float64=1.0)
     λ, μ = obj.λ, obj.μ
     I33 = I3()
-    ∂Ψuu(F) = _δδ_μ_3D(μ) + _δδ_λ_3D(λ)
+    # ∂Ψuu(F) = _δδ_μ_3D(μ) + _δδ_λ_3D(λ)
+    ∂Ψuu(F) = μ * (δᵢₖδⱼₗ3D + δᵢₗδⱼₖ3D) + λ * δᵢⱼδₖₗ3D
     ∂Ψu(F) = ∂Ψuu(F) ⊙ (F - I33)
     Ψ(F) = 0.5 * (F - I33) ⊙ (∂Ψuu(F) ⊙ (F - I33))
     return (Ψ, ∂Ψu, ∂Ψuu)
@@ -502,6 +503,9 @@ mutable struct LinearElasticity3D{A} <: Mechano
 
 end
 
+
+
+ 
 struct NeoHookean3D{A} <: Mechano
   λ::Float64
   μ::Float64
@@ -529,19 +533,19 @@ struct NeoHookean3D{A} <: Mechano
 
 end
 
-struct MoneyRivlin3D{A} <: Mechano
+struct MooneyRivlin3D{A} <: Mechano
   λ::Float64
   μ1::Float64
   μ2::Float64
   ρ::Float64
   Kinematic::A
-  function MoneyRivlin3D(; λ::Float64, μ1::Float64, μ2::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+  function MooneyRivlin3D(; λ::Float64, μ1::Float64, μ2::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
     new{typeof(Kinematic)}(λ, μ1, μ2, ρ, Kinematic)
   end
 
 
 
-  function (obj::MoneyRivlin3D)(Λ::Float64=1.0; Threshold=0.01)
+  function (obj::MooneyRivlin3D)(Λ::Float64=1.0; Threshold=0.01)
     _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ1, μ2 = obj.λ, obj.μ1, obj.μ2
     Ψ(F) = μ1 / 2 * tr((F)' * F) + μ2 / 2.0 * tr((H(F))' * H(F)) - (μ1 + 2 * μ2) * logreg(J(F)) +
@@ -568,18 +572,18 @@ struct MoneyRivlin3D{A} <: Mechano
 
 end
 
-struct MoneyRivlin2D{A} <: Mechano
+struct MooneyRivlin2D{A} <: Mechano
   λ::Float64
   μ1::Float64
   μ2::Float64
   ρ::Float64
   Kinematic::A
 
-  function MoneyRivlin2D(; λ::Float64, μ1::Float64, μ2::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+  function MooneyRivlin2D(; λ::Float64, μ1::Float64, μ2::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
     new{typeof(Kinematic)}(λ, μ1, μ2, ρ, Kinematic)
   end
 
-  function (obj::MoneyRivlin2D)(Λ::Float64=1.0; Threshold=0.01)
+  function (obj::MooneyRivlin2D)(Λ::Float64=1.0; Threshold=0.01)
     _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ1, μ2 = obj.λ, obj.μ1, obj.μ2
     Ψ(F) = (μ1 / 2 + μ2 / 2) * tr((F)' * F) + μ2 / 2.0 * J(F)^2 - (μ1 + 2 * μ2) * logreg(J(F)) +
@@ -598,7 +602,7 @@ struct MoneyRivlin2D{A} <: Mechano
 end
 
 
-struct NonlinearMoneyRivlin3D{A} <: Mechano
+struct NonlinearMooneyRivlin3D{A} <: Mechano
   λ::Float64
   μ1::Float64
   μ2::Float64
@@ -606,11 +610,11 @@ struct NonlinearMoneyRivlin3D{A} <: Mechano
   β::Float64
   ρ::Float64
   Kinematic::A
-  function NonlinearMoneyRivlin3D(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+  function NonlinearMooneyRivlin3D(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
     new{typeof(Kinematic)}(λ, μ1, μ2, α, β, ρ, Kinematic)
   end
 
-  function (obj::NonlinearMoneyRivlin3D)(Λ::Float64=1.0; Threshold=0.01)
+  function (obj::NonlinearMooneyRivlin3D)(Λ::Float64=1.0; Threshold=0.01)
     _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ1, μ2, α, β = obj.λ, obj.μ1, obj.μ2, obj.α, obj.β
     Ψ(F) = μ1 / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F))^α + μ2 / (2.0 * β * 3.0^(β - 1)) * (tr((H(F))' * H(F)))^β - (μ1 + 2 * μ2) * logreg(J(F)) +
@@ -637,7 +641,7 @@ struct NonlinearMoneyRivlin3D{A} <: Mechano
 end
 
 
-struct NonlinearMoneyRivlin2D{A} <: Mechano
+struct NonlinearMooneyRivlin2D{A} <: Mechano
   λ::Float64
   μ1::Float64
   μ2::Float64
@@ -645,11 +649,11 @@ struct NonlinearMoneyRivlin2D{A} <: Mechano
   β::Float64
   ρ::Float64
   Kinematic::A
-  function NonlinearMoneyRivlin2D(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+  function NonlinearMooneyRivlin2D(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
     new{typeof(Kinematic)}(λ, μ1, μ2, α, β, ρ, Kinematic)
   end
 
-  function (obj::NonlinearMoneyRivlin2D)(Λ::Float64=1.0; Threshold=0.01)
+  function (obj::NonlinearMooneyRivlin2D)(Λ::Float64=1.0; Threshold=0.01)
     _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ1, μ2, α, β = obj.λ, obj.μ1, obj.μ2, obj.α, obj.β
 
@@ -679,7 +683,7 @@ struct NonlinearMoneyRivlin2D{A} <: Mechano
 end
 
 
-struct NonlinearMoneyRivlin2D_CV{A} <: Mechano
+struct NonlinearMooneyRivlin2D_CV{A} <: Mechano
   λ::Float64
   μ1::Float64
   μ2::Float64
@@ -688,11 +692,11 @@ struct NonlinearMoneyRivlin2D_CV{A} <: Mechano
   γ::Float64
   ρ::Float64
   Kinematic::A
-  function NonlinearMoneyRivlin2D_CV(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, γ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+  function NonlinearMooneyRivlin2D_CV(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, γ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
     new{typeof(Kinematic)}(λ, μ1, μ2, α, β, γ, ρ, Kinematic)
   end
 
-  function (obj::NonlinearMoneyRivlin2D_CV)(Λ::Float64=1.0)
+  function (obj::NonlinearMooneyRivlin2D_CV)(Λ::Float64=1.0)
     _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ1, μ2, α, β, γ = obj.λ, obj.μ1, obj.μ2, obj.α, obj.β, obj.γ
 
@@ -816,19 +820,19 @@ struct NonlinearNeoHookean_CV{A} <: Mechano
 
 end
 
-struct NonlinearIncompressibleMoneyRivlin2D_CV{A} <: Mechano
+struct NonlinearIncompressibleMooneyRivlin2D_CV{A} <: Mechano
   λ::Float64
   μ::Float64
   α::Float64
   γ::Float64
   ρ::Float64
   Kinematic::A
-  function NonlinearIncompressibleMoneyRivlin2D_CV(; λ::Float64, μ::Float64, α::Float64, γ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+  function NonlinearIncompressibleMooneyRivlin2D_CV(; λ::Float64, μ::Float64, α::Float64, γ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
     new{typeof(Kinematic)}(λ, μ, α, γ, ρ, Kinematic)
   end
 
 
-  function (obj::NonlinearIncompressibleMoneyRivlin2D_CV)(Λ::Float64=1.0)
+  function (obj::NonlinearIncompressibleMooneyRivlin2D_CV)(Λ::Float64=1.0)
     _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ, α, γ = obj.λ, obj.μ, obj.α, obj.γ
 

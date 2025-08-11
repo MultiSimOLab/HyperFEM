@@ -56,7 +56,7 @@ degree = 2 * order
 Ω = Triangulation(geomodel)
 dΩ = Measure(Ω, degree)
 
-# Dirichlet conditions 
+# Dirichlet boundary conditions 
 evolu(Λ) = 1.0
 dir_u_tags = ["fixedup"]
 dir_u_values = [[0.0, 0.0, 0.0]]
@@ -71,7 +71,7 @@ Dφ = DirichletBC(dir_φ_tags, dir_φ_values, dir_φ_timesteps)
 
 D_bc = MultiFieldBC([Du, Dφ])
 
-# FE spaces
+# Finite Elements
 reffeu = ReferenceFE(lagrangian, VectorValue{3,Float64}, order)
 reffeφ = ReferenceFE(lagrangian, Float64, order)
 

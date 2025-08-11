@@ -3,7 +3,7 @@ using HyperFEM: jacobian
 
 
 @testset "Assembly Jacobian ThermoMechanics" begin
-    modelMR = MoneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
+    modelMR = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
     modelT = ThermalModel(Cv=1.0, θr=1.0, α=2.0, κ=1.0)
     f(δθ::Float64)::Float64 = (δθ + 1.0) / 1.0
     df(δθ::Float64)::Float64 = 1.0
@@ -64,7 +64,7 @@ using HyperFEM: jacobian
 end
 
 @testset "Assembly Jacobian ElectroMechanics" begin
-    modelMR = MoneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
+    modelMR = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
     modelID = IdealDielectric(ε=4.0)
     modelelectro = ElectroMechModel(Mechano=modelMR, Electro=modelID)
 
@@ -137,8 +137,8 @@ end
 #     ∇umacro = TensorValue(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0) * 1e-2
   
 #     Kmodel = EvolutiveKinematics(Mechano; F=(t) -> ((∇u) -> ∇u + one(∇u) + t * ∇umacro))
-#     physmodel_matrix = MoneyRivlin3D(λ=10.0, μ1=1.0, μ2=1.0, Kinematic=Kmodel)
-#     physmodel_inclussion = MoneyRivlin3D(λ=50.0, μ1=5.0, μ2=5.0, Kinematic=Kmodel)
+#     physmodel_matrix = MooneyRivlin3D(λ=10.0, μ1=1.0, μ2=1.0, Kinematic=Kmodel)
+#     physmodel_inclussion = MooneyRivlin3D(λ=50.0, μ1=5.0, μ2=5.0, Kinematic=Kmodel)
   
 #     # Setup integration
 #     order = 1
