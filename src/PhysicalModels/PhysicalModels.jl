@@ -87,6 +87,7 @@ abstract type MagnetoMechano <: MultiPhysicalModel end
 include("KinematicModels.jl")
 include("PINNs.jl")
 export Kinematics
+export KinematicModel
 export EvolutiveKinematics
 export get_Kinematics
 export getIsoInvariants

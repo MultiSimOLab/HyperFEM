@@ -124,7 +124,7 @@ x = solve!(comp_model; stepping=(nsteps=5, maxbisec=5), post=post_model)
 
 In order to give credit to the HyperFEM contributors, we ask that you please reference the paper:
 
-> Exploiting Residual Anisotropies for Optimization in Ultra-Soft Magneto-Active Structures. Advanced Materials. 2025
+> In process
 
 along with the required citations for [Gridap](https://github.com/gridap/Gridap.jl).
 

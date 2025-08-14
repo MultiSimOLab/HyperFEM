@@ -37,34 +37,24 @@ export Ellipsoid
 # dot ⋅ * 
 
 
-
-
-
 @inline _flat_idx(i::Int, j::Int, N::Int) = i + N*(j-1)
 @inline _flat_idx(i::Int, j::Int, k::Int, l::Int, N::Int) = _flat_idx(_flat_idx(i,j,N), _flat_idx(k,l,N), N)
-@inline _full_idx2(i::Int, N::Int) = ((i-1)%N+1 ,(i-1)÷N+1)
+@inline _full_idx2(α::Int, N::Int) = ((α-1)%N+1 ,(α-1)÷N+1)
 @inline _full_idx4(α::Int, β::Int, N::Int) = (_full_idx2(α,N)..., _full_idx2(β,N)...)
 @inline _full_idx4(α::Int, N::Int) = _full_idx4(_full_idx2(α,N*N)...,N)
 
-const δᵢⱼδₖₗ3D = TensorValue{9,9,Float64}(ntuple(α -> begin
-    i, j, k, l = _full_idx4(α,3)
-    (i==j && k==l) ? 1.0 : 0.0
+function _Kroneckerδδ(δδ::Function, N::Int)
+  TensorValue{N*N,N*N,Float64}(ntuple(α -> begin
+    i, j, k, l = _full_idx4(α,N)
+    δδ(i,j,k,l) ? 1.0 : 0.0
   end,
-  9*9)
-)
-const δᵢₖδⱼₗ3D = TensorValue{9,9,Float64}(ntuple(α -> begin
-    i, j, k, l = _full_idx4(α,3)
-    (i==k && j==l) ? 1.0 : 0.0
-  end,
-  9*9)
-)
+  9*9))
+end
 
-const δᵢₗδⱼₖ3D = TensorValue{9,9,Float64}(ntuple(α -> begin
-    i, j, k, l = _full_idx4(α,3)
-    (i==l && j==k) ? 1.0 : 0.0
-end,
-  9*9)
-)
+const δᵢⱼδₖₗ3D = _Kroneckerδδ((i,j,k,l) -> i==j && k==l, 3)
+const δᵢₖδⱼₗ3D = _Kroneckerδδ((i,j,k,l) -> i==k && j==l, 3)
+const δᵢₗδⱼₖ3D = _Kroneckerδδ((i,j,k,l) -> i==l && j==k, 3)
+
 
 function _∂H∂F_2D()
   TensorValue(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0)
