@@ -34,6 +34,7 @@ export NonlinearNeoHookean_CV
 export NonlinearMooneyRivlin_CV
 export NonlinearIncompressibleMooneyRivlin2D_CV
 export TransverseIsotropy3D
+export TransverseIsotropy2D
 export LinearElasticity3D
 export LinearElasticity2D
 export IdealDielectric
@@ -909,6 +910,61 @@ struct TransverseIsotropy3D{A} <: Mechano
 
 
 end
+
+
+struct TransverseIsotropy2D{A} <: Mechano
+  μ::Float64
+  α::Float64
+  β::Float64
+  ρ::Float64
+  Kinematic::A
+  function TransverseIsotropy2D(; μ::Float64, α::Float64, β::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(μ, α, β, ρ, Kinematic)
+  end
+
+
+  function (obj::TransverseIsotropy2D)(Λ::Float64=1.0; Threshold=0.01)
+    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    I4(F, N) = (F * N) ⋅ (F * N)
+    I5(F, N) = (H(F) * N) ⋅ (H(F) * N)
+    μ, α, β = obj.μ, obj.α, obj.β
+    Ψ(F, N) = μ / (2.0 * α) * (I4(F, N)^α - 1) + μ / (2.0 * β) * (I5(F, N)^β - 1) - μ * logreg(J(F))
+
+    I__ = I2()
+
+    ∂I4∂F(F, N) = 2*((F * N) ⊗ N)
+    ∂I4∂F∂F(F, N) = 2*(I__ ⊗₁₃²⁴ (N ⊗ N))
+    ∂I5∂F∂F(F, N) =  2*(I__ ⊗ I__) -  2*(I__ ⊗ (N ⊗ N) + (N ⊗ N) ⊗ I__) +  2*((N ⊗ N) ⊗₁₃²⁴ I__)
+    ∂I5∂F(F, N) = 2*tr(F)*I__ - 2*(N⋅(F*N))*I__ - 2*tr(F)*(N ⊗ N) +  2*(N ⊗ (F'*N))
+
+    ∂log∂J(J) = J >= Threshold ? 1 / J : (2 / Threshold - J / (Threshold^2))
+    ∂log2∂J2(J) = J >= Threshold ? -1 / (J^2) : (-1 / (Threshold^2))
+    ∂Ψ_∂J(F, N) = -μ * ∂log∂J(J(F))
+    ∂Ψ2_∂J2(F, N) = -μ * ∂log2∂J2(J(F))
+
+
+    ∂Ψu(F, N) = (μ/2 * (I4(F, N)^(α - 1))) * ∂I4∂F(F, N) + 
+                      (μ/2 * (I5(F, N)^(β - 1))) * ∂I5∂F(F, N)  + 
+                      ∂Ψ_∂J(F, N) * H(F)
+
+
+    ∂Ψuu(F, N) = μ/2*(α-1)*(I4(F, N)^(α - 2)) * (∂I4∂F(F, N)) ⊗ (∂I4∂F(F, N)) + 
+                 μ/2*(I4(F, N)^(α - 1)) * ∂I4∂F∂F(F, N) + 
+                 μ/2*(β-1)*(I5(F, N)^(β - 2)) * (∂I5∂F(F, N)) ⊗ (∂I5∂F(F, N)) + 
+                 μ/2*(I5(F, N)^(β - 1)) * ∂I5∂F∂F(F, N) + 
+                 ∂Ψ2_∂J2(F, N) * (H(F) ⊗ H(F)) + 
+                 ∂Ψ_∂J(F, N)*_∂H∂F_2D()
+    
+    
+
+    return (Ψ, ∂Ψu, ∂Ψuu)
+
+  end
+
+
+end
+
+
 
 struct IncompressibleNeoHookean3D{A} <: Mechano
   λ::Float64

@@ -41,25 +41,30 @@ end
 
 
 function solve!(m::StaggeredModel;
-    stepping=(nsteps=20, maxbisec=15),
+    stepping=(nsteps=20, nsubsteps=1 , maxbisec=15),
     kargsolve)
+
+    nsubsteps=stepping[:nsubsteps]
+    nsteps=stepping[:nsteps]
 
     x⁺, x⁻ = m.caches
     map((x) -> TrialFESpace!(x.spaces[1], x.dirichlet, 0.0), m.compmodels)
     map((x, y) -> TrialFESpace!(x.fe_space, y.dirichlet, 0.0), m.state⁻, m.compmodels)
 
     flagconv = 1 # convergence flag 0 (max bisections) 1 (max steps)
-    ∆Λ = 1.0 / stepping[:nsteps]
-    for time in 0:stepping[:nsteps]-1
+    ∆Λ = 1.0 / nsteps
+    for time in 0:nsteps-1
         println("*******************************************")
         println("           Staggered Step: $time           ")
         println("*******************************************")
         stevol(Λ) = ∆Λ * (Λ + time)
         map(x -> updateBC!(x.dirichlet, x.dirichlet.caches, [stevol for _ in 1:length(x.dirichlet.caches)]), m.compmodels)
-        map((x) -> TrialFESpace!(x.spaces[1], x.dirichlet, 1.0), m.compmodels)
-        _, flagconv = map((x, y) -> solve!(x; y...), m.compmodels, kargsolve)
-        map((x, y) -> TrialFESpace!(x.fe_space, y.dirichlet, 1.0), m.state⁻, m.compmodels)
-        map((x, y) -> x .= y, x⁻, x⁺)
+        for Λ_inner in 1:nsubsteps
+            map((x) -> TrialFESpace!(x.spaces[1], x.dirichlet, 1.0), m.compmodels)
+            _, flagconv = map((x, y) -> solve!(x; y...), m.compmodels, kargsolve)
+            map((x, y) -> TrialFESpace!(x.fe_space, y.dirichlet, 1.0), m.state⁻, m.compmodels)
+            map((x, y) -> x .= y, x⁻, x⁺)
+        end
     end
 
     return x⁺, flagconv

@@ -312,6 +312,34 @@ end
 
 
 
+@testset "TransverseIsotropy2D" begin
+ ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
+ ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
+
+  N = VectorValue(1.0, 2.0)/sqrt(5.0)
+  μParams = [6456.9137547089595, 896.4633794151492,
+    1.999999451256222,
+    1.9999960497608036,
+    11747.646562400318,
+    0.7841068624959612, 1.5386288924587603]
+  model = TransverseIsotropy2D(μ=μParams[5], α=μParams[6], β=μParams[7])
+  Ψ, ∂Ψu, ∂Ψuu = model()
+
+  F, _, J_ = get_Kinematics(model.Kinematic)
+
+  # ∂Ψu_(F,N) =TensorValue(ForwardDiff.gradient(x -> Ψ(x,get_array(N)), get_array(F)))
+  # ∂Ψuu_(F,N) =TensorValue(ForwardDiff.hessian(x -> Ψ(x,get_array(N)), get_array(F)))
+
+  # norm(∂Ψu_(F(∇u),N)) - norm(∂Ψu(F(∇u0),N))
+  # norm(∂Ψuu_(F(∇u),N)) - norm(∂Ψuu(F(∇u),N))
+
+
+  @test Ψ(F(∇u), N) == 0.27292220826242186
+  @test norm(∂Ψu(F(∇u), N)) == 100.64088114687468
+  @test norm(∂Ψuu(F(∇u), N)) == 46792.35008576098
+end
+
+
 
 
 

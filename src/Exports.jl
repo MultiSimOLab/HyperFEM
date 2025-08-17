@@ -39,6 +39,7 @@ end
 @publish PhysicalModels NonlinearMooneyRivlin_CV
 @publish PhysicalModels NonlinearIncompressibleMooneyRivlin2D_CV
 @publish PhysicalModels TransverseIsotropy3D
+@publish PhysicalModels TransverseIsotropy2D
 @publish PhysicalModels ThermalModel
 @publish PhysicalModels IdealDielectric
 @publish PhysicalModels IdealMagnetic
