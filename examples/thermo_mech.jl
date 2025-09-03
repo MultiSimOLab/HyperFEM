@@ -109,8 +109,8 @@ struct ThermalExpansion{A} <: Thermo
     ∂Ψuu(F) = μ1 * I_ + μ2 * (F × (I_ × F)) + ∂Ψ2_∂J2(F) * (H(F) ⊗ H(F)) + ×ᵢ⁴(∂Ψ_∂H(F) + ∂Ψ_∂J(F) * F)
 
     return (Ψ, ∂Ψu, ∂Ψuu)
-
   end
+ end
 
 
 struct ThermoMechJavierGil
