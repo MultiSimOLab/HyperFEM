@@ -13,12 +13,15 @@ using Gridap
   F, _, _ = get_Kinematics(model.Kinematic)
 
   # @benchmark norm(∂Ψuu(F(∇u)))
+  # @code_warntype  norm(∂Ψuu(F(∇u)))
 
   #  ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
   #  ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
 
   #  norm(∂Ψu_(F(∇u))) -norm(∂Ψu(F(∇u)))
   #  norm(∂Ψuu_(F(∇u))) -norm(∂Ψuu(F(∇u)))
+
+
 
   @test Ψ(F(∇u)) == 8.274742322531269
   @test norm(∂Ψu(F(∇u))) == 5.647570016731348
@@ -54,9 +57,9 @@ end
   model = IncompressibleNeoHookean3D_2dP(μ=1.0, τ=1.0, Δt=1.0)
   Ψ, Se, ∂Se = model()
   F, H, _ = get_Kinematics(model.Kinematic)
- 
 
- 
+
+
   # Se_(Ce) =2*TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(Ce)))
   # ∂Se_(Ce) =2*TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(Ce)))
 
@@ -83,7 +86,7 @@ end
   model = LinearElasticity3D(λ=3.0, μ=1.0)
   Ψ, ∂Ψu, ∂Ψuu = model()
   F, _, _ = get_Kinematics(model.Kinematic)
- 
+
   @test (Ψ(F(∇u))) == 0.0006104999999999824
   @test norm(∂Ψu(F(∇u))) == 0.09933277404764056
   @test norm(∂Ψuu(F(∇u))) == 11.874342087037917
@@ -158,7 +161,7 @@ end
   model = Yeoh3D(λ=3.0, C10=1.0, C20=1.0, C30=1.0)
   Ψ, ∂Ψu, ∂Ψuu = model()
 
-    F, _, _ = get_Kinematics(model.Kinematic)
+  F, _, _ = get_Kinematics(model.Kinematic)
 
   #    ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
   #  ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
@@ -168,9 +171,9 @@ end
 
 
 
-  @test Ψ(F(∇u)) == 0.0018248918516909718 
+  @test Ψ(F(∇u)) == 0.0018248918516909718
   @test norm(∂Ψu(F(∇u))) == 0.33825920882848515
-  @test norm(∂Ψuu(F(∇u))) == 40.845986774511886 
+  @test norm(∂Ψuu(F(∇u))) == 40.845986774511886
 end
 
 
@@ -313,10 +316,10 @@ end
 
 
 @testset "TransverseIsotropy2D" begin
- ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
- ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
+  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
+  ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
 
-  N = VectorValue(1.0, 2.0)/sqrt(5.0)
+  N = VectorValue(1.0, 2.0) / sqrt(5.0)
   μParams = [6456.9137547089595, 896.4633794151492,
     1.999999451256222,
     1.9999960497608036,
@@ -491,6 +494,65 @@ end
   @test norm(∂Ψφu(F(∇u, X), E(∇φ))) == 5.910650247536949
 
 end
+
+
+
+@testset "ThermoElectroMech_Bonet" begin
+
+  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
+  ∇φ = VectorValue(1.0, 2.0, 3.0)
+  θt = 3.4 - 1.0
+  modelMR = MooneyRivlin3D(λ=0.0, μ1=0.5, μ2=0.5)
+  modelID = IdealDielectric(ε=1.0)
+  modelT = ThermalModel(Cv=17.385, θr=293.0, α=0.00156331, γv=2.0, γd=2.0)
+
+  modelTEM = ThermoElectroMech_Bonet(Thermo=modelT, Electro=modelID, Mechano=modelMR)
+  Ψ, ∂Ψu, ∂ΨE, ∂Ψθ, ∂ΨFF, ∂ΨEE, ∂2Ψθθ, ∂ΨEF, ∂ΨFθ, ∂ΨEθ, η = modelTEM()
+
+  F, _, _ = get_Kinematics(modelMR.Kinematic)
+  E = get_Kinematics(modelID.Kinematic)
+
+  ∂Ψ_∂F(F, E, θ) = TensorValue(ForwardDiff.gradient(F -> Ψ(F, get_array(E), θ), get_array(F)))
+  ∂Ψ_∂E(F, E, θ) = VectorValue(ForwardDiff.gradient(E -> Ψ(get_array(F), E, θ), get_array(E)))
+  ∂Ψ_∂θ(F, E, θ) = ForwardDiff.derivative(θ -> Ψ(get_array(F), get_array(E), θ), θ)
+
+
+  ∂2Ψ_∂2E(F, E, θ) = TensorValue(ForwardDiff.hessian(E -> Ψ(get_array(F), E, θ), get_array(E)))
+  ∂2Ψ∂2θ(F, E, θ) = ForwardDiff.derivative(θ -> ∂Ψ_∂θ(get_array(F), get_array(E), θ), θ)
+  ∂2Ψ_∂2Eθ(F, E, θ) = VectorValue(ForwardDiff.derivative(θ -> get_array(∂Ψ_∂E(get_array(F), get_array(E), θ)), θ))
+  ∂2Ψ_∂2F(F, E, θ) = TensorValue(ForwardDiff.hessian(F -> Ψ(F, get_array(E), θ), get_array(F)))
+  ∂2Ψ_∂2Fθ(F, E, θ) = TensorValue(ForwardDiff.derivative(θ -> get_array(∂Ψ_∂F(get_array(F), get_array(E), θ)), θ))
+  ∂2Ψ_∂EF(F, E, θ) = TensorValue(ForwardDiff.jacobian(F -> get_array(∂Ψ_∂E(F, get_array(E), θ)), get_array(F)))
+
+
+  @test isapprox(∂Ψu(F(∇u), E(∇φ), θt), ∂Ψ_∂F(F(∇u), E(∇φ), θt); rtol=1e-14)
+  @test isapprox(∂ΨE(F(∇u), E(∇φ), θt), ∂Ψ_∂E(F(∇u), E(∇φ), θt); rtol=1e-14)
+  @test isapprox(∂Ψθ(F(∇u), E(∇φ), θt), ∂Ψ_∂θ(F(∇u), E(∇φ), θt); rtol=1e-14)
+  @test isapprox(∂ΨEE(F(∇u), E(∇φ), θt), ∂2Ψ_∂2E(F(∇u), E(∇φ), θt); rtol=1e-14)
+  @test isapprox(∂2Ψθθ(F(∇u), E(∇φ), θt), ∂2Ψ∂2θ(F(∇u), E(∇φ), θt); rtol=1e-14)
+  @test isapprox(∂ΨEθ(F(∇u), E(∇φ), θt), ∂2Ψ_∂2Eθ(F(∇u), E(∇φ), θt); rtol=1e-14)
+  @test isapprox(∂ΨFF(F(∇u), E(∇φ), θt), ∂2Ψ_∂2F(F(∇u), E(∇φ), θt); rtol=1e-14)
+  @test isapprox(∂ΨFθ(F(∇u), E(∇φ), θt), ∂2Ψ_∂2Fθ(F(∇u), E(∇φ), θt); rtol=1e-14)
+  @test isapprox(∂ΨEF(F(∇u), E(∇φ), θt), ∂2Ψ_∂EF(F(∇u), E(∇φ), θt); rtol=1e-14)
+
+ end
+
+
+@testset "Volumetric_energy" begin
+  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
+  model = VolumetricEnergy(λ=0.0 )
+ 
+   Ψ, ∂Ψu, ∂Ψuu= model()
+  F, _, _ = get_Kinematics(modelMR.Kinematic)
+ 
+  ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
+  ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
+
+  @test isapprox(∂Ψu(F(∇u)), ∂Ψu_(F(∇u)); rtol=1e-14)
+  @test isapprox(∂Ψuu(F(∇u)), ∂Ψuu_(F(∇u)); rtol=1e-14)
+ 
+end
+
 
 
 

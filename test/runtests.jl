@@ -13,6 +13,16 @@ using JSON
 using ForwardDiff
 using BenchmarkTools
 
+import Base.isapprox
+
+function isapprox(a::TensorValue, b::TensorValue; kwargs...)
+    return isapprox(get_array(a), get_array(b); kwargs...)
+end
+
+
+function isapprox(a::VectorValue, b::VectorValue; kwargs...)
+    return isapprox(get_array(a), get_array(b); kwargs...)
+end
 
 @testset "HyperFEMTests" verbose = true begin
 

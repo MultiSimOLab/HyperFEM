@@ -30,6 +30,7 @@ end
 @publish PhysicalModels IncompressibleNeoHookean2D
 @publish PhysicalModels IncompressibleNeoHookean2D_CV
 @publish PhysicalModels IncompressibleNeoHookean3D_2dP
+@publish PhysicalModels VolumetricEnergy
 @publish PhysicalModels MooneyRivlin3D
 @publish PhysicalModels MooneyRivlin2D
 @publish PhysicalModels NonlinearMooneyRivlin3D
@@ -53,6 +54,7 @@ end
 @publish PhysicalModels FlexoElectroModel
 @publish PhysicalModels ThermoElectroMech_Govindjee
 @publish PhysicalModels ThermoElectroMech_PINNs
+@publish PhysicalModels ThermoElectroMech_Bonet
 @publish PhysicalModels MagnetoMechModel
 @publish PhysicalModels ARAP2D
 @publish PhysicalModels ARAP2D_regularized

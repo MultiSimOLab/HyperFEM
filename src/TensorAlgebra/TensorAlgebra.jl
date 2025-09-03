@@ -799,7 +799,7 @@ function I9()
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0)
 end
-
+ 
 
 # Jacobian regularization
 function logreg(J; Threshold=0.01)

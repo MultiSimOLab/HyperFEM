@@ -25,6 +25,7 @@ export IncompressibleNeoHookean2D_CV
 export IncompressibleNeoHookean3D_2dP
 export ARAP2D
 export ARAP2D_regularized
+export VolumetricEnergy
 export MooneyRivlin3D
 export MooneyRivlin2D
 export NonlinearMooneyRivlin3D
@@ -50,6 +51,7 @@ export ThermoMech_EntropicPolyconvex
 export FlexoElectroModel
 export ThermoElectroMech_Govindjee
 export ThermoElectroMech_PINNs
+export ThermoElectroMech_Bonet
 export MagnetoMechModel
 
 export Mechano
@@ -408,8 +410,10 @@ struct ThermalModel <: Thermo
   θr::Float64
   α::Float64
   κ::Float64
-  function ThermalModel(; Cv::Float64, θr::Float64, α::Float64, κ::Float64=10.0)
-    new(Cv, θr, α, κ)
+  γv::Float64
+  γd::Float64
+  function ThermalModel(; Cv::Float64, θr::Float64, α::Float64, κ::Float64=10.0, γv::Float64=1.0, γd::Float64=1.0)
+    new(Cv, θr, α, κ, γv, γd)
   end
 
   function (obj::ThermalModel)(Λ::Float64=1.0)
@@ -505,9 +509,25 @@ mutable struct LinearElasticity3D{A} <: Mechano
 
 end
 
+struct VolumetricEnergy{A} <: Mechano
+  λ::Float64
+  Kinematic::A
+  function VolumetricEnergy(; λ::Float64, Kinematic::KinematicModel=Kinematics(Mechano))
+    new{typeof(Kinematic)}(λ, Kinematic)
+  end
 
+  function (obj::VolumetricEnergy)(Λ::Float64=1.0)
+    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    λ = obj.λ
+    Ψ(F) = (λ / 2.0) * (J(F) - 1)^2 
+    ∂Ψ_∂J(F) =  λ * (J(F) - 1)
+    ∂Ψ2_∂J2(F) = λ
+    ∂Ψu(F) =  ∂Ψ_∂J(F) * H(F)
+    ∂Ψuu(F) =∂Ψ2_∂J2(F) * (H(F) ⊗ H(F)) + ×ᵢ⁴(∂Ψ_∂J(F) * F)
+    return (Ψ, ∂Ψu, ∂Ψuu)
+  end
+end
 
- 
 struct NeoHookean3D{A} <: Mechano
   λ::Float64
   μ::Float64
@@ -725,6 +745,10 @@ struct NonlinearMooneyRivlin2D_CV{A} <: Mechano
 
 end
 
+ 
+function trAA(A::TensorValue{3, 3, T, N}) where {T, N}
+  return sum(A.data[i]*A.data[i] for i in 1:N)
+end
 
 struct NonlinearMooneyRivlin_CV{A} <: Mechano
   λ::Float64
@@ -744,40 +768,28 @@ struct NonlinearMooneyRivlin_CV{A} <: Mechano
     λ, μ1, μ2, α, β, γ = obj.λ, obj.μ1, obj.μ2, obj.α, obj.β, obj.γ
 
 
-    Ψ(F) = μ1 / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F))^α + 
+
+    Ψ(F::TensorValue{3, 3, Float64, 9}) = μ1 / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F))^α + 
            μ2 / (2.0 * β * 3.0^(β - 1)) * (tr((H(F))' * H(F)))^β - 
            (μ1 + 2*μ2) * log(J(F)) + λ * (J(F)^(γ) + J(F)^(-γ))
 
-    ∂Ψ_∂F(F) = ((μ1 / (3.0^(α - 1)) * (tr((F)' * F))^(α - 1))) * F
-    # ∂Ψ_∂H(F) = ((μ2 / (3.0^(β - 1)) * (tr((H(F))' * H(F)))^(β - 1))) * H(F)
-    # ∂Ψ_∂J(F) = -(μ1 + 2*μ2) * (1.0 / J(F)) + λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1))
-    # ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂H(F) × F + ∂Ψ_∂J(F) * H(F)
+    ∂Ψ_∂F(F::TensorValue{3, 3, Float64, 9}) = ((μ1 / (3.0^(α - 1)) * (trAA(F))^(α - 1))) * F
+    ∂Ψ_∂H(F) = ((μ2 / (3.0^(β - 1)) * (tr((H(F))' * H(F)))^(β - 1))) * H(F)
+    ∂Ψ_∂J(F) = -(μ1 + 2*μ2) * (1.0 / J(F)) + λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1))
+    ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂H(F) × F + ∂Ψ_∂J(F) * H(F)
 
-    ∂Ψ_∂H(HF) = ((μ2 / (3.0^(β - 1)) * (tr((HF)' * HF))^(β - 1))) * HF
-    ∂Ψ_∂J(JF) = -(μ1 + 2*μ2) * (1.0 / JF) + λ * γ * (JF^(γ - 1) - JF^(-γ - 1))
-    ∂Ψu(F) = let HF=H(F); JF=J(F); ∂Ψ_∂F(F) + ∂Ψ_∂H(HF) × F + ∂Ψ_∂J(JF) * HF end
      I_ = I9()
 
-    # ∂Ψ2_∂FF(F) = ((μ1 / (3.0^(α - 1)) * (tr((F)' * F))^(α - 1))) * I_ +
-    #              2 * ((μ1 * (α - 1) / (3.0^(α - 1)) * (tr((F)' * F))^(α - 2))) * (F ⊗ F)
-    # ∂Ψ2_∂HH(F) = ((μ2 / (3.0^(β - 1)) * (tr((H(F))' * H(F)))^(β - 1))) * I_ +
-    #              2 * ((μ2 * (β - 1) / (3.0^(β - 1)) * (tr((H(F))' * H(F)))^(β - 2))) * (H(F) ⊗ H(F))
-    # ∂Ψ2_∂JJ(F) = (μ1 + 2*μ2) * (1.0 / (J(F))^2) + λ * γ * ((γ - 1) * J(F)^(γ - 2) + (γ + 1) * J(F)^(-γ - 2))
-
-    # ∂Ψuu(F) = ∂Ψ2_∂FF(F) + (F × (∂Ψ2_∂HH(F) × F)) + ∂Ψ2_∂JJ(F) * (H(F) ⊗ H(F)) + ×ᵢ⁴(∂Ψ_∂H(F) + ∂Ψ_∂J(F) * F)
-
  
-
     ∂Ψ2_∂FF(F) = ((μ1 / (3.0^(α - 1)) * (tr((F)' * F))^(α - 1))) * I_ +
                  2 * ((μ1 * (α - 1) / (3.0^(α - 1)) * (tr((F)' * F))^(α - 2))) * (F ⊗ F)
-    ∂Ψ2_∂HH(HF) = ((μ2 / (3.0^(β - 1)) * (tr((HF)' * HF))^(β - 1))) * I_ +
-                 2 * ((μ2 * (β - 1) / (3.0^(β - 1)) * (tr((HF)' * HF))^(β - 2))) * (HF ⊗ HF)
-    ∂Ψ2_∂JJ(JF) = (μ1 + 2*μ2) * (1.0 / (JF)^2) + λ * γ * ((γ - 1) * JF^(γ - 2) + (γ + 1) * JF^(-γ - 2))
+    ∂Ψ2_∂HH(F) = ((μ2 / (3.0^(β - 1)) * (tr((H(F))' * H(F)))^(β - 1))) * I_ +
+                 2 * ((μ2 * (β - 1) / (3.0^(β - 1)) * (tr((H(F))' * H(F)))^(β - 2))) * (H(F) ⊗ H(F))
+    ∂Ψ2_∂JJ(F) = (μ1 + 2*μ2) * (1.0 / (J(F))^2) + λ * γ * ((γ - 1) * J(F)^(γ - 2) + (γ + 1) * J(F)^(-γ - 2))
 
-    ∂Ψuu(F) = let HF = H(F); 
-                  JF=J(F); 
-          ∂Ψ2_∂FF(F) + (F × (∂Ψ2_∂HH(HF) × F)) +  ∂Ψ2_∂JJ(JF) * (HF ⊗ HF) + ×ᵢ⁴(∂Ψ_∂H(HF) + ∂Ψ_∂J(JF) * F) end
+    ∂Ψuu(F) = ∂Ψ2_∂FF(F) + (F × (∂Ψ2_∂HH(F) × F)) + ∂Ψ2_∂JJ(F) * (H(F) ⊗ H(F)) + ×ᵢ⁴(∂Ψ_∂H(F) + ∂Ψ_∂J(F) * F)
 
+  
     return (Ψ, ∂Ψu, ∂Ψuu)
 
   end
@@ -1208,6 +1220,7 @@ struct IncompressibleNeoHookean3D_2dP{A} <: Mechano
 end
 
 
+
 # ===================
 # MultiPhysicalModel models
 # ===================
@@ -1435,6 +1448,58 @@ struct ThermoElectroMech_Govindjee{A,B,C} <: ThermoElectroMechano
 
   end
 end
+
+
+struct ThermoElectroMech_Bonet{A,B,C} <: ThermoElectroMechano
+  Thermo::A
+  Electro::B
+  Mechano::C
+  function ThermoElectroMech_Bonet(; Thermo::ThermalModel, Electro::Electro, Mechano::Mechano)
+    A, B, C, = typeof(Thermo), typeof(Electro), typeof(Mechano)
+    new{A,B,C}(Thermo, Electro, Mechano)
+  end
+
+
+  function (obj::ThermoElectroMech_Bonet)(Λ::Float64=1.0)
+   @unpack Cv,θr, α, κ, γv, γd =obj.Thermo
+    Ψem, ∂Ψem∂F, ∂Ψem∂E, ∂Ψem∂FF, ∂Ψem∂EF, ∂Ψem∂EE = _getCoupling(obj.Mechano, obj.Electro, Λ)
+    gd(δθ) = 1/(γd+1) * (((δθ+θr)/θr)^(γd+1) -1)
+    ∂gd(δθ) = (δθ+θr)^γd / θr^(γd+1)
+    ∂∂gd(δθ) = γd*(δθ+θr)^(γd-1) / θr^(γd+1)
+    gv(δθ) = 1/(γv+1) * (((δθ+θr)/θr)^(γv+1) -1)
+    ∂gv(δθ) = (δθ+θr)^γv / θr^(γv+1)
+    ∂∂gv(δθ) = γv*(δθ+θr)^(γv-1) / θr^(γv+1)
+
+    _, H, J = get_Kinematics(obj.Mechano.Kinematic; Λ=Λ)
+
+    η(F)=α*(J(F) - 1.0)+Cv/γv
+    ∂η∂J(F)=α
+    ∂η∂F(F)=∂η∂J(F)*H(F)
+    ∂2η∂FF(F)=×ᵢ⁴(∂η∂J(F) * F)
+
+    Ψ(F,E,δθ) = Ψem(F,E)*(1.0+gd(δθ))+gv(δθ)*η(F)
+
+    ∂Ψ_∂F(F, E, δθ)  =   (1.0+gd(δθ)) *∂Ψem∂F(F, E) + gv(δθ)*∂η∂F(F)
+    ∂Ψ_∂E(F, E, δθ)  =   (1.0+gd(δθ)) *∂Ψem∂E(F, E)
+    ∂Ψ_∂δθ(F, E, δθ) =   ∂gd(δθ) *Ψem(F, E) + ∂gv(δθ)*η(F)
+
+    ∂2Ψ_∂2F(F, E, δθ) =  (1.0+gd(δθ)) *∂Ψem∂FF(F, E) + gv(δθ)*∂2η∂FF(F)
+    ∂2Ψ_∂2E(F, E, δθ) =  (1.0+gd(δθ)) *∂Ψem∂EE(F, E)
+    ∂2Ψ_∂2δθ(F, E, δθ) =  ∂∂gd(δθ) *Ψem(F, E) + ∂∂gv(δθ)*η(F)
+
+    ∂ΨEF(F, E, δθ) =  (1.0+gd(δθ)) *∂Ψem∂EF(F, E)
+    ∂ΨFδθ(F, E, δθ) =  ∂gd(δθ) *∂Ψem∂F(F, E) + ∂gv(δθ)*∂η∂F(F)
+    ∂ΨEδθ(F, E, δθ) =  ∂gd(δθ) *∂Ψem∂E(F, E)
+
+    η(F, E, δθ) = -∂Ψ_∂δθ(F, E, δθ)
+
+    return (Ψ, ∂Ψ_∂F, ∂Ψ_∂E, ∂Ψ_∂δθ, ∂2Ψ_∂2F, ∂2Ψ_∂2E, ∂2Ψ_∂2δθ, ∂ΨEF, ∂ΨFδθ, ∂ΨEδθ, η)
+
+  end
+end
+
+
+
 
 
 struct MagnetoMechModel{A,B} <: MagnetoMechano
