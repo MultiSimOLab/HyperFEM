@@ -60,6 +60,8 @@ end
 @publish PhysicalModels ARAP2D_regularized
 @publish PhysicalModels HessianRegularization
 @publish PhysicalModels Hessian∇JRegularization
+@publish PhysicalModels ViscousIncompressible
+@publish PhysicalModels GeneralizedMaxwell
 
 @publish PhysicalModels Mechano
 @publish PhysicalModels Thermo
@@ -78,7 +80,8 @@ end
 @publish PhysicalModels get_Kinematics
 @publish PhysicalModels getIsoInvariants
  
-
+@publish PhysicalModels initializeStateVariables
+@publish PhysicalModels updateStateVariables!
 
 @publish WeakForms residual
 @publish WeakForms jacobian
