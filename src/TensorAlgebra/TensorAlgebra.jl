@@ -3,8 +3,10 @@ module TensorAlgebra
 using Gridap
 using Gridap.TensorValues
 using StaticArrays
+using LinearAlgebra
 import Base: *
 import Base: +
+import Base: sqrt
 
 export (*)
 export (×ᵢ⁴)
@@ -24,6 +26,12 @@ export Tensorize
 export δᵢⱼδₖₗ3D
 export δᵢₖδⱼₗ3D
 export δᵢₗδⱼₖ3D
+export sqrt
+export cof
+export outer_13_24
+export outer_14_23
+export contraction_IP_JPKL
+export contraction_IP_PJKL
  
 
 include("FunctionalAlgebra.jl")
@@ -35,6 +43,40 @@ export Ellipsoid
 # cross × \times
 # sum +
 # dot ⋅ * 
+
+
+"""
+  msqrt(A::TensorValue)::TensorValue
+
+  Compute the square root of a 3x3 matrix by means of eigen decomposition.
+
+  # Arguments
+  - `A::TensorValue`: the matrix to calculate the square root
+
+  # Returns
+  - `::TensorValue`: the squared root matrix
+"""
+@inline function sqrt(A::TensorValue{3,3})
+  λ, Q = eigen(get_array(A))  # TODO: the get_array must be removed as long as it is supported after https://github.com/gridap/Gridap.jl/pull/1157
+  λ = sqrt.(λ)
+  TensorValue{3,3}(λ[1]*Q[1:3]*Q[1:3]' + λ[2]*Q[4:6]*Q[4:6]' + λ[3]*Q[7:9]*Q[7:9]')
+end
+
+
+"""
+  cof(A::TensorValue)::TensorValue
+
+  Calculate the cofactor of a matrix.
+
+  # Arguments
+  - `A::TensorValue`: the matrix to calculate.
+
+  # Returns
+  - `TensorValue`: the cofactor matrix.
+"""
+@inline function cof(A::TensorValue)
+  return det(A)*inv(A')
+end
 
 
 @inline _flat_idx(i::Int, j::Int, N::Int) = i + N*(j-1)
@@ -799,7 +841,7 @@ function I9()
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0)
 end
- 
+
 
 # Jacobian regularization
 function logreg(J; Threshold=0.01)
@@ -816,6 +858,128 @@ end
     str *= "A.data[$i], "
   end
   Meta.parse("TensorValue($str)")
+end
+
+
+"""
+  outer_13_24(Matrix1::TensorValue, Matrix2::TensorValue)::TensorValue
+
+  Computes the **outer product** of two second-order tensors (matrices), returning a fourth-order tensor 
+  represented in a `D² x D²` matrix form (Voigt or flattened index notation) using combined indices.
+
+  # Arguments
+  - `Matrix1::TensorValue{D, D}`: A second-order tensor (e.g., a stress, strain, or deformation tensor).
+  - `Matrix2::TensorValue{D, D}`: Another second-order tensor to be used in the outer product.
+
+  # Returns
+  - `TensorValue{D^2, D^2}`: A statically-sized matrix representing the fourth-order tensor formed from the outer product.
+"""
+@inline function outer_13_24(Matrix1::TensorValue{D}, Matrix2::TensorValue{D}) where D
+  Out = zeros(Float64,D*D,D*D)
+  for j in 1:D
+    for i in 1:D
+      for l in 1:D
+        for k in 1:D
+          Out[i + D * (j - 1), k + D * (l - 1)] += Matrix1[i,k] * Matrix2[j,l]
+        end
+      end
+    end
+  end
+  TensorValue{D*D,D*D}(Out)
+end
+
+
+"""
+  outer_14_23(Matrix1::TensorValue, Matrix2::TensorValue)::TensorValue
+
+  Computes the **outer product** of two second-order tensors (matrices), returning a fourth-order tensor 
+  represented in a `D² x D²` matrix form (flattened notation) using combined indices.
+
+  # Arguments
+  - `Matrix1::TensorValue{D, D}`: A second-order tensor (e.g., a stress, strain, or deformation tensor).
+  - `Matrix2::TensorValue{D, D}`: Another second-order tensor to be used in the outer product.
+
+  # Returns
+  - `TensorValue{D^2, D^2}`: A statically-sized matrix representing the fourth-order tensor formed from the outer product.
+"""
+@inline function outer_14_23(Matrix1::TensorValue{D}, Matrix2::TensorValue{D}) where D
+  Out = zeros(Float64,D*D,D*D)
+  for j in 1:D
+    for i in 1:D
+      for l in 1:D
+        for k in 1:D
+          Out[i + D * (j - 1), k + D * (l - 1)] += Matrix1[i,l] * Matrix2[j,k]
+        end
+      end
+    end
+  end
+  TensorValue{D*D,D*D}(Out)
+end
+
+
+"""
+  contraction_IP_JPKL(Matrix1::TensorValue{D}, Matrix2::TensorValue{D*D})::TensorValue{D*D}
+
+  Performs a specific tensor contraction between a second-order tensor `Matrix1` (of size `D × D`)
+  and a fourth-order tensor `Matrix2` (represented as a `D² x D²` matrix in Voigt or flattened index notation),
+  returning the result as a new fourth-order tensor (in the same flattened form).
+  The contraction follows the **index contraction pattern**, where addition is performed for repeated indices.
+
+  # Arguments
+  - `Matrix1::TensorValue{D, D}`: A second-order tensor (e.g., a stress or deformation tensor).
+  - `Matrix2::TensorValue{D^2, D^2}`: A fourth-order tensor written in matrix form using combined indices.
+
+  # Returns
+  - `TensorValue{D^2, D^2}`: The resulting fourth-order tensor in the same matrix representation.
+"""
+@inline function contraction_IP_JPKL(Matrix1::TensorValue{D}, Matrix2::TensorValue{D²}) where {D, D²}
+  @assert D*D == D² "Second and Fourth-order tensors size mismatch"
+  Out  =  zeros(Float64,D*D,D*D)
+  for i in 1:D
+    for j in 1:D
+      for k in 1:D
+        for l in 1:D
+          for p in 1:D
+            Out[i + D * (j - 1), k + D * (l - 1)] += Matrix1[i,p] * Matrix2[j + D * (p - 1), k + D * (l - 1)]
+          end
+        end
+      end
+    end
+  end
+  return TensorValue{D*D,D*D}(Out)
+end
+
+
+"""
+  contraction_IP_JPKL(Matrix1::TensorValue{D}, Matrix2::TensorValue{D*D})::TensorValue{D*D}
+
+  Performs a specific tensor contraction between a second-order tensor `Matrix1` (of size `D × D`)
+  and a fourth-order tensor `Matrix2` (represented as a `D² x D²` matrix in Voigt or flattened index notation),
+  returning the result as a new fourth-order tensor (in the same flattened form).
+  The contraction follows the **index contraction pattern**, where addition is performed for repeated indices.
+
+  # Arguments
+  - `Matrix1::TensorValue{D, D}`: A second-order tensor (e.g., a stress or deformation tensor).
+  - `Matrix2::TensorValue{D^2, D^2}`: A fourth-order tensor written in matrix form using combined indices.
+
+  # Returns
+  - `TensorValue{D^2, D^2}`: The resulting fourth-order tensor in the same matrix representation.
+"""
+@inline function contraction_IP_PJKL(Matrix1::TensorValue{D}, Matrix2::TensorValue{D²}) where {D, D²}
+  @assert D*D == D² "Second and Fourth-order tensors size mismatch"
+  Out  =  zeros(Float64,D*D,D*D)
+  for i in 1:D
+    for j in 1:D
+      for k in 1:D
+        for l in 1:D
+          for p in 1:D
+            Out[i + D * (j - 1), k + D * (l - 1)] += Matrix1[i,p] * Matrix2[p + D * (j - 1), k + D * (l - 1)]
+          end
+        end
+      end
+    end
+  end
+  return TensorValue{D*D,D*D}(Out)
 end
 
 
