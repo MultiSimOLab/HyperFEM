@@ -55,6 +55,9 @@ export ThermoElectroMech_Bonet
 export MagnetoMechModel
 
 export Mechano
+export Elasto
+export Visco
+export ViscoElastic
 export Electro
 export Magneto
 export Thermo
