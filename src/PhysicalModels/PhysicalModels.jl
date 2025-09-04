@@ -53,6 +53,8 @@ export ThermoElectroMech_Govindjee
 export ThermoElectroMech_PINNs
 export ThermoElectroMech_Bonet
 export MagnetoMechModel
+export GeneralizedMaxwell
+export ViscousIncompressible
 
 export Mechano
 export Elasto
@@ -70,8 +72,11 @@ export FlexoElectro
 
 export EnergyInterpolationScheme
 
+export KinematicDescription
 export DerivativeStrategy
 
+export initializeStateVariables
+export updateStateVariables!
 export update_state!
 
 struct DerivativeStrategy{Kind} end
@@ -82,6 +87,10 @@ abstract type Electro <: PhysicalModel end
 abstract type Magneto <: PhysicalModel end
 abstract type Thermo <: PhysicalModel end
 
+abstract type Elasto <: Mechano end
+abstract type Visco <: Mechano end
+abstract type ViscoElastic <: Mechano end
+
 abstract type MultiPhysicalModel <: PhysicalModel end
 abstract type ElectroMechano <: MultiPhysicalModel end
 abstract type ThermoElectroMechano <: MultiPhysicalModel end
@@ -91,6 +100,7 @@ abstract type FlexoElectro <: MultiPhysicalModel end
 abstract type MagnetoMechano <: MultiPhysicalModel end
 
 include("KinematicModels.jl")
+include("ViscousModels.jl")
 include("PINNs.jl")
 export Kinematics
 export KinematicModel
@@ -100,6 +110,18 @@ export getIsoInvariants
 
 export HessianRegularization
 export Hessian∇JRegularization
+
+
+# ============================================
+# State variables management
+# ============================================
+
+function initializeStateVariables(::PhysicalModel, points::Measure)
+  return nothing
+end
+
+function updateStateVariables!(::PhysicalModel, vars...)
+end
 
 # ============================================
 # Regularization of Mechanical models
@@ -531,12 +553,12 @@ struct VolumetricEnergy{A} <: Mechano
   end
 end
 
-struct NeoHookean3D{A} <: Mechano
+struct NeoHookean3D{A} <: Elasto
   λ::Float64
   μ::Float64
   ρ::Float64
   Kinematic::A
-  function NeoHookean3D(; λ::Float64, μ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
+  function NeoHookean3D(; λ::Float64, μ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Elasto))
     new{typeof(Kinematic)}(λ, μ, ρ, Kinematic)
   end
 
@@ -981,13 +1003,13 @@ end
 
 
 
-struct IncompressibleNeoHookean3D{A} <: Mechano
+struct IncompressibleNeoHookean3D{A} <: Elasto
   λ::Float64
   μ::Float64
   ρ::Float64
   δ::Float64
   Kinematic::A
-  function IncompressibleNeoHookean3D(; λ::Float64, μ::Float64, ρ::Float64=0.0, δ::Float64=0.1, Kinematic::KinematicModel=Kinematics(Mechano))
+  function IncompressibleNeoHookean3D(; λ::Float64, μ::Float64, ρ::Float64=0.0, δ::Float64=0.1, Kinematic::KinematicModel=Kinematics(Elasto))
     new{typeof(Kinematic)}(λ, μ, ρ, δ, Kinematic)
   end
 
@@ -1026,6 +1048,22 @@ struct IncompressibleNeoHookean3D{A} <: Mechano
     return (Ψ, ∂Ψu, ∂Ψuu)
   end
 
+  function (obj::IncompressibleNeoHookean3D)(::KinematicDescription{:SecondPiola}, Λ::Float64=1.0)
+    Ψ(C) = obj.μ / 2 * tr(C) * det(C)^(-1/3)
+    S(C) = begin
+      J = det(C)
+      invC = inv(C)
+      obj.μ * J^(-1/3) * I3() - obj.μ / 3 * tr(C) * J^(-1/3) * invC
+    end
+    ∂S∂C(C) = begin
+      J = det(C)
+      trC = tr(C)
+      invC = inv(C)
+      IinvC = I3() ⊗ invC
+      1/3 * obj.μ * J^(-1/3) * (4/3*trC*invC⊗invC -(IinvC+IinvC') -trC/J*×ᵢ⁴(C))
+    end
+    return (Ψ, S, ∂S∂C)
+  end
 end
 
 struct IncompressibleNeoHookean2D{A} <: Mechano
