@@ -538,12 +538,12 @@ end
  end
 
 
-@testset "Volumetric_energy" begin
+@testset "VolumetricEnergy" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   model = VolumetricEnergy(λ=0.0 )
  
    Ψ, ∂Ψu, ∂Ψuu= model()
-  F, _, _ = get_Kinematics(modelMR.Kinematic)
+  F, _, _ = get_Kinematics(model.Kinematic)
  
   ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
   ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
