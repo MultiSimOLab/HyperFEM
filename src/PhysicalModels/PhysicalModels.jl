@@ -1009,7 +1009,7 @@ struct IncompressibleNeoHookean3D{A} <: Elasto
   ρ::Float64
   δ::Float64
   Kinematic::A
-  function IncompressibleNeoHookean3D(; λ::Float64, μ::Float64, ρ::Float64=0.0, δ::Float64=0.1, Kinematic::KinematicModel=Kinematics(Elasto))
+  function IncompressibleNeoHookean3D(; λ::Float64, μ::Float64, ρ::Float64=0.0, δ::Float64=0.1, Kinematic::KinematicModel=Kinematics(Mechano))
     new{typeof(Kinematic)}(λ, μ, ρ, δ, Kinematic)
   end
 
