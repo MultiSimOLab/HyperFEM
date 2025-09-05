@@ -56,7 +56,7 @@ export Ellipsoid
   # Returns
   - `::TensorValue`: the squared root matrix
 """
-@inline function sqrt(A::TensorValue{3,3})
+function sqrt(A::TensorValue{3,3})
   λ, Q = eigen(get_array(A))  # TODO: the get_array must be removed as long as it is supported after https://github.com/gridap/Gridap.jl/pull/1157
   λ = sqrt.(λ)
   TensorValue{3,3}(λ[1]*Q[1:3]*Q[1:3]' + λ[2]*Q[4:6]*Q[4:6]' + λ[3]*Q[7:9]*Q[7:9]')
@@ -74,16 +74,16 @@ end
   # Returns
   - `TensorValue`: the cofactor matrix.
 """
-@inline function cof(A::TensorValue)
+function cof(A::TensorValue)
   return det(A)*inv(A')
 end
 
 
-@inline _flat_idx(i::Int, j::Int, N::Int) = i + N*(j-1)
-@inline _flat_idx(i::Int, j::Int, k::Int, l::Int, N::Int) = _flat_idx(_flat_idx(i,j,N), _flat_idx(k,l,N), N)
-@inline _full_idx2(α::Int, N::Int) = ((α-1)%N+1 ,(α-1)÷N+1)
-@inline _full_idx4(α::Int, β::Int, N::Int) = (_full_idx2(α,N)..., _full_idx2(β,N)...)
-@inline _full_idx4(α::Int, N::Int) = _full_idx4(_full_idx2(α,N*N)...,N)
+_flat_idx(i::Int, j::Int, N::Int) = i + N*(j-1)
+_flat_idx(i::Int, j::Int, k::Int, l::Int, N::Int) = _flat_idx(_flat_idx(i,j,N), _flat_idx(k,l,N), N)
+_full_idx2(α::Int, N::Int) = ((α-1)%N+1 ,(α-1)÷N+1)
+_full_idx4(α::Int, β::Int, N::Int) = (_full_idx2(α,N)..., _full_idx2(β,N)...)
+_full_idx4(α::Int, N::Int) = _full_idx4(_full_idx2(α,N*N)...,N)
 
 function _Kroneckerδδ(δδ::Function, N::Int)
   TensorValue{N*N,N*N,Float64}(ntuple(α -> begin
@@ -874,7 +874,7 @@ end
   # Returns
   - `TensorValue{D^2, D^2}`: A statically-sized matrix representing the fourth-order tensor formed from the outer product.
 """
-@inline function outer_13_24(Matrix1::TensorValue{D}, Matrix2::TensorValue{D}) where D
+function outer_13_24(Matrix1::TensorValue{D}, Matrix2::TensorValue{D}) where D
   Out = zeros(Float64,D*D,D*D)
   for j in 1:D
     for i in 1:D
@@ -902,7 +902,7 @@ end
   # Returns
   - `TensorValue{D^2, D^2}`: A statically-sized matrix representing the fourth-order tensor formed from the outer product.
 """
-@inline function outer_14_23(Matrix1::TensorValue{D}, Matrix2::TensorValue{D}) where D
+function outer_14_23(Matrix1::TensorValue{D}, Matrix2::TensorValue{D}) where D
   Out = zeros(Float64,D*D,D*D)
   for j in 1:D
     for i in 1:D
@@ -932,7 +932,7 @@ end
   # Returns
   - `TensorValue{D^2, D^2}`: The resulting fourth-order tensor in the same matrix representation.
 """
-@inline function contraction_IP_JPKL(Matrix1::TensorValue{D}, Matrix2::TensorValue{D²}) where {D, D²}
+function contraction_IP_JPKL(Matrix1::TensorValue{D}, Matrix2::TensorValue{D²}) where {D, D²}
   @assert D*D == D² "Second and Fourth-order tensors size mismatch"
   Out  =  zeros(Float64,D*D,D*D)
   for i in 1:D
@@ -965,7 +965,7 @@ end
   # Returns
   - `TensorValue{D^2, D^2}`: The resulting fourth-order tensor in the same matrix representation.
 """
-@inline function contraction_IP_PJKL(Matrix1::TensorValue{D}, Matrix2::TensorValue{D²}) where {D, D²}
+function contraction_IP_PJKL(Matrix1::TensorValue{D}, Matrix2::TensorValue{D²}) where {D, D²}
   @assert D*D == D² "Second and Fourth-order tensors size mismatch"
   Out  =  zeros(Float64,D*D,D*D)
   for i in 1:D
