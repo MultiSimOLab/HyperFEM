@@ -1,32 +1,24 @@
 using Gridap
+using HyperFEM.PhysicalModels
 
 
+function test_derivatives_(model::PhysicalModel; rtol=1e-14, kwargs...)
+  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
 
+  Ψ, ∂Ψu, ∂Ψuu = model()
+
+  ∂Ψu_(F) = TensorValue(ForwardDiff.gradient(Ψ, get_array(F)))
+  ∂Ψuu_(F) = TensorValue(ForwardDiff.hessian(Ψ, get_array(F)))
+
+  F, _, _ = get_Kinematics(model.Kinematic)
+  @test isapprox(∂Ψu(F(∇u)), ∂Ψu_(F(∇u)), rtol=rtol, kwargs...)
+  @test isapprox(∂Ψuu(F(∇u)), ∂Ψuu_(F(∇u)), rtol=rtol, kwargs...)
+end
 
 
 @testset "NonlinearMooneyRivlin_CV" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
-
   model = NonlinearMooneyRivlin_CV(λ=3.0, μ1=1.0, μ2=1.0, α=2.0, β=1.0, γ=6.0)
-
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  F, _, _ = get_Kinematics(model.Kinematic)
-
-  # @benchmark norm(∂Ψuu(F(∇u)))
-  # @code_warntype  norm(∂Ψuu(F(∇u)))
-
-  #  ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
-  #  ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
-
-  #  norm(∂Ψu_(F(∇u))) -norm(∂Ψu(F(∇u)))
-  #  norm(∂Ψuu_(F(∇u))) -norm(∂Ψuu(F(∇u)))
-
-
-
-  @test Ψ(F(∇u)) == 8.274742322531269
-  @test norm(∂Ψu(F(∇u))) == 5.647570016731348
-  @test norm(∂Ψuu(F(∇u))) == 653.1484437383998
-
+  test_derivatives_(model, rtol=1e-13)
 end
 
 

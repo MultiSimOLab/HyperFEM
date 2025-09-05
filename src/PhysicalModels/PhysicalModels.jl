@@ -56,6 +56,7 @@ export MagnetoMechModel
 export GeneralizedMaxwell
 export ViscousIncompressible
 
+export PhysicalModel
 export Mechano
 export Elasto
 export Visco
@@ -794,11 +795,11 @@ struct NonlinearMooneyRivlin_CV{A} <: Mechano
 
 
 
-    Ψ(F::TensorValue{3, 3, Float64, 9}) = μ1 / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F))^α + 
+    Ψ(F) = μ1 / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F))^α + 
            μ2 / (2.0 * β * 3.0^(β - 1)) * (tr((H(F))' * H(F)))^β - 
            (μ1 + 2*μ2) * log(J(F)) + λ * (J(F)^(γ) + J(F)^(-γ))
 
-    ∂Ψ_∂F(F::TensorValue{3, 3, Float64, 9}) = ((μ1 / (3.0^(α - 1)) * (trAA(F))^(α - 1))) * F
+    ∂Ψ_∂F(F) = ((μ1 / (3.0^(α - 1)) * (trAA(F))^(α - 1))) * F
     ∂Ψ_∂H(F) = ((μ2 / (3.0^(β - 1)) * (tr((H(F))' * H(F)))^(β - 1))) * H(F)
     ∂Ψ_∂J(F) = -(μ1 + 2*μ2) * (1.0 / J(F)) + λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1))
     ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂H(F) × F + ∂Ψ_∂J(F) * H(F)
