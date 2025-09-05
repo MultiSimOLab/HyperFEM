@@ -1,11 +1,14 @@
 
 abstract type KinematicModel end
 
+struct KinematicDescription{Kind} end
+
 get_Kinematics(::KinematicModel; Λ::Float64) = @abstractmethod
 
 struct Kinematics{A,B} <: KinematicModel
     metrics::A
-    function Kinematics(::Type{Mechano}; F::Function=(∇u) -> one(∇u) + ∇u)
+
+    function Kinematics(::Union{Type{Mechano},Type{Elasto}}; F::Function=(∇u) -> one(∇u) + ∇u)
         J(F) = det(F)
         H(F) = det(F) * inv(F)'
         metrics = (F, H, J)
@@ -13,14 +16,13 @@ struct Kinematics{A,B} <: KinematicModel
         new{A,Mechano}(metrics)
     end
 
-    # function Kinematics(::Type{Mechano}, δ::Float64; F::Function=(∇u) -> one(∇u) + ∇u)
-    #     J_(F) = det(F)
-    #     H(F) = J(F) * inv(F)'
-    #     metrics = (F, H, J)
-    #     A = typeof(metrics)
-    #     new{A,Mechano}(metrics)
-    # end
-
+    function Kinematics(::Type{Visco}; F::Function=(∇u) -> one(∇u) + ∇u)
+        C(F) = F' * F
+        Ce(C,Uvα⁻¹) = Uvα⁻¹ * C * Uvα⁻¹
+        metrics = (F, C, Ce)
+        A = typeof(metrics)
+        new{A,Visco}(metrics)
+    end
 
     function Kinematics(::Type{Electro}; E::Function=(∇φ) -> -∇φ)
         metrics = (E)

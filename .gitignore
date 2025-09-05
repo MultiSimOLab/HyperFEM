@@ -1,0 +1,5 @@
+Manifest.toml
+results/
+debug/
+data/sims/
+**/.DS_Store

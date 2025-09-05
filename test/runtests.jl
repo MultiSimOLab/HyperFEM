@@ -36,5 +36,5 @@ end
         include("../test/TestWeakForms/runtests.jl")
     end
 
-end
+end;
 
