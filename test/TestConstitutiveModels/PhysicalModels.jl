@@ -2,11 +2,8 @@ using Gridap
 using HyperFEM.PhysicalModels
 
 
-function test_derivatives_(model::PhysicalModel; rtol=1e-14, kwargs...)
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
-
+function test_derivatives__(model::PhysicalModel, ∇u; rtol, kwargs...)
   Ψ, ∂Ψu, ∂Ψuu = model()
-
   ∂Ψu_(F) = TensorValue(ForwardDiff.gradient(Ψ, get_array(F)))
   ∂Ψuu_(F) = TensorValue(ForwardDiff.hessian(Ψ, get_array(F)))
 
@@ -15,32 +12,27 @@ function test_derivatives_(model::PhysicalModel; rtol=1e-14, kwargs...)
   @test isapprox(∂Ψuu(F(∇u)), ∂Ψuu_(F(∇u)), rtol=rtol, kwargs...)
 end
 
+function test_derivatives_2D_(model::PhysicalModel; rtol=1e-14, kwargs...)
+  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
+  test_derivatives__(model, ∇u, rtol=rtol, kwargs...)
+end
 
-@testset "NonlinearMooneyRivlin_CV" begin
-  model = NonlinearMooneyRivlin_CV(λ=3.0, μ1=1.0, μ2=1.0, α=2.0, β=1.0, γ=6.0)
-  test_derivatives_(model, rtol=1e-13)
+function test_derivatives_3D_(model::PhysicalModel; rtol=1e-14, kwargs...)
+  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
+  test_derivatives__(model, ∇u, rtol=rtol, kwargs...)
 end
 
 
 
+@testset "NonlinearMooneyRivlin_CV" begin
+  model = NonlinearMooneyRivlin_CV(λ=3.0, μ1=1.0, μ2=1.0, α=2.0, β=1.0, γ=6.0)
+  test_derivatives_3D_(model, rtol=1e-13)
+end
+
+
 @testset "NonlinearNeoHookean_CV" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
-
   model = NonlinearNeoHookean_CV(λ=3.0, μ=1.0, α=2.0, γ=6.0)
-
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  F, _, _ = get_Kinematics(model.Kinematic)
-
-  #  ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
-  #  ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
-
-  #  norm(∂Ψu_(F(∇u))) -norm(∂Ψu(F(∇u)))
-  #  norm(∂Ψuu_(F(∇u))) -norm(∂Ψuu(F(∇u)))
-
-  @test Ψ(F(∇u)) == 6.774247349061977
-  @test norm(∂Ψu(F(∇u))) == 5.578324662235092
-  @test norm(∂Ψuu(F(∇u))) == 645.1103360183206
-
+  test_derivatives_3D_(model, rtol=1e-13)
 end
 
 
@@ -62,6 +54,7 @@ end
   @test norm(∂Se(Ce)) == 2.616897862779383
 
 end
+
 
 @testset "LinearElasticity2D" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
