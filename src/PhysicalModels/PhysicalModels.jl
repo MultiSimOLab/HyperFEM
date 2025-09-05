@@ -558,7 +558,7 @@ struct NeoHookean3D{A} <: Elasto
   μ::Float64
   ρ::Float64
   Kinematic::A
-  function NeoHookean3D(; λ::Float64, μ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Elasto))
+  function NeoHookean3D(; λ::Float64, μ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
     new{typeof(Kinematic)}(λ, μ, ρ, Kinematic)
   end
 
