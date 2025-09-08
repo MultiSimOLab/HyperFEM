@@ -5,6 +5,7 @@ using Gridap, GridapGmsh, GridapSolvers, DrWatson, TimerOutputs
 using GridapSolvers.NonlinearSolvers
 using Gridap.FESpaces
 using Gridap.CellData
+using Gridap.TensorValues
 using HyperFEM: jacobian, IterativeSolver, solve!
 using WriteVTK
 using Revise
@@ -15,14 +16,8 @@ using BenchmarkTools
 
 import Base.isapprox
 
-function isapprox(a::TensorValue, b::TensorValue; kwargs...)
-    return isapprox(get_array(a), get_array(b); kwargs...)
-end
+isapprox(A::MultiValue, B::MultiValue; kwargs...) = isapprox(get_array(A), get_array(B); kwargs...)
 
-
-function isapprox(a::VectorValue, b::VectorValue; kwargs...)
-    return isapprox(get_array(a), get_array(b); kwargs...)
-end
 
 @testset "HyperFEMTests" verbose = true begin
 

@@ -1,54 +1,52 @@
 using Gridap
+using ForwardDiff
+using StaticArrays
+using Test
+using HyperFEM.PhysicalModels
 
 
+import Base: -
+
+(-)(A::SMatrix, B::TensorValue) = A - get_array(B)  # NOTE: These functions are required for LinearElasticity to work with ForwardDiff
+(-)(A::TensorValue, B::SMatrix) = get_array(A) - B
 
 
+const ∇u2 = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
+const ∇u3 = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
+const μParams = [6456.9137547089595, 896.4633794151492,
+    1.999999451256222, 1.9999960497608036, 11747.646562400318,
+    0.7841068624959612, 1.5386288924587603]
 
-@testset "NonlinearMooneyRivlin_CV" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
 
-  model = NonlinearMooneyRivlin_CV(λ=3.0, μ1=1.0, μ2=1.0, α=2.0, β=1.0, γ=6.0)
-
+function test_derivatives__(model::PhysicalModel, ∇u; rtol, kwargs...)
   Ψ, ∂Ψu, ∂Ψuu = model()
+  ∂Ψu_(F) = TensorValue(ForwardDiff.gradient(Ψ, get_array(F)))
+  ∂Ψuu_(F) = TensorValue(ForwardDiff.hessian(Ψ, get_array(F)))
+
   F, _, _ = get_Kinematics(model.Kinematic)
+  @test isapprox(∂Ψu(F(∇u)), ∂Ψu_(F(∇u)), rtol=rtol, kwargs...)
+  @test isapprox(∂Ψuu(F(∇u)), ∂Ψuu_(F(∇u)), rtol=rtol, kwargs...)
+end
 
-  # @benchmark norm(∂Ψuu(F(∇u)))
-  # @code_warntype  norm(∂Ψuu(F(∇u)))
+function test_derivatives_2D_(model::PhysicalModel; rtol=1e-14, kwargs...)
+  test_derivatives__(model, ∇u2, rtol=rtol, kwargs...)
+end
 
-  #  ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
-  #  ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
-
-  #  norm(∂Ψu_(F(∇u))) -norm(∂Ψu(F(∇u)))
-  #  norm(∂Ψuu_(F(∇u))) -norm(∂Ψuu(F(∇u)))
-
-
-
-  @test Ψ(F(∇u)) == 8.274742322531269
-  @test norm(∂Ψu(F(∇u))) == 5.647570016731348
-  @test norm(∂Ψuu(F(∇u))) == 653.1484437383998
-
+function test_derivatives_3D_(model::PhysicalModel; rtol=1e-14, kwargs...)
+  test_derivatives__(model, ∇u3, rtol=rtol, kwargs...)
 end
 
 
 
+@testset "NonlinearMooneyRivlin_CV" begin
+  model = NonlinearMooneyRivlin_CV(λ=3.0, μ1=1.0, μ2=1.0, α=2.0, β=1.0, γ=6.0)
+  test_derivatives_3D_(model, rtol=1e-13)
+end
+
+
 @testset "NonlinearNeoHookean_CV" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
-
   model = NonlinearNeoHookean_CV(λ=3.0, μ=1.0, α=2.0, γ=6.0)
-
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  F, _, _ = get_Kinematics(model.Kinematic)
-
-  #  ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
-  #  ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
-
-  #  norm(∂Ψu_(F(∇u))) -norm(∂Ψu(F(∇u)))
-  #  norm(∂Ψuu_(F(∇u))) -norm(∂Ψuu(F(∇u)))
-
-  @test Ψ(F(∇u)) == 6.774247349061977
-  @test norm(∂Ψu(F(∇u))) == 5.578324662235092
-  @test norm(∂Ψuu(F(∇u))) == 645.1103360183206
-
+  test_derivatives_3D_(model, rtol=1e-13)
 end
 
 
@@ -71,248 +69,75 @@ end
 
 end
 
+
 @testset "LinearElasticity2D" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
   model = LinearElasticity2D(λ=3.0, μ=1.0)
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  F, _, _ = get_Kinematics(model.Kinematic)
-  @test (Ψ(F(∇u))) == 6.699999999999821e-5
-  @test norm(∂Ψu(F(∇u))) == 0.029461839725311915
-  @test norm(∂Ψuu(F(∇u))) == 8.48528137423857
+  test_derivatives_2D_(model)
 end
 
-@testset "LinearElasticity3D" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
-  model = LinearElasticity3D(λ=3.0, μ=1.0)
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  F, _, _ = get_Kinematics(model.Kinematic)
 
-  @test (Ψ(F(∇u))) == 0.0006104999999999824
-  @test norm(∂Ψu(F(∇u))) == 0.09933277404764056
-  @test norm(∂Ψuu(F(∇u))) == 11.874342087037917
+@testset "LinearElasticity3D" begin
+  model = LinearElasticity3D(λ=3.0, μ=1.0)
+  test_derivatives_3D_(model)
 end
 
 
 @testset "NeoHookean3D" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   model = NeoHookean3D(λ=3.0, μ=1.0)
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  F, _, _ = get_Kinematics(model.Kinematic)
-  @test Ψ(F(∇u)) == 0.0006083121396460722
-  @test norm(∂Ψu(F(∇u))) == 0.099612127449168118
-  @test norm(∂Ψuu(F(∇u))) == 12.073268944343628
+  test_derivatives_3D_(model, rtol=1e-13)
 end
 
 
 @testset "MooneyRivlin2D" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
   model = MooneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  F, _, _ = get_Kinematics(model.Kinematic)
-  @test Ψ(F(∇u)) == 4.000175692713462
-  @test norm(∂Ψu(F(∇u))) == 0.07481942119475013
-  @test norm(∂Ψuu(F(∇u))) == 21.74472726344396
+  test_derivatives_2D_(model)
 end
 
 @testset "MooneyRivlin3D" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   model = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  F, _, _ = get_Kinematics(model.Kinematic)
-  @test Ψ(F(∇u)) == 0.001598259078230413
-  @test norm(∂Ψu(F(∇u))) == 0.24833325775972206
-  @test norm(∂Ψuu(F(∇u))) == 30.36786840739546
+  test_derivatives_3D_(model, rtol=1e-13)
 end
 
 
 @testset "NonlinearMooneyRivlin2D" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
-  ∇u0 = TensorValue(0.0, 0.0, 0.0, 0.0) * 1e-3
-
-  μParams = [6456.9137547089595, 896.4633794151492,
-    1.999999451256222,
-    1.9999960497608036,
-    11747.646562400318,
-    0.7841068624959612, 1.5386288924587603]
   model = NonlinearMooneyRivlin2D(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α=μParams[3], β=μParams[4])
-
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  F, _, _ = get_Kinematics(model.Kinematic)
-
-  # ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
-  # ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
-
-  # norm(∂Ψu_(F(∇u))) -norm(∂Ψu(F(∇u)))
-  # norm(∂Ψuu_(F(∇u))) -norm(∂Ψuu(F(∇u)))
-
-  @test Ψ(F(∇u)) == 5524.542944928555
-  @test norm(∂Ψu(F(∇u))) == 5322.887691298287
-  @test norm(∂Ψuu(F(∇u))) == 1.5136029879040532e6
-
-
+  test_derivatives_2D_(model)
 end
-
-
 
 
 @testset "Yeoh3D" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
-
   model = Yeoh3D(λ=3.0, C10=1.0, C20=1.0, C30=1.0)
-  Ψ, ∂Ψu, ∂Ψuu = model()
-
-  F, _, _ = get_Kinematics(model.Kinematic)
-
-  #    ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
-  #  ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
-
-  #  norm(∂Ψu_(F(∇u))) -norm(∂Ψu(F(∇u)))
-  #  norm(∂Ψuu_(F(∇u))) -norm(∂Ψuu(F(∇u)))
-
-
-
-  @test Ψ(F(∇u)) == 0.0018248918516909718
-  @test norm(∂Ψu(F(∇u))) == 0.33825920882848515
-  @test norm(∂Ψuu(F(∇u))) == 40.845986774511886
+  test_derivatives_3D_(model)
 end
-
-
 
 
 @testset "NonlinearMooneyRivlin2D_CV" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
-  ∇u0 = TensorValue(0.0, 0.0, 0.0, 0.0) * 1e-3
-
-  μParams = [6456.9137547089595, 896.4633794151492,
-    1.999999451256222,
-    1.9999960497608036,
-    11747.646562400318,
-    0.7841068624959612, 1.5386288924587603]
   model = NonlinearMooneyRivlin2D_CV(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α=μParams[3], β=μParams[4], γ=μParams[4])
-
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  F, _, _ = get_Kinematics(model.Kinematic)
-
-  # ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
-  # ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
-
-  # norm(∂Ψu_(F(∇u))) -norm(∂Ψu(F(∇u)))
-  # norm(∂Ψuu_(F(∇u))) -norm(∂Ψuu(F(∇u)))
-
-  @test Ψ(F(∇u)) == 1.47626389512027e6
-  @test norm(∂Ψu(F(∇u))) == 41486.412892304914
-  @test norm(∂Ψuu(F(∇u))) == 1.171028839080193e7
-
-
+  test_derivatives_2D_(model)
 end
 
 
-
 @testset "NonlinearMooneyRivlin3D" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
-
-  μParams = [6456.9137547089595, 896.4633794151492,
-    1.999999451256222,
-    1.9999960497608036,
-    11747.646562400318,
-    0.7841068624959612, 1.5386288924587603]
   model = NonlinearMooneyRivlin3D(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α=μParams[3], β=μParams[4])
-
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  F, _, _ = get_Kinematics(model.Kinematic)
-
-  # ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
-  # ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
-
-  # norm(∂Ψu_(F(∇u))) -norm(∂Ψu(F(∇u)))
-  # norm(∂Ψuu_(F(∇u))) -norm(∂Ψuu(F(∇u)))
-
-  @test Ψ(F(∇u)) == 5600.526853280392
-  @test norm(∂Ψu(F(∇u))) == 19622.49002309361
-  @test norm(∂Ψuu(F(∇u))) == 2.313386876448522e6
-
+  test_derivatives_3D_(model, rtol=1e-13)
 end
 
 
 @testset "IncompressibleNeoHookean2D" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
-  ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
-
-  μParams = [6456.9137547089595, 896.4633794151492,
-    1.999999451256222,
-    1.9999960497608036,
-    11747.646562400318,
-    0.7841068624959612, 1.5386288924587603]
   model = IncompressibleNeoHookean2D(λ=(μParams[1] + μParams[2]) * 1e2, μ=μParams[1])
-
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  F, _, J_ = get_Kinematics(model.Kinematic)
-
-  # ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
-  # ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
-
-  # norm(∂Ψu_(F(∇u))) - norm(∂Ψu(F(∇u)))
-  #  norm(∂Ψuu_(F(∇u))) - norm(∂Ψuu(F(∇u)))
-
-  @test Ψ(F(∇u)) == 9678.62138906247
-  @test norm(∂Ψu(F(∇u))) == 5225.228283839419
-  @test norm(∂Ψuu(F(∇u))) == 1.4859216839324834e6
+  test_derivatives_2D_(model)
 end
 
 @testset "IncompressibleNeoHookean2D_CV" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
-  ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
-
-  μParams = [6456.9137547089595, 896.4633794151492,
-    1.999999451256222,
-    1.9999960497608036,
-    11747.646562400318,
-    0.7841068624959612, 1.5386288924587603]
   model = IncompressibleNeoHookean2D_CV(λ=(μParams[1] + μParams[2]) * 1e2, μ=μParams[1], γ=3.0)
-
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  F, _, J_ = get_Kinematics(model.Kinematic)
-
-  ∂Ψu_(F) = TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
-  ∂Ψuu_(F) = TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
-
-  norm(∂Ψu_(F(∇u))) - norm(∂Ψu(F(∇u)))
-  norm(∂Ψuu_(F(∇u))) - norm(∂Ψuu(F(∇u)))
-
-  @test Ψ(F(∇u)) == 1.4805254328174442e6
-  @test norm(∂Ψu(F(∇u))) == 93109.55194565043
-  @test norm(∂Ψuu(F(∇u))) == 2.6282687148741454e7
+  test_derivatives_2D_(model)
 end
 
 
 @testset "NonlinearIncompressibleMooneyRivlin2D_CV" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
-  ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
-
-  μParams = [6456.9137547089595, 896.4633794151492,
-    1.999999451256222,
-    1.9999960497608036,
-    11747.646562400318,
-    0.7841068624959612, 1.5386288924587603]
   model = NonlinearIncompressibleMooneyRivlin2D_CV(λ=(μParams[1] + μParams[2]) * 1e2, μ=μParams[1], α=μParams[3], γ=3.0)
-
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  F, _, J_ = get_Kinematics(model.Kinematic)
-
-  # ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
-  # ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
-
-  # norm(∂Ψu_(F(∇u))) - norm(∂Ψu(F(∇u)))
-  #  norm(∂Ψuu_(F(∇u))) - norm(∂Ψuu(F(∇u)))
-
-
-  @test Ψ(F(∇u)) == 1.4853683856379557e6
-  @test norm(∂Ψu(F(∇u))) == 93139.40884969762
-  @test norm(∂Ψuu(F(∇u))) == 2.629114137261709e7
+  test_derivatives_2D_(model)
 end
-
-
-
 
 
 @testset "TransverseIsotropy2D" begin
@@ -320,11 +145,6 @@ end
   ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
 
   N = VectorValue(1.0, 2.0) / sqrt(5.0)
-  μParams = [6456.9137547089595, 896.4633794151492,
-    1.999999451256222,
-    1.9999960497608036,
-    11747.646562400318,
-    0.7841068624959612, 1.5386288924587603]
   model = TransverseIsotropy2D(μ=μParams[5], α=μParams[6], β=μParams[7])
   Ψ, ∂Ψu, ∂Ψuu = model()
 
@@ -349,11 +169,6 @@ end
 @testset "TransverseIsotropy3D" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   N = VectorValue(1.0, 2.0, 3.0)
-  μParams = [6456.9137547089595, 896.4633794151492,
-    1.999999451256222,
-    1.9999960497608036,
-    11747.646562400318,
-    0.7841068624959612, 1.5386288924587603]
   model = TransverseIsotropy3D(μ=μParams[5], α=μParams[6], β=μParams[7])
 
   Ψ, ∂Ψu, ∂Ψuu = model()
@@ -843,58 +658,16 @@ end
 
 
 @testset "ARAP2D" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
-  ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
-
-  μParams = [6456.9137547089595, 896.4633794151492,
-    1.999999451256222,
-    1.9999960497608036,
-    11747.646562400318,
-    0.7841068624959612, 1.5386288924587603]
   model = ARAP2D(μ=μParams[1])
-
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  F, _, J_ = get_Kinematics(model.Kinematic)
-
-  # ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
-  # ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
-
-  # norm(∂Ψu_(F(∇u))) - norm(∂Ψu(F(∇u)))
-  #  norm(∂Ψuu_(F(∇u))) - norm(∂Ψuu(F(∇u)))
-
-  @test Ψ(F(∇u)) == 6457.022976353012
-  @test norm(∂Ψu(F(∇u))) == 52.980951554554586
-  @test norm(∂Ψuu(F(∇u))) == 18172.854404408303
+  test_derivatives_2D_(model, rtol=1e-13)
 end
 
 
 
 
 @testset "ARAP2D_regularized" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
-  ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
-
-  μParams = [6456.9137547089595, 896.4633794151492,
-    1.999999451256222,
-    1.9999960497608036,
-    11747.646562400318,
-    0.7841068624959612, 1.5386288924587603]
   model = ARAP2D_regularized(μ=μParams[1])
-
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  F, _, J_ = get_Kinematics(model.Kinematic)
-
-  # ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
-  # ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
-
-  # norm(∂Ψu_(F(∇u))) - norm(∂Ψu(F(∇u)))
-  #  norm(∂Ψuu_(F(∇u))) - norm(∂Ψuu(F(∇u)))
-  #  norm(∂Ψu(F(∇u0)))
-
-
-  @test Ψ(F(∇u)) == 6440.959849358168
-  @test norm(∂Ψu(F(∇u))) == 52.8548808805944
-  @test norm(∂Ψuu(F(∇u))) == 18128.952058660318
+  test_derivatives_2D_(model, rtol=1e-13)
 end
 
 
@@ -902,11 +675,6 @@ end
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
   ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
 
-  μParams = [6456.9137547089595, 896.4633794151492,
-    1.999999451256222,
-    1.9999960497608036,
-    11747.646562400318,
-    0.7841068624959612, 1.5386288924587603]
   model = ARAP2D_regularized(μ=μParams[1])
   modelreg = HessianRegularization(Mechano=model)
 

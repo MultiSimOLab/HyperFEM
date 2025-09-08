@@ -56,6 +56,7 @@ export MagnetoMechModel
 export GeneralizedMaxwell
 export ViscousIncompressible
 
+export PhysicalModel
 export Mechano
 export Elasto
 export Visco
@@ -135,7 +136,6 @@ struct HessianRegularization{A,B} <: Mechano
     new{typeof(Mechano),typeof(Mechano.Kinematic)}(Mechano, δ, Mechano.Kinematic)
   end
 
-
   function (obj::HessianRegularization)(Λ::Float64=1.0)
     Ψs, ∂Ψs, ∂2Ψs = obj.Mechano()
     δ = obj.δ
@@ -146,13 +146,10 @@ struct HessianRegularization{A,B} <: Mechano
       val = real(vecval.values)
       TensorValue(vec * diagm(max.(δ, val)) * vec')
     end
-
     return (Ψs, ∂Ψs, ∂2Ψ)
   end
-
-
-
 end
+
 
 struct Hessian∇JRegularization{A,B} <: Mechano
   Mechano::A
@@ -162,7 +159,6 @@ struct Hessian∇JRegularization{A,B} <: Mechano
   function Hessian∇JRegularization(; Mechano::Mechano, δ::Float64=1.0e-6, κ::Float64=1.0)
     new{typeof(Mechano),typeof(Mechano.Kinematic)}(Mechano, δ, κ, Mechano.Kinematic)
   end
-
 
   function (obj::Hessian∇JRegularization)(Λ::Float64=1.0)
     Ψs, ∂Ψs, ∂2Ψs = obj.Mechano()
@@ -179,8 +175,6 @@ struct Hessian∇JRegularization{A,B} <: Mechano
       val = real(vecval.values)
       TensorValue(vec * diagm(max.(δ, val)) * vec')
     end
-
-    # ∂2Ψ(F, Jh) = TensorValue(real(λ(F, Jh).vectors) * diagm(max.(δ, real(λ(F, Jh).values))) * real(λ(F, Jh).vectors)')
     return (Ψ, ∂Ψ, ∂2Ψ)
   end
 end
@@ -502,15 +496,14 @@ struct LinearElasticity2D{A} <: Mechano
 
   function (obj::LinearElasticity2D)(Λ::Float64=1.0)
     λ, μ = obj.λ, obj.μ
-    I22 = I2()
-    ∂Ψuu(F) = _δδ_μ_2D(μ) + _δδ_λ_2D(λ)
-    ∂Ψu(F) = ∂Ψuu(F) ⊙ (F - I22)
-    Ψ(F) = 0.5 * (F - I22) ⊙ (∂Ψuu(F) ⊙ (F - I22))
+    ε(F) = 0.5(F + F') -I2()
+    ∂Ψuu(F) = μ * (δᵢₖδⱼₗ2D + δᵢₗδⱼₖ2D) + λ * δᵢⱼδₖₗ2D
+    ∂Ψu(F) = ∂Ψuu(F) ⊙ (F - I2())
+    Ψ(F) = μ * sum(ε(F).*ε(F)) + 0.5 * λ * tr(ε(F))^2
     return (Ψ, ∂Ψu, ∂Ψuu)
   end
-
-
 end
+
 
 mutable struct LinearElasticity3D{A} <: Mechano
   λ::Float64
@@ -523,16 +516,14 @@ mutable struct LinearElasticity3D{A} <: Mechano
 
   function (obj::LinearElasticity3D)(Λ::Float64=1.0)
     λ, μ = obj.λ, obj.μ
-    I33 = I3()
-    # ∂Ψuu(F) = _δδ_μ_3D(μ) + _δδ_λ_3D(λ)
+    ε(F) = 0.5(F + F') -I3()
     ∂Ψuu(F) = μ * (δᵢₖδⱼₗ3D + δᵢₗδⱼₖ3D) + λ * δᵢⱼδₖₗ3D
-    ∂Ψu(F) = ∂Ψuu(F) ⊙ (F - I33)
-    Ψ(F) = 0.5 * (F - I33) ⊙ (∂Ψuu(F) ⊙ (F - I33))
+    ∂Ψu(F) = ∂Ψuu(F) ⊙ (F - I3())
+    Ψ(F) = μ * sum(ε(F).*ε(F)) + 0.5 * λ * tr(ε(F))^2
     return (Ψ, ∂Ψu, ∂Ψuu)
   end
-
-
 end
+
 
 struct VolumetricEnergy{A} <: Mechano
   λ::Float64
@@ -794,11 +785,11 @@ struct NonlinearMooneyRivlin_CV{A} <: Mechano
 
 
 
-    Ψ(F::TensorValue{3, 3, Float64, 9}) = μ1 / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F))^α + 
+    Ψ(F) = μ1 / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F))^α + 
            μ2 / (2.0 * β * 3.0^(β - 1)) * (tr((H(F))' * H(F)))^β - 
            (μ1 + 2*μ2) * log(J(F)) + λ * (J(F)^(γ) + J(F)^(-γ))
 
-    ∂Ψ_∂F(F::TensorValue{3, 3, Float64, 9}) = ((μ1 / (3.0^(α - 1)) * (trAA(F))^(α - 1))) * F
+    ∂Ψ_∂F(F) = ((μ1 / (3.0^(α - 1)) * (trAA(F))^(α - 1))) * F
     ∂Ψ_∂H(F) = ((μ2 / (3.0^(β - 1)) * (tr((H(F))' * H(F)))^(β - 1))) * H(F)
     ∂Ψ_∂J(F) = -(μ1 + 2*μ2) * (1.0 / J(F)) + λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1))
     ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂H(F) × F + ∂Ψ_∂J(F) * H(F)
