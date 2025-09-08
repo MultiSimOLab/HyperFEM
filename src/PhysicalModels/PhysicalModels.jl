@@ -7,10 +7,6 @@ using DrWatson
 using ForwardDiff
 using LinearAlgebra
 using ..TensorAlgebra
-using ..TensorAlgebra: _δδ_μ_3D
-using ..TensorAlgebra: _δδ_λ_3D
-using ..TensorAlgebra: _δδ_μ_2D
-using ..TensorAlgebra: _δδ_λ_2D
 using ..TensorAlgebra: _∂H∂F_2D
 using ..TensorAlgebra: I3
 using ..TensorAlgebra: I9
