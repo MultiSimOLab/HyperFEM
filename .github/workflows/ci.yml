@@ -2,8 +2,12 @@ name: Tests
 
 on: [pull_request, workflow_dispatch]
 
+permissions: # needed to allow julia-actions/cache to delete old caches that it has created
+  actions: write
+  contents: read
+
 jobs:
-  test: # Main CI tests
+  test: # main CI tests
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
