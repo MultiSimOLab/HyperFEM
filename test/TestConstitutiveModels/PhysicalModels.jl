@@ -1,5 +1,21 @@
 using Gridap
+using ForwardDiff
+using StaticArrays
+using Test
 using HyperFEM.PhysicalModels
+
+
+import Base: -
+
+(-)(A::SMatrix, B::TensorValue) = A - get_array(B)  # NOTE: These functions are required for LinearElasticity to work with ForwardDiff
+(-)(A::TensorValue, B::SMatrix) = get_array(A) - B
+
+
+const ∇u2 = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
+const ∇u3 = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
+const μParams = [6456.9137547089595, 896.4633794151492,
+    1.999999451256222, 1.9999960497608036, 11747.646562400318,
+    0.7841068624959612, 1.5386288924587603]
 
 
 function test_derivatives__(model::PhysicalModel, ∇u; rtol, kwargs...)
@@ -13,13 +29,11 @@ function test_derivatives__(model::PhysicalModel, ∇u; rtol, kwargs...)
 end
 
 function test_derivatives_2D_(model::PhysicalModel; rtol=1e-14, kwargs...)
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
-  test_derivatives__(model, ∇u, rtol=rtol, kwargs...)
+  test_derivatives__(model, ∇u2, rtol=rtol, kwargs...)
 end
 
 function test_derivatives_3D_(model::PhysicalModel; rtol=1e-14, kwargs...)
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
-  test_derivatives__(model, ∇u, rtol=rtol, kwargs...)
+  test_derivatives__(model, ∇u3, rtol=rtol, kwargs...)
 end
 
 
@@ -57,24 +71,14 @@ end
 
 
 @testset "LinearElasticity2D" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
   model = LinearElasticity2D(λ=3.0, μ=1.0)
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  F, _, _ = get_Kinematics(model.Kinematic)
-  @test (Ψ(F(∇u))) == 6.699999999999821e-5
-  @test norm(∂Ψu(F(∇u))) == 0.029461839725311915
-  @test norm(∂Ψuu(F(∇u))) == 8.48528137423857
+  test_derivatives_2D_(model)
 end
 
-@testset "LinearElasticity3D" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
-  model = LinearElasticity3D(λ=3.0, μ=1.0)
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  F, _, _ = get_Kinematics(model.Kinematic)
 
-  @test (Ψ(F(∇u))) == 0.0006104999999999824
-  @test norm(∂Ψu(F(∇u))) == 0.09933277404764056
-  @test norm(∂Ψuu(F(∇u))) == 11.874342087037917
+@testset "LinearElasticity3D" begin
+  model = LinearElasticity3D(λ=3.0, μ=1.0)
+  test_derivatives_3D_(model)
 end
 
 
