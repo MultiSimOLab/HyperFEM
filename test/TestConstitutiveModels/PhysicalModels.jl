@@ -1,5 +1,6 @@
 using Gridap
 using ForwardDiff
+using JSON
 using StaticArrays
 using Test
 using HyperFEM.PhysicalModels
