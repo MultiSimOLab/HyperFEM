@@ -37,11 +37,19 @@ function test_derivatives_3D_(model::PhysicalModel; rtol=1e-14, kwargs...)
   test_derivatives__(model, ∇u3, rtol=rtol, kwargs...)
 end
 
+function test_type_stability_(model::PhysicalModel, ∇u)
+  Ψ, ∂Ψu, ∂Ψuu = model()
+  F, _, _ = get_Kinematics(model.Kinematic)
+  @test (@inferred Ψ(F(∇u))) isa Number
+  @test (@inferred ∂Ψu(F(∇u))) isa Number
+  @test (@inferred ∂Ψuu(F(∇u))) isa Number
+end
 
 
 @testset "NonlinearMooneyRivlin_CV" begin
   model = NonlinearMooneyRivlin_CV(λ=3.0, μ1=1.0, μ2=1.0, α=2.0, β=1.0, γ=6.0)
   test_derivatives_3D_(model, rtol=1e-13)
+  test_type_stability_(model, ∇u3)
 end
 
 
@@ -702,11 +710,6 @@ end
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
   ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
 
-  μParams = [6456.9137547089595, 896.4633794151492,
-    1.999999451256222,
-    1.9999960497608036,
-    11747.646562400318,
-    0.7841068624959612, 1.5386288924587603]
   model = ARAP2D(μ=μParams[1])
   modelreg = Hessian∇JRegularization(Mechano=model)
 
