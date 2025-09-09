@@ -7,11 +7,6 @@ using Gridap.FESpaces
 using Gridap.CellData
 using Gridap.TensorValues
 using HyperFEM: jacobian, IterativeSolver, solve!
-using WriteVTK
-using Revise
-using DrWatson
-using JSON
-using ForwardDiff
 using BenchmarkTools
 
 import Base.isapprox
