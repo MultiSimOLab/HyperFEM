@@ -1,0 +1,27 @@
+name: Tests
+
+on: [pull_request, workflow_dispatch]
+
+permissions: # needed to allow julia-actions/cache to delete old caches that it has created
+  actions: write
+  contents: read
+
+jobs:
+  test: # main CI tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['lts', '1', 'pre']
+        arch: [x64]
+        os: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
