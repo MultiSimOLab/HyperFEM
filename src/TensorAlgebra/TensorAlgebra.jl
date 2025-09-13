@@ -32,8 +32,6 @@ export δᵢₖδⱼₗ3D
 export δᵢₗδⱼₖ3D
 export sqrt
 export cof
-export outer_13_24
-export outer_14_23
 export contraction_IP_JPKL
 export contraction_IP_PJKL
  
@@ -595,62 +593,6 @@ end
     str *= "A.data[$i], "
   end
   Meta.parse("TensorValue($str)")
-end
-
-
-"""
-  outer_13_24(Matrix1::TensorValue, Matrix2::TensorValue)::TensorValue
-
-  Computes the **outer product** of two second-order tensors (matrices), returning a fourth-order tensor 
-  represented in a `D² x D²` matrix form (Voigt or flattened index notation) using combined indices.
-
-  # Arguments
-  - `Matrix1::TensorValue{D, D}`: A second-order tensor (e.g., a stress, strain, or deformation tensor).
-  - `Matrix2::TensorValue{D, D}`: Another second-order tensor to be used in the outer product.
-
-  # Returns
-  - `TensorValue{D^2, D^2}`: A statically-sized matrix representing the fourth-order tensor formed from the outer product.
-"""
-function outer_13_24(Matrix1::TensorValue{D}, Matrix2::TensorValue{D}) where D
-  Out = zeros(Float64,D*D,D*D)
-  for j in 1:D
-    for i in 1:D
-      for l in 1:D
-        for k in 1:D
-          Out[i + D * (j - 1), k + D * (l - 1)] += Matrix1[i,k] * Matrix2[j,l]
-        end
-      end
-    end
-  end
-  TensorValue{D*D,D*D}(Out)
-end
-
-
-"""
-  outer_14_23(Matrix1::TensorValue, Matrix2::TensorValue)::TensorValue
-
-  Computes the **outer product** of two second-order tensors (matrices), returning a fourth-order tensor 
-  represented in a `D² x D²` matrix form (flattened notation) using combined indices.
-
-  # Arguments
-  - `Matrix1::TensorValue{D, D}`: A second-order tensor (e.g., a stress, strain, or deformation tensor).
-  - `Matrix2::TensorValue{D, D}`: Another second-order tensor to be used in the outer product.
-
-  # Returns
-  - `TensorValue{D^2, D^2}`: A statically-sized matrix representing the fourth-order tensor formed from the outer product.
-"""
-function outer_14_23(Matrix1::TensorValue{D}, Matrix2::TensorValue{D}) where D
-  Out = zeros(Float64,D*D,D*D)
-  for j in 1:D
-    for i in 1:D
-      for l in 1:D
-        for k in 1:D
-          Out[i + D * (j - 1), k + D * (l - 1)] += Matrix1[i,l] * Matrix2[j,k]
-        end
-      end
-    end
-  end
-  TensorValue{D*D,D*D}(Out)
 end
 
 
