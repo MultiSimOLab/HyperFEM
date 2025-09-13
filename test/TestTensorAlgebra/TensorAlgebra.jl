@@ -1,5 +1,6 @@
 using Gridap.TensorValues
 using HyperFEM.TensorAlgebra
+using Test
 using BenchmarkTools
 
  
@@ -28,8 +29,19 @@ end
   @test norm(get_array(V1) ⊗ get_array(V2)) == 17.04406054905931
 
 end
- 
- 
+
+
+@testset "outer products" begin
+  A = TensorValue(1.0, 2.0, 3.0, 4.0)
+  B = TensorValue(5.0, 6.0, 7.0, 8.0)
+  u = VectorValue(1.0, 2.0)
+  v = VectorValue(3.0, 4.0)
+  @test A ⊗ B     == TensorValue(5.0, 10.0, 15.0, 20.0, 6.0, 12.0, 18.0, 24.0, 7.0, 14.0, 21.0, 28.0, 8.0, 16.0, 24.0, 32.0)
+  @test A ⊗₁₂³⁴ B == TensorValue(5.0, 10.0, 15.0, 20.0, 6.0, 12.0, 18.0, 24.0, 7.0, 14.0, 21.0, 28.0, 8.0, 16.0, 24.0, 32.0)
+  @test A ⊗₁₃²⁴ B == TensorValue(5.0, 10.0, 6.0, 12.0, 15.0, 20.0, 18.0, 24.0, 7.0, 14.0, 8.0, 16.0, 21.0, 28.0, 24.0, 32.0)
+  @test A ⊗₁₄²³ B == TensorValue(5.0, 10.0, 6.0, 12.0, 7.0, 14.0, 8.0, 16.0, 15.0, 20.0, 18.0, 24.0, 21.0, 28.0, 24.0, 32.0)
+end
+
 
 # @benchmark (A ⊗₁₃²⁴ B)
 # @benchmark (A ⊗₁₂³ V1)
