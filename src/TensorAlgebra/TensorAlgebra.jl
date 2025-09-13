@@ -14,8 +14,9 @@ export (+)
 export (⊗₁₂³)
 export (⊗₁₃²)
 export (⊗₁²³)
-export (⊗₁₃²⁴)
 export (⊗₁₂³⁴)
+export (⊗₁₃²⁴)
+export (⊗₁₄²³)
 export (⊗₁²)
 export I3
 export I9
@@ -205,110 +206,62 @@ function (⊗₁₃²)(A::TensorValue{2,2,Float64}, V::VectorValue{2,Float64})
     A[4] * V[2])
 end
 
-function (⊗₁₃²⁴)(A::TensorValue{3,3,Float64}, B::TensorValue{3,3,Float64})
 
-  TensorValue{9,9,Float64,81}(A[1] * B[1],
-    A[2] * B[1],
-    A[3] * B[1],
-    A[1] * B[2],
-    A[2] * B[2],
-    A[3] * B[2],
-    A[1] * B[3],
-    A[2] * B[3],
-    A[3] * B[3],
-    A[4] * B[1],
-    A[5] * B[1],
-    A[6] * B[1],
-    A[4] * B[2],
-    A[5] * B[2],
-    A[6] * B[2],
-    A[4] * B[3],
-    A[5] * B[3],
-    A[6] * B[3],
-    A[7] * B[1],
-    A[8] * B[1],
-    A[9] * B[1],
-    A[7] * B[2],
-    A[8] * B[2],
-    A[9] * B[2],
-    A[7] * B[3],
-    A[8] * B[3],
-    A[9] * B[3],
-    A[1] * B[4],
-    A[2] * B[4],
-    A[3] * B[4],
-    A[1] * B[5],
-    A[2] * B[5],
-    A[3] * B[5],
-    A[1] * B[6],
-    A[2] * B[6],
-    A[3] * B[6],
-    A[4] * B[4],
-    A[5] * B[4],
-    A[6] * B[4],
-    A[4] * B[5],
-    A[5] * B[5],
-    A[6] * B[5],
-    A[4] * B[6],
-    A[5] * B[6],
-    A[6] * B[6],
-    A[7] * B[4],
-    A[8] * B[4],
-    A[9] * B[4],
-    A[7] * B[5],
-    A[8] * B[5],
-    A[9] * B[5],
-    A[7] * B[6],
-    A[8] * B[6],
-    A[9] * B[6],
-    A[1] * B[7],
-    A[2] * B[7],
-    A[3] * B[7],
-    A[1] * B[8],
-    A[2] * B[8],
-    A[3] * B[8],
-    A[1] * B[9],
-    A[2] * B[9],
-    A[3] * B[9],
-    A[4] * B[7],
-    A[5] * B[7],
-    A[6] * B[7],
-    A[4] * B[8],
-    A[5] * B[8],
-    A[6] * B[8],
-    A[4] * B[9],
-    A[5] * B[9],
-    A[6] * B[9],
-    A[7] * B[7],
-    A[8] * B[7],
-    A[9] * B[7],
-    A[7] * B[8],
-    A[8] * B[8],
-    A[9] * B[8],
-    A[7] * B[9],
-    A[8] * B[9],
-    A[9] * B[9])
+"""
+  ⊗₁₃²⁴(A::TensorValue, B::TensorValue)::TensorValue
+
+  Computes the **outer product** of two second-order tensors (matrices), returning a fourth-order tensor 
+  represented in a `D² x D²` flattened matrix using comined indices.
+
+  # Arguments
+  - `A::TensorValue{D}`: A second-order tensor.
+  - `B::TensorValue{D}`: Another second-order tensor.
+
+  # Returns
+  - `TensorValue{D*D}`: A statically-sized matrix representing the fourth-order tensor.
+"""
+@generated function (⊗₁₃²⁴)(A::TensorValue{D}, B::TensorValue{D}) where D
+  str = ""
+  for l in 1:D
+    for k in 1:D
+      for j in 1:D
+        for i in 1:D
+          str *= "A[$i,$k]*B[$j,$l],"
+        end
+      end
+    end
+  end
+  Meta.parse("TensorValue{D*D}($str)")
 end
 
-function (⊗₁₃²⁴)(A::TensorValue{2,2,Float64}, B::TensorValue{2,2,Float64})
 
-  TensorValue{4,4,Float64,16}(A[1] * B[1],
-    A[2] * B[1],
-    A[1] * B[2],
-    A[2] * B[2],
-    A[3] * B[1],
-    A[4] * B[1],
-    A[3] * B[2],
-    A[4] * B[2],
-    A[1] * B[3],
-    A[2] * B[3],
-    A[1] * B[4],
-    A[2] * B[4],
-    A[3] * B[3],
-    A[4] * B[3],
-    A[3] * B[4],
-    A[4] * B[4])
+"""
+  ⊗₁₄²³(A::TensorValue, B::TensorValue)::TensorValue
+
+  Computes the **outer product** of two second-order tensors (matrices), returning a fourth-order tensor 
+  represented in a `D² x D²` flattened matrix using comined indices.
+
+  # Arguments
+  - `A::TensorValue{D}`: A second-order tensor.
+  - `B::TensorValue{D}`: Another second-order tensor.
+
+  # Returns
+  - `TensorValue{D*D}`: A statically-sized matrix representing the fourth-order tensor.
+"""
+@generated function (⊗₁₄²³)(A::TensorValue{D}, B::TensorValue{D}) where D
+  str = ""
+  for l in 1:D
+    for k in 1:D
+      for j in 1:D
+        for i in 1:D
+          str *= "A[$i,$l]*B[$j,$k],"
+        end
+      end
+    end
+  end
+  Meta.parse("TensorValue{D*D}($str)")
 end
+
 
 function (×ᵢ⁴)(A::TensorValue{3,3,Float64})
 
