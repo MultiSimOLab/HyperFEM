@@ -13,25 +13,8 @@ using BenchmarkTools
   @test logreg(J; Threshold=0.01) == 0.014870878346353422
 end
 
+
 @testset "outer" begin
-  A = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
-  B = TensorValue(4.6, 2.1, 1.7, 3.2, 6.5, 1.4, 9.2, 8.0, 9.0) * 1e-3
-  V1 = VectorValue(1.0, 2.0, 3.0)
-  V2 = VectorValue(1.5, 2.5, 3.5)
-  @test norm(A ⊗ B) == 0.0002984572833756952
-  @test norm(A ⊗₁₂³⁴ B)== 0.0002984572833756952
-  @test norm(V1 ⊗ V2) == 17.04406054905931
-  @test norm(V1 ⊗₁² V2) == 17.04406054905931
-  @test norm(V1 ⊗₁²³ A)== 0.06316644678941503
-  @test norm(A ⊗₁₂³ V1)== 0.06316644678941503
-  @test norm(A ⊗₁₃² V1)== 0.06316644678941503
-  @test norm(A ⊗₁₃²⁴ B)== 0.00029845728337569516
-  @test norm(get_array(V1) ⊗ get_array(V2)) == 17.04406054905931
-
-end
-
-
-@testset "outer products" begin
   A = TensorValue(1.0, 2.0, 3.0, 4.0)
   B = TensorValue(5.0, 6.0, 7.0, 8.0)
   u = VectorValue(1.0, 2.0)
