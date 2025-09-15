@@ -1,4 +1,5 @@
 using Gridap.TensorValues
+using Gridap.Arrays
 using HyperFEM.TensorAlgebra
 using Test
 using BenchmarkTools
@@ -86,7 +87,7 @@ end
 end
 
 
-@testset "Identity" begin
+@testset "identity" begin
   I2_ = TensorValue(1.0, 0.0, 0.0, 1.0)
   I3_ = TensorValue(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
   I4_ = TensorValue(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0)
@@ -108,4 +109,12 @@ end
   # @benchmark I2
   # @benchmark I9_
   # @benchmark I9
+end
+
+
+@testset "contraction" begin
+  A = TensorValue(1.0, 2.0, 3.0, 4.0)
+  H = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0)
+  @test contraction_IP_PJKL(A,H) == TensorValue(7.0, 10.0, 15.0, 22.0, 23.0, 34.0, 31.0, 46.0, 39.0, 58.0, 47.0, 70.0, 55.0, 82.0, 63.0, 94.0)
+  @test contraction_IP_JPKL(A,H) == TensorValue(10.0, 14.0, 14.0, 20.0, 26.0, 38.0, 30.0, 44.0, 42.0, 62.0, 46.0, 68.0, 58.0, 86.0, 62.0, 92.0)
 end

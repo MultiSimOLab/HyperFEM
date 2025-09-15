@@ -582,68 +582,58 @@ end
 
 
 """
-  contraction_IP_JPKL(Matrix1::TensorValue{D}, Matrix2::TensorValue{D*D})::TensorValue{D*D}
+  **`contraction_IP_PJKL(A::TensorValue{D}, H::TensorValue{D*D})::TensorValue{D*D}`**
 
-  Performs a specific tensor contraction between a second-order tensor `Matrix1` (of size `D × D`)
-  and a fourth-order tensor `Matrix2` (represented as a `D² x D²` matrix in Voigt or flattened index notation),
-  returning the result as a new fourth-order tensor (in the same flattened form).
-  The contraction follows the **index contraction pattern**, where addition is performed for repeated indices.
-
-  # Arguments
-  - `Matrix1::TensorValue{D, D}`: A second-order tensor (e.g., a stress or deformation tensor).
-  - `Matrix2::TensorValue{D^2, D^2}`: A fourth-order tensor written in matrix form using combined indices.
-
-  # Returns
-  - `TensorValue{D^2, D^2}`: The resulting fourth-order tensor in the same matrix representation.
+  Performs a tensor contraction between a second-order tensor (of size `D × D`)
+  and a fourth-order tensor (represented as a `D² × D²` matrix in flattened index notation).
+  The operation follows the **index contraction pattern**, where addition is performed for repeated indices.
 """
-function contraction_IP_JPKL(Matrix1::TensorValue{D}, Matrix2::TensorValue{D²}) where {D, D²}
+@generated function contraction_IP_PJKL(A::TensorValue{D}, H::TensorValue{D²}) where {D, D²}
   @assert D*D == D² "Second and Fourth-order tensors size mismatch"
-  Out  =  zeros(Float64,D*D,D*D)
-  for i in 1:D
-    for j in 1:D
-      for k in 1:D
-        for l in 1:D
+  str = ""
+  for l in 1:D
+    for k in 1:D
+      for j in 1:D
+        for i in 1:D
           for p in 1:D
-            Out[i + D * (j - 1), k + D * (l - 1)] += Matrix1[i,p] * Matrix2[j + D * (p - 1), k + D * (l - 1)]
+            a = _flat_idx(p,j,D)
+            b = _flat_idx(k,l,D)
+            str *= "+A[$i,$p]*H[$a,$b]"
           end
+          str *= ","
         end
       end
     end
   end
-  return TensorValue{D*D,D*D}(Out)
+  Meta.parse("TensorValue{D²,D², Float64}($str)")
 end
 
 
 """
-  contraction_IP_JPKL(Matrix1::TensorValue{D}, Matrix2::TensorValue{D*D})::TensorValue{D*D}
+  **`contraction_IP_JPKL(A::TensorValue{D}, H::TensorValue{D*D})::TensorValue{D*D}`**
 
-  Performs a specific tensor contraction between a second-order tensor `Matrix1` (of size `D × D`)
-  and a fourth-order tensor `Matrix2` (represented as a `D² x D²` matrix in Voigt or flattened index notation),
-  returning the result as a new fourth-order tensor (in the same flattened form).
-  The contraction follows the **index contraction pattern**, where addition is performed for repeated indices.
-
-  # Arguments
-  - `Matrix1::TensorValue{D, D}`: A second-order tensor (e.g., a stress or deformation tensor).
-  - `Matrix2::TensorValue{D^2, D^2}`: A fourth-order tensor written in matrix form using combined indices.
-
-  # Returns
-  - `TensorValue{D^2, D^2}`: The resulting fourth-order tensor in the same matrix representation.
+  Performs a tensor contraction between a second-order tensor (of size `D × D`)
+  and a fourth-order tensor (represented as a `D² × D²` matrix in flattened index notation).
+  The operation follows the **index contraction pattern**, where addition is performed for repeated indices.
 """
-function contraction_IP_PJKL(Matrix1::TensorValue{D}, Matrix2::TensorValue{D²}) where {D, D²}
+@generated function contraction_IP_JPKL(A::TensorValue{D}, H::TensorValue{D²}) where {D, D²}
   @assert D*D == D² "Second and Fourth-order tensors size mismatch"
-  Out  =  zeros(Float64,D*D,D*D)
-  for i in 1:D
-    for j in 1:D
-      for k in 1:D
-        for l in 1:D
+  str = ""
+  for l in 1:D
+    for k in 1:D
+      for j in 1:D
+        for i in 1:D
           for p in 1:D
-            Out[i + D * (j - 1), k + D * (l - 1)] += Matrix1[i,p] * Matrix2[p + D * (j - 1), k + D * (l - 1)]
+            a = _flat_idx(j,p,D)
+            b = _flat_idx(k,l,D)
+            str *= "+A[$i,$p]*H[$a,$b]"
           end
+          str *= ","
         end
       end
     end
   end
-  return TensorValue{D*D,D*D}(Out)
+  Meta.parse("TensorValue{D²,D², Float64}($str)")
 end
 
 
