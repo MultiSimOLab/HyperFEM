@@ -119,7 +119,7 @@ end
 
 
 """
-  ⊗₁²(A::VectorValue{D}, B::VectorValue{D})::TensorValue{D,D}
+  **`⊗₁²(A::VectorValue{D}, B::VectorValue{D})::TensorValue{D,D}`**
 
   Outer product of two first-order tensors (vectors), returning a second-order tensor (matrix).
 """
@@ -135,7 +135,7 @@ end
 
 
 """
-  ⊗₁₃²⁴(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D*D}
+  **`⊗₁₃²⁴(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D*D}`**
 
   Outer product of two second-order tensors (matrices), returning a fourth-order tensor 
   represented in a `D² x D²` flattened matrix using combined indices.
@@ -152,7 +152,7 @@ end
 
 
 """
-  ⊗₁₃²⁴(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D*D}
+  **`⊗₁₃²⁴(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D*D}`**
 
   Outer product of two second-order tensors (matrices), returning a fourth-order tensor 
   represented in a `D² x D²` flattened matrix using combined indices.
@@ -173,7 +173,7 @@ end
 
 
 """
-  ⊗₁₄²³(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D*D}
+  **`⊗₁₄²³(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D*D}`**
 
   Outer product of two second-order tensors (matrices), returning a fourth-order tensor 
   represented in a `D² x D²` flattened matrix using combined indices.
@@ -193,6 +193,12 @@ end
 end
 
 
+"""
+  **`⊗₁²³(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D*D}`**
+
+  Outer product of a first-order and second-order tensors (vector by matrix),
+  returning a third-order tensor represented in a `D x D²` flattened matrix using combined indices.
+"""
 @generated function (⊗₁²³)(V::VectorValue{D,Float64}, A::TensorValue{D,D,Float64}) where {D}
   str = ""
   for iA in 1:D*D
@@ -204,6 +210,12 @@ end
 end
 
 
+"""
+  **`⊗₁²³(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D*D}`**
+
+  Outer product of a second-order and first-order tensors (matrix by vector),
+  returning a third-order tensor represented in a `D x D²` flattened matrix using combined indices.
+"""
 @generated function (⊗₁₂³)(A::TensorValue{D,D,Float64}, V::VectorValue{D,Float64}) where {D}
   str = ""
   for iV in 1:D
@@ -215,7 +227,13 @@ end
 end
 
 
-function (⊗₁₃²)(A::TensorValue{3,3,Float64}, V::VectorValue{3,Float64})
+"""
+  **`⊗₁²³(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D*D}`**
+
+  Outer product of a second-order and first-order tensors (matrix by vector),
+  returning a third-order tensor represented in a `D x D²` flattened matrix using combined indices.
+"""
+@generated function (⊗₁₃²)(A::TensorValue{3,3,Float64}, V::VectorValue{3,Float64})
 
   TensorValue{3,9,Float64,27}(A[1] * V[1],
     A[2] * V[1],
