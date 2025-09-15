@@ -48,7 +48,7 @@ export Ellipsoid
 
 
 """
-  sqrt(A::TensorValue)::TensorValue
+  sqrt(A::TensorValue{3})::TensorValue{3}
 
   Compute the square root of a 3x3 matrix by means of eigen decomposition.
 
@@ -117,6 +117,12 @@ function Gridap.TensorValues.outer(A::VectorValue{D,Float64}, B::VectorValue{D,F
   return (A ⊗₁² B)
 end
 
+
+"""
+  ⊗₁²(A::VectorValue{D}, B::VectorValue{D})::TensorValue{D,D}
+
+  Outer product of two first-order tensors (vectors), returning a second-order tensor (matrix).
+"""
 @generated function (⊗₁²)(A::VectorValue{D,Float64}, B::VectorValue{D,Float64}) where {D}
   str = ""
   for iB in 1:D
@@ -127,6 +133,13 @@ end
   Meta.parse("TensorValue{D,D, Float64}($str)")
 end
 
+
+"""
+  ⊗₁₃²⁴(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D*D}
+
+  Outer product of two second-order tensors (matrices), returning a fourth-order tensor 
+  represented in a `D² x D²` flattened matrix using combined indices.
+"""
 @generated function (⊗₁₂³⁴)(A::TensorValue{D,D,Float64}, B::TensorValue{D,D,Float64}) where {D}
   str = ""
   for iB in 1:D*D
@@ -139,17 +152,10 @@ end
 
 
 """
-  ⊗₁₃²⁴(A::TensorValue, B::TensorValue)::TensorValue
+  ⊗₁₃²⁴(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D*D}
 
-  Computes the **outer product** of two second-order tensors (matrices), returning a fourth-order tensor 
-  represented in a `D² x D²` flattened matrix using comined indices.
-
-  # Arguments
-  - `A::TensorValue{D}`: A second-order tensor.
-  - `B::TensorValue{D}`: Another second-order tensor.
-
-  # Returns
-  - `TensorValue{D*D}`: A statically-sized matrix representing the fourth-order tensor.
+  Outer product of two second-order tensors (matrices), returning a fourth-order tensor 
+  represented in a `D² x D²` flattened matrix using combined indices.
 """
 @generated function (⊗₁₃²⁴)(A::TensorValue{D}, B::TensorValue{D}) where D
   str = ""
@@ -167,17 +173,10 @@ end
 
 
 """
-  ⊗₁₄²³(A::TensorValue, B::TensorValue)::TensorValue
+  ⊗₁₄²³(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D*D}
 
-  Computes the **outer product** of two second-order tensors (matrices), returning a fourth-order tensor 
-  represented in a `D² x D²` flattened matrix using comined indices.
-
-  # Arguments
-  - `A::TensorValue{D}`: A second-order tensor.
-  - `B::TensorValue{D}`: Another second-order tensor.
-
-  # Returns
-  - `TensorValue{D*D}`: A statically-sized matrix representing the fourth-order tensor.
+  Outer product of two second-order tensors (matrices), returning a fourth-order tensor 
+  represented in a `D² x D²` flattened matrix using combined indices.
 """
 @generated function (⊗₁₄²³)(A::TensorValue{D}, B::TensorValue{D}) where D
   str = ""
