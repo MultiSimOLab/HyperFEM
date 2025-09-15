@@ -138,6 +138,62 @@ end
 end
 
 
+"""
+  ⊗₁₃²⁴(A::TensorValue, B::TensorValue)::TensorValue
+
+  Computes the **outer product** of two second-order tensors (matrices), returning a fourth-order tensor 
+  represented in a `D² x D²` flattened matrix using comined indices.
+
+  # Arguments
+  - `A::TensorValue{D}`: A second-order tensor.
+  - `B::TensorValue{D}`: Another second-order tensor.
+
+  # Returns
+  - `TensorValue{D*D}`: A statically-sized matrix representing the fourth-order tensor.
+"""
+@generated function (⊗₁₃²⁴)(A::TensorValue{D}, B::TensorValue{D}) where D
+  str = ""
+  for l in 1:D
+    for k in 1:D
+      for j in 1:D
+        for i in 1:D
+          str *= "A[$i,$k]*B[$j,$l],"
+        end
+      end
+    end
+  end
+  Meta.parse("TensorValue{D*D}($str)")
+end
+
+
+"""
+  ⊗₁₄²³(A::TensorValue, B::TensorValue)::TensorValue
+
+  Computes the **outer product** of two second-order tensors (matrices), returning a fourth-order tensor 
+  represented in a `D² x D²` flattened matrix using comined indices.
+
+  # Arguments
+  - `A::TensorValue{D}`: A second-order tensor.
+  - `B::TensorValue{D}`: Another second-order tensor.
+
+  # Returns
+  - `TensorValue{D*D}`: A statically-sized matrix representing the fourth-order tensor.
+"""
+@generated function (⊗₁₄²³)(A::TensorValue{D}, B::TensorValue{D}) where D
+  str = ""
+  for l in 1:D
+    for k in 1:D
+      for j in 1:D
+        for i in 1:D
+          str *= "A[$i,$l]*B[$j,$k],"
+        end
+      end
+    end
+  end
+  Meta.parse("TensorValue{D*D}($str)")
+end
+
+
 @generated function (⊗₁²³)(V::VectorValue{D,Float64}, A::TensorValue{D,D,Float64}) where {D}
   str = ""
   for iA in 1:D*D
@@ -202,62 +258,6 @@ function (⊗₁₃²)(A::TensorValue{2,2,Float64}, V::VectorValue{2,Float64})
     A[4] * V[1],
     A[3] * V[2],
     A[4] * V[2])
-end
-
-
-"""
-  ⊗₁₃²⁴(A::TensorValue, B::TensorValue)::TensorValue
-
-  Computes the **outer product** of two second-order tensors (matrices), returning a fourth-order tensor 
-  represented in a `D² x D²` flattened matrix using comined indices.
-
-  # Arguments
-  - `A::TensorValue{D}`: A second-order tensor.
-  - `B::TensorValue{D}`: Another second-order tensor.
-
-  # Returns
-  - `TensorValue{D*D}`: A statically-sized matrix representing the fourth-order tensor.
-"""
-@generated function (⊗₁₃²⁴)(A::TensorValue{D}, B::TensorValue{D}) where D
-  str = ""
-  for l in 1:D
-    for k in 1:D
-      for j in 1:D
-        for i in 1:D
-          str *= "A[$i,$k]*B[$j,$l],"
-        end
-      end
-    end
-  end
-  Meta.parse("TensorValue{D*D}($str)")
-end
-
-
-"""
-  ⊗₁₄²³(A::TensorValue, B::TensorValue)::TensorValue
-
-  Computes the **outer product** of two second-order tensors (matrices), returning a fourth-order tensor 
-  represented in a `D² x D²` flattened matrix using comined indices.
-
-  # Arguments
-  - `A::TensorValue{D}`: A second-order tensor.
-  - `B::TensorValue{D}`: Another second-order tensor.
-
-  # Returns
-  - `TensorValue{D*D}`: A statically-sized matrix representing the fourth-order tensor.
-"""
-@generated function (⊗₁₄²³)(A::TensorValue{D}, B::TensorValue{D}) where D
-  str = ""
-  for l in 1:D
-    for k in 1:D
-      for j in 1:D
-        for i in 1:D
-          str *= "A[$i,$l]*B[$j,$k],"
-        end
-      end
-    end
-  end
-  Meta.parse("TensorValue{D*D}($str)")
 end
 
 
