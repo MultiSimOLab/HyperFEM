@@ -14,8 +14,9 @@ export (+)
 export (⊗₁₂³)
 export (⊗₁₃²)
 export (⊗₁²³)
-export (⊗₁₃²⁴)
 export (⊗₁₂³⁴)
+export (⊗₁₃²⁴)
+export (⊗₁₄²³)
 export (⊗₁²)
 export I3
 export I9
@@ -31,8 +32,6 @@ export δᵢₖδⱼₗ3D
 export δᵢₗδⱼₖ3D
 export sqrt
 export cof
-export outer_13_24
-export outer_14_23
 export contraction_IP_JPKL
 export contraction_IP_PJKL
  
@@ -49,20 +48,20 @@ export Ellipsoid
 
 
 """
-  msqrt(A::TensorValue)::TensorValue
+  sqrt(A::TensorValue{3})::TensorValue{3}
 
   Compute the square root of a 3x3 matrix by means of eigen decomposition.
 
   # Arguments
-  - `A::TensorValue`: the matrix to calculate the square root
+  - `A::TensorValue{3}`: the matrix to calculate the square root
 
   # Returns
-  - `::TensorValue`: the squared root matrix
+  - `::TensorValue{3}`: the squared root matrix
 """
-function sqrt(A::TensorValue{3,3})
+function sqrt(A::TensorValue{3})
   λ, Q = eigen(get_array(A))  # TODO: the get_array must be removed as long as it is supported after https://github.com/gridap/Gridap.jl/pull/1157
   λ = sqrt.(λ)
-  TensorValue{3,3}(λ[1]*Q[1:3]*Q[1:3]' + λ[2]*Q[4:6]*Q[4:6]' + λ[3]*Q[7:9]*Q[7:9]')
+  TensorValue{3}(λ[1]*Q[1:3]*Q[1:3]' + λ[2]*Q[4:6]*Q[4:6]' + λ[3]*Q[7:9]*Q[7:9]')
 end
 
 
@@ -118,6 +117,12 @@ function Gridap.TensorValues.outer(A::VectorValue{D,Float64}, B::VectorValue{D,F
   return (A ⊗₁² B)
 end
 
+
+"""
+  **`⊗₁²(A::VectorValue{D}, B::VectorValue{D})::TensorValue{D,D}`**
+
+  Outer product of two first-order tensors (vectors), returning a second-order tensor (matrix).
+"""
 @generated function (⊗₁²)(A::VectorValue{D,Float64}, B::VectorValue{D,Float64}) where {D}
   str = ""
   for iB in 1:D
@@ -128,6 +133,13 @@ end
   Meta.parse("TensorValue{D,D, Float64}($str)")
 end
 
+
+"""
+  **`⊗₁₃²⁴(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D*D}`**
+
+  Outer product of two second-order tensors (matrices), returning a fourth-order tensor 
+  represented in a `D² x D²` flattened matrix using combined indices.
+"""
 @generated function (⊗₁₂³⁴)(A::TensorValue{D,D,Float64}, B::TensorValue{D,D,Float64}) where {D}
   str = ""
   for iB in 1:D*D
@@ -139,6 +151,54 @@ end
 end
 
 
+"""
+  **`⊗₁₃²⁴(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D*D}`**
+
+  Outer product of two second-order tensors (matrices), returning a fourth-order tensor 
+  represented in a `D² x D²` flattened matrix using combined indices.
+"""
+@generated function (⊗₁₃²⁴)(A::TensorValue{D}, B::TensorValue{D}) where D
+  str = ""
+  for l in 1:D
+    for k in 1:D
+      for j in 1:D
+        for i in 1:D
+          str *= "A[$i,$k]*B[$j,$l],"
+        end
+      end
+    end
+  end
+  Meta.parse("TensorValue{D*D}($str)")
+end
+
+
+"""
+  **`⊗₁₄²³(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D*D}`**
+
+  Outer product of two second-order tensors (matrices), returning a fourth-order tensor 
+  represented in a `D² x D²` flattened matrix using combined indices.
+"""
+@generated function (⊗₁₄²³)(A::TensorValue{D}, B::TensorValue{D}) where D
+  str = ""
+  for l in 1:D
+    for k in 1:D
+      for j in 1:D
+        for i in 1:D
+          str *= "A[$i,$l]*B[$j,$k],"
+        end
+      end
+    end
+  end
+  Meta.parse("TensorValue{D*D}($str)")
+end
+
+
+"""
+  **`⊗₁²³(A::VectorValue{D}, B::TensorValue{D})::TensorValue{D,D*D}`**
+
+  Outer product of a first-order and second-order tensors (vector and matrix),
+  returning a third-order tensor represented in a `D x D²` flattened matrix using combined indices.
+"""
 @generated function (⊗₁²³)(V::VectorValue{D,Float64}, A::TensorValue{D,D,Float64}) where {D}
   str = ""
   for iA in 1:D*D
@@ -150,6 +210,12 @@ end
 end
 
 
+"""
+  **`⊗₁²³(A::TensorValue{D}, B::VectorValue{D})::TensorValue{D,D*D}`**
+
+  Outer product of a second-order and first-order tensors (matrix and vector),
+  returning a third-order tensor represented in a `D x D²` flattened matrix using combined indices.
+"""
 @generated function (⊗₁₂³)(A::TensorValue{D,D,Float64}, V::VectorValue{D,Float64}) where {D}
   str = ""
   for iV in 1:D
@@ -161,154 +227,24 @@ end
 end
 
 
-function (⊗₁₃²)(A::TensorValue{3,3,Float64}, V::VectorValue{3,Float64})
+"""
+  **`⊗₁²³(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D,D*D}`**
 
-  TensorValue{3,9,Float64,27}(A[1] * V[1],
-    A[2] * V[1],
-    A[3] * V[1],
-    A[1] * V[2],
-    A[2] * V[2],
-    A[3] * V[2],
-    A[1] * V[3],
-    A[2] * V[3],
-    A[3] * V[3],
-    A[4] * V[1],
-    A[5] * V[1],
-    A[6] * V[1],
-    A[4] * V[2],
-    A[5] * V[2],
-    A[6] * V[2],
-    A[4] * V[3],
-    A[5] * V[3],
-    A[6] * V[3],
-    A[7] * V[1],
-    A[8] * V[1],
-    A[9] * V[1],
-    A[7] * V[2],
-    A[8] * V[2],
-    A[9] * V[2],
-    A[7] * V[3],
-    A[8] * V[3],
-    A[9] * V[3])
+  Outer product of a second-order and first-order tensors (matrix and vector),
+  returning a third-order tensor represented in a `D x D²` flattened matrix using combined indices.
+"""
+@generated function (⊗₁₃²)(A::TensorValue{D}, V::VectorValue{D}) where D
+  str = ""
+  for k in 1:D
+    for j in 1:D
+      for i in 1:D
+        str *= "A[$i,$k]*V[$j],"
+      end
+    end
+  end
+  Meta.parse("TensorValue{D,D*D}($str)")
 end
 
-
-function (⊗₁₃²)(A::TensorValue{2,2,Float64}, V::VectorValue{2,Float64})
-
-  TensorValue{2,4,Float64,8}(A[1] * V[1],
-    A[2] * V[1],
-    A[1] * V[2],
-    A[2] * V[2],
-    A[3] * V[1],
-    A[4] * V[1],
-    A[3] * V[2],
-    A[4] * V[2])
-end
-
-function (⊗₁₃²⁴)(A::TensorValue{3,3,Float64}, B::TensorValue{3,3,Float64})
-
-  TensorValue{9,9,Float64,81}(A[1] * B[1],
-    A[2] * B[1],
-    A[3] * B[1],
-    A[1] * B[2],
-    A[2] * B[2],
-    A[3] * B[2],
-    A[1] * B[3],
-    A[2] * B[3],
-    A[3] * B[3],
-    A[4] * B[1],
-    A[5] * B[1],
-    A[6] * B[1],
-    A[4] * B[2],
-    A[5] * B[2],
-    A[6] * B[2],
-    A[4] * B[3],
-    A[5] * B[3],
-    A[6] * B[3],
-    A[7] * B[1],
-    A[8] * B[1],
-    A[9] * B[1],
-    A[7] * B[2],
-    A[8] * B[2],
-    A[9] * B[2],
-    A[7] * B[3],
-    A[8] * B[3],
-    A[9] * B[3],
-    A[1] * B[4],
-    A[2] * B[4],
-    A[3] * B[4],
-    A[1] * B[5],
-    A[2] * B[5],
-    A[3] * B[5],
-    A[1] * B[6],
-    A[2] * B[6],
-    A[3] * B[6],
-    A[4] * B[4],
-    A[5] * B[4],
-    A[6] * B[4],
-    A[4] * B[5],
-    A[5] * B[5],
-    A[6] * B[5],
-    A[4] * B[6],
-    A[5] * B[6],
-    A[6] * B[6],
-    A[7] * B[4],
-    A[8] * B[4],
-    A[9] * B[4],
-    A[7] * B[5],
-    A[8] * B[5],
-    A[9] * B[5],
-    A[7] * B[6],
-    A[8] * B[6],
-    A[9] * B[6],
-    A[1] * B[7],
-    A[2] * B[7],
-    A[3] * B[7],
-    A[1] * B[8],
-    A[2] * B[8],
-    A[3] * B[8],
-    A[1] * B[9],
-    A[2] * B[9],
-    A[3] * B[9],
-    A[4] * B[7],
-    A[5] * B[7],
-    A[6] * B[7],
-    A[4] * B[8],
-    A[5] * B[8],
-    A[6] * B[8],
-    A[4] * B[9],
-    A[5] * B[9],
-    A[6] * B[9],
-    A[7] * B[7],
-    A[8] * B[7],
-    A[9] * B[7],
-    A[7] * B[8],
-    A[8] * B[8],
-    A[9] * B[8],
-    A[7] * B[9],
-    A[8] * B[9],
-    A[9] * B[9])
-end
-
-function (⊗₁₃²⁴)(A::TensorValue{2,2,Float64}, B::TensorValue{2,2,Float64})
-
-  TensorValue{4,4,Float64,16}(A[1] * B[1],
-    A[2] * B[1],
-    A[1] * B[2],
-    A[2] * B[2],
-    A[3] * B[1],
-    A[4] * B[1],
-    A[3] * B[2],
-    A[4] * B[2],
-    A[1] * B[3],
-    A[2] * B[3],
-    A[1] * B[4],
-    A[2] * B[4],
-    A[3] * B[3],
-    A[4] * B[3],
-    A[3] * B[4],
-    A[4] * B[4])
-end
 
 function (×ᵢ⁴)(A::TensorValue{3,3,Float64})
 
@@ -646,124 +582,58 @@ end
 
 
 """
-  outer_13_24(Matrix1::TensorValue, Matrix2::TensorValue)::TensorValue
+  **`contraction_IP_PJKL(A::TensorValue{D}, H::TensorValue{D*D})::TensorValue{D*D}`**
 
-  Computes the **outer product** of two second-order tensors (matrices), returning a fourth-order tensor 
-  represented in a `D² x D²` matrix form (Voigt or flattened index notation) using combined indices.
-
-  # Arguments
-  - `Matrix1::TensorValue{D, D}`: A second-order tensor (e.g., a stress, strain, or deformation tensor).
-  - `Matrix2::TensorValue{D, D}`: Another second-order tensor to be used in the outer product.
-
-  # Returns
-  - `TensorValue{D^2, D^2}`: A statically-sized matrix representing the fourth-order tensor formed from the outer product.
+  Performs a tensor contraction between a second-order tensor (of size `D × D`)
+  and a fourth-order tensor (represented as a `D² × D²` matrix in flattened index notation).
+  The operation follows the **index contraction pattern**, where addition is performed for repeated indices.
 """
-function outer_13_24(Matrix1::TensorValue{D}, Matrix2::TensorValue{D}) where D
-  Out = zeros(Float64,D*D,D*D)
-  for j in 1:D
-    for i in 1:D
-      for l in 1:D
-        for k in 1:D
-          Out[i + D * (j - 1), k + D * (l - 1)] += Matrix1[i,k] * Matrix2[j,l]
-        end
-      end
-    end
-  end
-  TensorValue{D*D,D*D}(Out)
-end
-
-
-"""
-  outer_14_23(Matrix1::TensorValue, Matrix2::TensorValue)::TensorValue
-
-  Computes the **outer product** of two second-order tensors (matrices), returning a fourth-order tensor 
-  represented in a `D² x D²` matrix form (flattened notation) using combined indices.
-
-  # Arguments
-  - `Matrix1::TensorValue{D, D}`: A second-order tensor (e.g., a stress, strain, or deformation tensor).
-  - `Matrix2::TensorValue{D, D}`: Another second-order tensor to be used in the outer product.
-
-  # Returns
-  - `TensorValue{D^2, D^2}`: A statically-sized matrix representing the fourth-order tensor formed from the outer product.
-"""
-function outer_14_23(Matrix1::TensorValue{D}, Matrix2::TensorValue{D}) where D
-  Out = zeros(Float64,D*D,D*D)
-  for j in 1:D
-    for i in 1:D
-      for l in 1:D
-        for k in 1:D
-          Out[i + D * (j - 1), k + D * (l - 1)] += Matrix1[i,l] * Matrix2[j,k]
-        end
-      end
-    end
-  end
-  TensorValue{D*D,D*D}(Out)
-end
-
-
-"""
-  contraction_IP_JPKL(Matrix1::TensorValue{D}, Matrix2::TensorValue{D*D})::TensorValue{D*D}
-
-  Performs a specific tensor contraction between a second-order tensor `Matrix1` (of size `D × D`)
-  and a fourth-order tensor `Matrix2` (represented as a `D² x D²` matrix in Voigt or flattened index notation),
-  returning the result as a new fourth-order tensor (in the same flattened form).
-  The contraction follows the **index contraction pattern**, where addition is performed for repeated indices.
-
-  # Arguments
-  - `Matrix1::TensorValue{D, D}`: A second-order tensor (e.g., a stress or deformation tensor).
-  - `Matrix2::TensorValue{D^2, D^2}`: A fourth-order tensor written in matrix form using combined indices.
-
-  # Returns
-  - `TensorValue{D^2, D^2}`: The resulting fourth-order tensor in the same matrix representation.
-"""
-function contraction_IP_JPKL(Matrix1::TensorValue{D}, Matrix2::TensorValue{D²}) where {D, D²}
+@generated function contraction_IP_PJKL(A::TensorValue{D}, H::TensorValue{D²}) where {D, D²}
   @assert D*D == D² "Second and Fourth-order tensors size mismatch"
-  Out  =  zeros(Float64,D*D,D*D)
-  for i in 1:D
-    for j in 1:D
-      for k in 1:D
-        for l in 1:D
+  str = ""
+  for l in 1:D
+    for k in 1:D
+      for j in 1:D
+        for i in 1:D
           for p in 1:D
-            Out[i + D * (j - 1), k + D * (l - 1)] += Matrix1[i,p] * Matrix2[j + D * (p - 1), k + D * (l - 1)]
+            a = _flat_idx(p,j,D)
+            b = _flat_idx(k,l,D)
+            str *= "+A[$i,$p]*H[$a,$b]"
           end
+          str *= ","
         end
       end
     end
   end
-  return TensorValue{D*D,D*D}(Out)
+  Meta.parse("TensorValue{D²,D², Float64}($str)")
 end
 
 
 """
-  contraction_IP_JPKL(Matrix1::TensorValue{D}, Matrix2::TensorValue{D*D})::TensorValue{D*D}
+  **`contraction_IP_JPKL(A::TensorValue{D}, H::TensorValue{D*D})::TensorValue{D*D}`**
 
-  Performs a specific tensor contraction between a second-order tensor `Matrix1` (of size `D × D`)
-  and a fourth-order tensor `Matrix2` (represented as a `D² x D²` matrix in Voigt or flattened index notation),
-  returning the result as a new fourth-order tensor (in the same flattened form).
-  The contraction follows the **index contraction pattern**, where addition is performed for repeated indices.
-
-  # Arguments
-  - `Matrix1::TensorValue{D, D}`: A second-order tensor (e.g., a stress or deformation tensor).
-  - `Matrix2::TensorValue{D^2, D^2}`: A fourth-order tensor written in matrix form using combined indices.
-
-  # Returns
-  - `TensorValue{D^2, D^2}`: The resulting fourth-order tensor in the same matrix representation.
+  Performs a tensor contraction between a second-order tensor (of size `D × D`)
+  and a fourth-order tensor (represented as a `D² × D²` matrix in flattened index notation).
+  The operation follows the **index contraction pattern**, where addition is performed for repeated indices.
 """
-function contraction_IP_PJKL(Matrix1::TensorValue{D}, Matrix2::TensorValue{D²}) where {D, D²}
+@generated function contraction_IP_JPKL(A::TensorValue{D}, H::TensorValue{D²}) where {D, D²}
   @assert D*D == D² "Second and Fourth-order tensors size mismatch"
-  Out  =  zeros(Float64,D*D,D*D)
-  for i in 1:D
-    for j in 1:D
-      for k in 1:D
-        for l in 1:D
+  str = ""
+  for l in 1:D
+    for k in 1:D
+      for j in 1:D
+        for i in 1:D
           for p in 1:D
-            Out[i + D * (j - 1), k + D * (l - 1)] += Matrix1[i,p] * Matrix2[p + D * (j - 1), k + D * (l - 1)]
+            a = _flat_idx(j,p,D)
+            b = _flat_idx(k,l,D)
+            str *= "+A[$i,$p]*H[$a,$b]"
           end
+          str *= ","
         end
       end
     end
   end
-  return TensorValue{D*D,D*D}(Out)
+  Meta.parse("TensorValue{D²,D², Float64}($str)")
 end
 
 

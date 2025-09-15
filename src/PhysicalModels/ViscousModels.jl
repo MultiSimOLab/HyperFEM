@@ -63,29 +63,6 @@ function updateStateVariables!(model::GeneralizedMaxwell, Δt, u, un, stateVars)
 end
 
 
-# """
-#   _getKinematic(::Visco, ∇u, Uv⁻¹)
-
-# Compute the kinematics of a viscous model.
-
-# # Arguments
-# - `::Visco`: A viscous model
-# - `∇u`: The deformation gradient at the considered time step
-# - `Uv⁻¹`: The inverse of the viscous strain at the considered time step
-
-# # Returns
-# - `F`
-# - `C`
-# - `Ce`
-# """
-# function _getKinematic(::Visco, ∇u, Uv⁻¹)
-#   F = one(∇u) + ∇u
-#   C = F' * F
-#   Ce = Uv⁻¹ * C * Uv⁻¹
-#   return (F, C, Ce)
-# end
-
-
 """
   ViscousStrain(Ce::TensorValue, C::TensorValue)::TensorValue
   
@@ -228,7 +205,7 @@ function ∂Ce_∂C(::ViscousIncompressible, γα, ∂Se∂Ce_, invUvn, Ce, Ce_t
     Ge = cof(Ce)
     ∂Se∂Ce = ∂Se∂Ce_(Ce)
     ∂Se∂Ce_trial = ∂Se∂Ce_(Ce_trial)
-    ∂Ce_trial_∂C = outer_13_24(invUvn, invUvn)
+    ∂Ce_trial_∂C = invUvn ⊗₁₃²⁴ invUvn
     #------------------------------------------
     # Derivative of return mapping with respect to Ce and λα
     #------------------------------------------   
@@ -258,7 +235,7 @@ end
 Tangent operator of Ce for at fixed Uv
 """
 function ∂Ce_∂C_Uvfixed(invUv)
-  return outer_13_24(invUv, invUv)
+  invUv ⊗₁₃²⁴ invUv
 end
 
 
@@ -267,7 +244,7 @@ end
 """
 function ∂Ce_∂invUv(C, invU)
   invU_C = invU * C
-  outer_13_24(invU_C, I3) + outer_13_24(I3, invU_C)
+  invU_C ⊗₁₃²⁴ I3 + I3 ⊗₁₃²⁴ invU_C
 end
 
 
@@ -306,7 +283,7 @@ function ViscousTangentOperator(obj::ViscousIncompressible, Δt::Float64,
   DCe_DC_Uvfixed = ∂Ce_∂C_Uvfixed(invUv)
   DCe_DinvUv = ∂Ce_∂invUv(C, invUv)
   DinvUv_DC = inv(DCe_DinvUv) * (DCe_DC - DCe_DC_Uvfixed)
-  DCDF = outer_13_24(F', I3) + outer_14_23(I3, F')
+  DCDF = F' ⊗₁₃²⁴ I3 + I3 ⊗₁₄²³ F'
   #------------------------------------------
   # 0.5*δC_{Uvfixed}:DSe[ΔC]
   #------------------------------------------
@@ -321,7 +298,7 @@ function ViscousTangentOperator(obj::ViscousIncompressible, Δt::Float64,
   # Sv:(D(δC_{Uvfixed})[ΔC])
   #------------------------------------------
   Sv = invUv_Se * invUv
-  C3 = outer_13_24(Sv, I3)
+  C3 = Sv ⊗₁₃²⁴ I3
   #------------------------------------------
   # Total Contribution
   #------------------------------------------
@@ -348,15 +325,9 @@ end
 function Piola(obj::ViscousIncompressible, Δt::Float64,
                 Se_::Function, ∂Se∂Ce_::Function,
                 F::TensorValue, Fn::TensorValue, stateVars::VectorValue)
-                # ∇u_::TensorValue, ∇un_::TensorValue, stateVars::VectorValue)
   state_vars = get_array(stateVars)
-  Uvn = TensorValue{3,3}(Tuple(state_vars[1:9]))
-  # Uvn = SMatrix{3,3}(state_vars[1:9])
+  Uvn = TensorValue{3,3}(Tuple(state_vars[1:9]))  # TODO: Update tensor slicing until next Gridap version has been released
   λαn = state_vars[10]
-#   ∇u = get_array(∇u_)
-#   ∇un = get_array(∇un_)
-  # F = get_array(F_)
-  # Fn = get_array(Fn_)
   #------------------------------------------
   # Get kinematics
   #------------------------------------------
@@ -366,24 +337,16 @@ function Piola(obj::ViscousIncompressible, Δt::Float64,
   Cn = C_(Fn)
   Ceᵗʳ = Ce_(C, invUvn)
   Cen  = Ce_(Cn, invUvn)
-#   F, C, Ceᵗʳ = _getKinematic(obj, ∇u, invUvn)
-#   _, _, Cen  = _getKinematic(obj, ∇un, invUvn)
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------
   Ce, _ = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, F, Ceᵗʳ, Cen, λαn)
   #------------------------------------------
-  # Get invUv and Sα
+  # Get invUv and Pα
   #------------------------------------------
   _, _, invUv = ViscousStrain(Ce, C)
   Pα = ViscousPiola(Se_, Ce, invUv, F)
-  #------------------------------------------
-  # Tangent operator
-  #------------------------------------------
-  # check_type = Pα isa TensorValue{3,3,Float64}
-  # if !check_type throw("Pα is a $(typeof(Pα))") end
   Pα
-  # return TensorValue(Pα)
 end
 
 
@@ -405,15 +368,9 @@ Visco-Elastic model for incompressible case
 function Tangent(obj::ViscousIncompressible, Δt::Float64,
                  Se_::Function, ∂Se∂Ce_::Function,
                  F::TensorValue, Fn::TensorValue, stateVars::VectorValue)
-                #  ∇u_::TensorValue, ∇un_::TensorValue, stateVars::VectorValue)
   state_vars = get_array(stateVars)
-  Uvn = TensorValue{3,3}(Tuple(state_vars[1:9]))
-  # Uvn = SMatrix{3,3}(state_vars[1:9])
+  Uvn = TensorValue{3,3}(Tuple(state_vars[1:9]))  # TODO: Update tensor slicing until next Gridap version has been released
   λαn = state_vars[10]
-#   ∇u = get_array(∇u_)
-#   ∇un = get_array(∇un_)
-#   F = get_array(F_)
-#   Fn = get_array(Fn_)
   #------------------------------------------
   # Get kinematics
   #------------------------------------------
@@ -423,8 +380,6 @@ function Tangent(obj::ViscousIncompressible, Δt::Float64,
   Cn = C_(Fn)
   Ceᵗʳ = Ce_(C, invUvn)
   Cen  = Ce_(Cn, invUvn)
-#   F, C, Ceᵗʳ = _getKinematic(obj, ∇u, invUvn)
-#   _, _, Cen  = _getKinematic(obj, ∇un, invUvn)
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------
@@ -461,13 +416,8 @@ function ReturnMapping(obj::ViscousIncompressible, Δt::Float64,
                        Se_::Function, ∂Se∂Ce_::Function,
                        F::TensorValue, Fn::TensorValue, stateVars::VectorValue)
   state_vars = get_array(stateVars)
-  Uvn = TensorValue{3,3}(Tuple(state_vars[1:9]))
-  # Uvn = SMatrix{3,3}(state_vars[1:9])
+  Uvn = TensorValue{3,3}(Tuple(state_vars[1:9]))  # TODO: Update tensor slicing until next Gridap version has been released
   λαn = state_vars[10]
-  # ∇u = get_array(∇u_)
-  # ∇un = get_array(∇un_)
-  # F = get_array(F_)
-  # Fn = get_array(Fn_)
   #------------------------------------------
   # Get kinematics
   #------------------------------------------
@@ -477,8 +427,6 @@ function ReturnMapping(obj::ViscousIncompressible, Δt::Float64,
   Cn = C_(Fn)
   Ceᵗʳ = Ce_(C, invUvn)
   Cen  = Ce_(Cn, invUvn)
-#   F, C, Ceᵗʳ = _getKinematic(obj, ∇u, invUvn)
-#   _, _, Cen  = _getKinematic(obj, ∇un, invUvn)
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------
@@ -496,13 +444,8 @@ function ViscousDissipation(obj::ViscousIncompressible, Δt::Float64,
                        Se_::Function, ∂Se∂Ce_::Function,
                        F::TensorValue, Fn::TensorValue, stateVars::VectorValue)
   state_vars = get_array(stateVars)
-  Uvn = TensorValue{3,3}(Tuple(state_vars[1:9]))
-  # Uvn = SMatrix{3,3}(state_vars[1:9])
+  Uvn = TensorValue{3,3}(Tuple(state_vars[1:9]))  # TODO: Update tensor slicing until next Gridap version has been released
   λαn = state_vars[10]
-  # ∇u = get_array(∇u_)
-  # ∇un = get_array(∇un_)
-  # F = get_array(F_)
-  # Fn = get_array(Fn_)
   #------------------------------------------
   # Get kinematics
   #------------------------------------------
@@ -512,8 +455,6 @@ function ViscousDissipation(obj::ViscousIncompressible, Δt::Float64,
   Cn = C_(Fn)
   Ceᵗʳ = Ce_(C, invUvn)
   Cen  = Ce_(Cn, invUvn)
-#   F, C, Ceᵗʳ = _getKinematic(obj, ∇u, invUvn)
-#   _, _, Cen  = _getKinematic(obj, ∇un, invUvn)
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------
