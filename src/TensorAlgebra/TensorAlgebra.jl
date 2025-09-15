@@ -194,9 +194,9 @@ end
 
 
 """
-  **`⊗₁²³(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D*D}`**
+  **`⊗₁²³(A::VectorValue{D}, B::TensorValue{D})::TensorValue{D,D*D}`**
 
-  Outer product of a first-order and second-order tensors (vector by matrix),
+  Outer product of a first-order and second-order tensors (vector and matrix),
   returning a third-order tensor represented in a `D x D²` flattened matrix using combined indices.
 """
 @generated function (⊗₁²³)(V::VectorValue{D,Float64}, A::TensorValue{D,D,Float64}) where {D}
@@ -211,9 +211,9 @@ end
 
 
 """
-  **`⊗₁²³(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D*D}`**
+  **`⊗₁²³(A::TensorValue{D}, B::VectorValue{D})::TensorValue{D,D*D}`**
 
-  Outer product of a second-order and first-order tensors (matrix by vector),
+  Outer product of a second-order and first-order tensors (matrix and vector),
   returning a third-order tensor represented in a `D x D²` flattened matrix using combined indices.
 """
 @generated function (⊗₁₂³)(A::TensorValue{D,D,Float64}, V::VectorValue{D,Float64}) where {D}
@@ -228,53 +228,21 @@ end
 
 
 """
-  **`⊗₁²³(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D*D}`**
+  **`⊗₁²³(A::TensorValue{D}, B::TensorValue{D})::TensorValue{D,D*D}`**
 
-  Outer product of a second-order and first-order tensors (matrix by vector),
+  Outer product of a second-order and first-order tensors (matrix and vector),
   returning a third-order tensor represented in a `D x D²` flattened matrix using combined indices.
 """
-@generated function (⊗₁₃²)(A::TensorValue{3,3,Float64}, V::VectorValue{3,Float64})
-
-  TensorValue{3,9,Float64,27}(A[1] * V[1],
-    A[2] * V[1],
-    A[3] * V[1],
-    A[1] * V[2],
-    A[2] * V[2],
-    A[3] * V[2],
-    A[1] * V[3],
-    A[2] * V[3],
-    A[3] * V[3],
-    A[4] * V[1],
-    A[5] * V[1],
-    A[6] * V[1],
-    A[4] * V[2],
-    A[5] * V[2],
-    A[6] * V[2],
-    A[4] * V[3],
-    A[5] * V[3],
-    A[6] * V[3],
-    A[7] * V[1],
-    A[8] * V[1],
-    A[9] * V[1],
-    A[7] * V[2],
-    A[8] * V[2],
-    A[9] * V[2],
-    A[7] * V[3],
-    A[8] * V[3],
-    A[9] * V[3])
-end
-
-
-function (⊗₁₃²)(A::TensorValue{2,2,Float64}, V::VectorValue{2,Float64})
-
-  TensorValue{2,4,Float64,8}(A[1] * V[1],
-    A[2] * V[1],
-    A[1] * V[2],
-    A[2] * V[2],
-    A[3] * V[1],
-    A[4] * V[1],
-    A[3] * V[2],
-    A[4] * V[2])
+@generated function (⊗₁₃²)(A::TensorValue{D}, V::VectorValue{D}) where D
+  str = ""
+  for k in 1:D
+    for j in 1:D
+      for i in 1:D
+        str *= "A[$i,$k]*V[$j],"
+      end
+    end
+  end
+  Meta.parse("TensorValue{D,D*D}($str)")
 end
 
 
