@@ -228,7 +228,7 @@ function ∂Ce_∂C(::ViscousIncompressible, γα, ∂Se∂Ce_, invUvn, Ce, Ce_t
     Ge = cof(Ce)
     ∂Se∂Ce = ∂Se∂Ce_(Ce)
     ∂Se∂Ce_trial = ∂Se∂Ce_(Ce_trial)
-    ∂Ce_trial_∂C = outer_13_24(invUvn, invUvn)
+    ∂Ce_trial_∂C = invUvn ⊗₁₃²⁴ invUvn
     #------------------------------------------
     # Derivative of return mapping with respect to Ce and λα
     #------------------------------------------   
@@ -258,7 +258,7 @@ end
 Tangent operator of Ce for at fixed Uv
 """
 function ∂Ce_∂C_Uvfixed(invUv)
-  return outer_13_24(invUv, invUv)
+  invUv ⊗₁₃²⁴ invUv
 end
 
 
@@ -267,7 +267,7 @@ end
 """
 function ∂Ce_∂invUv(C, invU)
   invU_C = invU * C
-  outer_13_24(invU_C, I3) + outer_13_24(I3, invU_C)
+  invU_C ⊗₁₃²⁴ I3 + I3 ⊗₁₃²⁴ invU_C
 end
 
 
@@ -306,7 +306,7 @@ function ViscousTangentOperator(obj::ViscousIncompressible, Δt::Float64,
   DCe_DC_Uvfixed = ∂Ce_∂C_Uvfixed(invUv)
   DCe_DinvUv = ∂Ce_∂invUv(C, invUv)
   DinvUv_DC = inv(DCe_DinvUv) * (DCe_DC - DCe_DC_Uvfixed)
-  DCDF = outer_13_24(F', I3) + outer_14_23(I3, F')
+  DCDF = F' ⊗₁₃²⁴ I3 + I3 ⊗₁₄²³ F'
   #------------------------------------------
   # 0.5*δC_{Uvfixed}:DSe[ΔC]
   #------------------------------------------
@@ -321,7 +321,7 @@ function ViscousTangentOperator(obj::ViscousIncompressible, Δt::Float64,
   # Sv:(D(δC_{Uvfixed})[ΔC])
   #------------------------------------------
   Sv = invUv_Se * invUv
-  C3 = outer_13_24(Sv, I3)
+  C3 = Sv ⊗₁₃²⁴ I3
   #------------------------------------------
   # Total Contribution
   #------------------------------------------
