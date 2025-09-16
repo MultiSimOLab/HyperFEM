@@ -67,18 +67,17 @@ end
 
  end
 
+
 @testset "inner" begin
-  A = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
-  B = TensorValue(4.6, 2.1, 1.7, 3.2, 6.5, 1.4, 9.2, 8.0, 9.0) * 1e-3
-  C = A ⊗ B
-  D = TensorValue([4.6 2.1 1.7 3.2 6.5 1.4 9.2 8.0 9.0;
-    1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0;
-    5.3 2.0 3.1 1.9 5.4 9.8 0.4 8.8 3.1] * 1e-3)
-  E = VectorValue(1.0, 2.0, 3.0) * 1e-3
-  @test norm(C ⊙ A) == 4.676298215469156e-6
-  @test norm(D ⊙ E) == 0.00010313946868197451
-  @test norm(D ⊙ A) == 0.0004509607632599537
+  H = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0)
+  G = TensorValue{2,4}(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0)
+  A = TensorValue(1.0, 2.0, 3.0, 4.0)
+  V = VectorValue(5.0, 6.0)
+  @test inner(H,A) == TensorValue(90.0, 100.0, 110.0, 120.0)
+  @test inner(G,A) == VectorValue(50.0, 60.0)
+  @test inner(G,V) == TensorValue(35.0, 46.0, 57.0, 68.0)
 end
+
 
 @testset "sum" begin
   A = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3

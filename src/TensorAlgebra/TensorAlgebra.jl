@@ -536,53 +536,73 @@ function Gridap.TensorValues.outer(A::SVector, B::SVector)
   return get_array(VectorValue(A) ⊗ VectorValue(B))
 end
 
-function Gridap.TensorValues.inner(Ten1::TensorValue{9,9,Float64}, Ten2::TensorValue{3,3,Float64})
-  TensorValue(Ten1[1] * Ten2[1] + Ten1[10] * Ten2[2] + Ten1[19] * Ten2[3] + Ten1[28] * Ten2[4] + Ten1[37] * Ten2[5] + Ten1[46] * Ten2[6] + Ten1[55] * Ten2[7] + Ten1[64] * Ten2[8] + Ten1[73] * Ten2[9],
-    Ten1[2] * Ten2[1] + Ten1[11] * Ten2[2] + Ten1[20] * Ten2[3] + Ten1[29] * Ten2[4] + Ten1[38] * Ten2[5] + Ten1[47] * Ten2[6] + Ten1[56] * Ten2[7] + Ten1[65] * Ten2[8] + Ten1[74] * Ten2[9],
-    Ten1[3] * Ten2[1] + Ten1[12] * Ten2[2] + Ten1[21] * Ten2[3] + Ten1[30] * Ten2[4] + Ten1[39] * Ten2[5] + Ten1[48] * Ten2[6] + Ten1[57] * Ten2[7] + Ten1[66] * Ten2[8] + Ten1[75] * Ten2[9],
-    Ten1[4] * Ten2[1] + Ten1[13] * Ten2[2] + Ten1[22] * Ten2[3] + Ten1[31] * Ten2[4] + Ten1[40] * Ten2[5] + Ten1[49] * Ten2[6] + Ten1[58] * Ten2[7] + Ten1[67] * Ten2[8] + Ten1[76] * Ten2[9],
-    Ten1[5] * Ten2[1] + Ten1[14] * Ten2[2] + Ten1[23] * Ten2[3] + Ten1[32] * Ten2[4] + Ten1[41] * Ten2[5] + Ten1[50] * Ten2[6] + Ten1[59] * Ten2[7] + Ten1[68] * Ten2[8] + Ten1[77] * Ten2[9],
-    Ten1[6] * Ten2[1] + Ten1[15] * Ten2[2] + Ten1[24] * Ten2[3] + Ten1[33] * Ten2[4] + Ten1[42] * Ten2[5] + Ten1[51] * Ten2[6] + Ten1[60] * Ten2[7] + Ten1[69] * Ten2[8] + Ten1[78] * Ten2[9],
-    Ten1[7] * Ten2[1] + Ten1[16] * Ten2[2] + Ten1[25] * Ten2[3] + Ten1[34] * Ten2[4] + Ten1[43] * Ten2[5] + Ten1[52] * Ten2[6] + Ten1[61] * Ten2[7] + Ten1[70] * Ten2[8] + Ten1[79] * Ten2[9],
-    Ten1[8] * Ten2[1] + Ten1[17] * Ten2[2] + Ten1[26] * Ten2[3] + Ten1[35] * Ten2[4] + Ten1[44] * Ten2[5] + Ten1[53] * Ten2[6] + Ten1[62] * Ten2[7] + Ten1[71] * Ten2[8] + Ten1[80] * Ten2[9],
-    Ten1[9] * Ten2[1] + Ten1[18] * Ten2[2] + Ten1[27] * Ten2[3] + Ten1[36] * Ten2[4] + Ten1[45] * Ten2[5] + Ten1[54] * Ten2[6] + Ten1[63] * Ten2[7] + Ten1[72] * Ten2[8] + Ten1[81] * Ten2[9])
+
+function str_inner_fourth_second(D)
+  str = ""
+  for j in 1:D
+    for i in 1:D
+      for l in 1:D
+        for k in 1:D
+          a = _flat_idx(i,j,k,l,D)
+          str *= "+H[$a]*A[$k,$l]"
+        end
+      end
+      str *= ","
+    end
+  end
+  "TensorValue{$D}($str)"
 end
 
-function Gridap.TensorValues.inner(Ten1::TensorValue{3,9,Float64}, Ten2::TensorValue{3,3,Float64})
-  VectorValue(Ten1[1] * Ten2[1] + Ten1[4] * Ten2[2] + Ten1[7] * Ten2[3] + Ten1[10] * Ten2[4] + Ten1[13] * Ten2[5] + Ten1[16] * Ten2[6] + Ten1[19] * Ten2[7] + Ten1[22] * Ten2[8] + Ten1[25] * Ten2[9],
-    Ten1[2] * Ten2[1] + Ten1[5] * Ten2[2] + Ten1[8] * Ten2[3] + Ten1[11] * Ten2[4] + Ten1[14] * Ten2[5] + Ten1[17] * Ten2[6] + Ten1[20] * Ten2[7] + Ten1[23] * Ten2[8] + Ten1[26] * Ten2[9],
-    Ten1[3] * Ten2[1] + Ten1[6] * Ten2[2] + Ten1[9] * Ten2[3] + Ten1[12] * Ten2[4] + Ten1[15] * Ten2[5] + Ten1[18] * Ten2[6] + Ten1[21] * Ten2[7] + Ten1[24] * Ten2[8] + Ten1[27] * Ten2[9])
+function str_inner_third_second(D)
+  str = ""
+  for i in 1:D
+    for k in 1:D
+      for j in 1:D
+        a = _flat_idx(j,k,D)
+        str *= "+H[$i,$a]*A[$j,$k]"
+      end
+    end
+    str *= ","
+  end
+  "VectorValue{$D}($str)"
 end
 
-function Gridap.TensorValues.inner(Ten1::TensorValue{2,4,Float64}, Ten2::TensorValue{2,2,Float64})
-  VectorValue(Ten1[1] * Ten2[1] + Ten1[3] * Ten2[2] + Ten1[5] * Ten2[3] + Ten1[7] * Ten2[4],
-    Ten1[2] * Ten2[1] + Ten1[4] * Ten2[2] + Ten1[6] * Ten2[3] + Ten1[8] * Ten2[4])
+function str_inner_third_first(D)
+  str = ""
+  for j in 1:D
+    for i in 1:D
+      for k in 1:D
+        a = _flat_idx(j,k,D)
+        str *= "+H[$i,$a]*V[$k]"
+      end
+      str *= ","
+    end
+  end
+  "TensorValue{$D}($str)"
 end
 
-function Gridap.TensorValues.inner(Ten1::TensorValue{3,9,Float64}, Ten2::VectorValue{3,Float64})
-  TensorValue(Ten1[1] * Ten2[1] + Ten1[10] * Ten2[2] + Ten1[19] * Ten2[3],
-    Ten1[2] * Ten2[1] + Ten1[11] * Ten2[2] + Ten1[20] * Ten2[3],
-    Ten1[3] * Ten2[1] + Ten1[12] * Ten2[2] + Ten1[21] * Ten2[3],
-    Ten1[4] * Ten2[1] + Ten1[13] * Ten2[2] + Ten1[22] * Ten2[3],
-    Ten1[5] * Ten2[1] + Ten1[14] * Ten2[2] + Ten1[23] * Ten2[3],
-    Ten1[6] * Ten2[1] + Ten1[15] * Ten2[2] + Ten1[24] * Ten2[3],
-    Ten1[7] * Ten2[1] + Ten1[16] * Ten2[2] + Ten1[25] * Ten2[3],
-    Ten1[8] * Ten2[1] + Ten1[17] * Ten2[2] + Ten1[26] * Ten2[3],
-    Ten1[9] * Ten2[1] + Ten1[18] * Ten2[2] + Ten1[27] * Ten2[3])
+@generated function Gridap.TensorValues.inner(H::TensorValue{4,4}, A::TensorValue{2,2})
+  Meta.parse(str_inner_fourth_second(2))
 end
 
-function Gridap.TensorValues.inner(Ten1::TensorValue{2,4,Float64}, Ten2::VectorValue{2,Float64})
-  TensorValue(Ten1[1] * Ten2[1] + Ten1[5] * Ten2[2],
-    Ten1[2] * Ten2[1] + Ten1[6] * Ten2[2],
-    Ten1[3] * Ten2[1] + Ten1[7] * Ten2[2],
-    Ten1[4] * Ten2[1] + Ten1[8] * Ten2[2])
+@generated function Gridap.TensorValues.inner(H::TensorValue{9,9}, A::TensorValue{3,3})
+  Meta.parse(str_inner_fourth_second(3))
 end
 
-function Gridap.TensorValues.inner(Ten1::TensorValue{4,4,Float64}, Ten2::TensorValue{2,2,Float64})
-  TensorValue(Ten1[1] * Ten2[1] + Ten1[5] * Ten2[2] + Ten1[9] * Ten2[3] + Ten1[13] * Ten2[4],
-    Ten1[2] * Ten2[1] + Ten1[6] * Ten2[2] + Ten1[10] * Ten2[3] + Ten1[14] * Ten2[4],
-    Ten1[3] * Ten2[1] + Ten1[7] * Ten2[2] + Ten1[11] * Ten2[3] + Ten1[15] * Ten2[4],
-    Ten1[4] * Ten2[1] + Ten1[8] * Ten2[2] + Ten1[12] * Ten2[3] + Ten1[16] * Ten2[4])
+@generated function Gridap.TensorValues.inner(H::TensorValue{2,4}, A::TensorValue{2,2})
+  Meta.parse(str_inner_third_second(2))
+end
+
+@generated function Gridap.TensorValues.inner(H::TensorValue{3,9}, A::TensorValue{3,3})
+  Meta.parse(str_inner_third_second(3))
+end
+
+@generated function Gridap.TensorValues.inner(H::TensorValue{2,4}, V::VectorValue{2})
+  Meta.parse(str_inner_third_first(2))
+end
+
+@generated function Gridap.TensorValues.inner(H::TensorValue{3,9}, V::VectorValue{3})
+  Meta.parse(str_inner_third_first(3))
 end
 
 function Gridap.TensorValues.inner(Vec1::VectorValue, Ten1::TensorValue)
