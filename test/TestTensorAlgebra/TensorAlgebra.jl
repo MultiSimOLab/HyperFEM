@@ -73,6 +73,10 @@ end
   G = TensorValue{2,4}(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0)
   A = TensorValue(1.0, 2.0, 3.0, 4.0)
   V = VectorValue(5.0, 6.0)
+  @test inner(H,H) == 1496.0
+  @test inner(G,G) == 204.0
+  @test inner(A,A) == 30.0
+  @test inner(V,V) == 61.0
   @test inner(H,A) == TensorValue(90.0, 100.0, 110.0, 120.0)
   @test inner(G,A) == VectorValue(50.0, 60.0)
   @test inner(G,V) == TensorValue(35.0, 46.0, 57.0, 68.0)
@@ -80,9 +84,10 @@ end
 
 
 @testset "sum" begin
-  A = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
-  B = TensorValue(4.6, 2.1, 1.7, 3.2, 6.5, 1.4, 9.2, 8.0, 9.0) * 1e-3
-  @test norm(A + B) == 0.03393449572337859
+  A = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)
+  B = TensorValue(4.1, 5.2, 6.3, 7.4, 8.5, 9.6, 1.7, 2.8, 3.9)
+  @test A + B == TensorValue(5.1, 7.2, 9.3, 11.4, 13.5, 15.6, 8.7, 10.8, 12.9)
+  @test norm(A + B) ≈ 32.842807431765024
 end
 
 
