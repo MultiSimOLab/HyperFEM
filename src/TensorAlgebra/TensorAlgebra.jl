@@ -85,6 +85,7 @@ _full_idx4(α::Int, N::Int) = _full_idx4(_full_idx2(α,N*N)...,N)
 # Identity matrix
 # =====================
 
+"""The scaling N×N matrix"""
 const I_(N) = TensorValue{N,N,Float64}(ntuple(α -> begin
   i,j = _full_idx2(α,N)
   i==j ? 1.0 : 0.0
@@ -92,22 +93,30 @@ end,N*N))
 
 """
     I2::TensorValue{2}
-Identity matrix 2D"""
+
+Identity matrix 2D
+"""
 const I2 = I_(2)
 
 """
     I3::TensorValue{3}
-Identity matrix 3D"""
+
+Identity matrix 3D
+"""
 const I3 = I_(3)
 
 """
     I4::TensorValue{4}
-Identity fourth-order tensor 2D"""
+
+Identity fourth-order tensor 2D
+"""
 const I4 = I_(4)
 
 """
     I9::TensorValue{9}
-Identity fourth-order tensor 3D"""
+
+Identity fourth-order tensor 3D
+"""
 const I9 = I_(9)
 
 
@@ -115,6 +124,10 @@ const I9 = I_(9)
 # Delta Kronecker
 # =====================
 
+"""
+    _Kroneckerδδ(δδ::Function, N::Int)::TensorValue{N*N,N*N,Float64}
+
+Delta Kronecker outer product according to the `δδ(i,j,k,l)` function"""
 function _Kroneckerδδ(δδ::Function, N::Int)
   TensorValue{N*N,N*N,Float64}(ntuple(α -> begin
     i, j, k, l = _full_idx4(α,N)
