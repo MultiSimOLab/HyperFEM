@@ -10,6 +10,7 @@ using ..TensorAlgebra
 using ..TensorAlgebra: _∂H∂F_2D
 using StaticArrays
 
+import Base: +
 
 export Yeoh3D
 export NeoHookean3D
@@ -28,6 +29,7 @@ export NonlinearMooneyRivlin2D_CV
 export NonlinearNeoHookean_CV
 export NonlinearMooneyRivlin_CV
 export NonlinearIncompressibleMooneyRivlin2D_CV
+export EightChain
 export TransverseIsotropy3D
 export TransverseIsotropy2D
 export LinearElasticity3D
@@ -438,6 +440,25 @@ end
 # Mechanical models
 # ===================
 
+struct ComposedElasticModel <: Elasto
+  Model1::Elasto
+  Model2::Elasto
+  function ComposedElasticModel(model1::Elasto,model2::Elasto)
+    new(model1,model2)
+  end
+  function (obj::ComposedElasticModel)(Λ::Float64=1.0)
+    DΨ1 = obj.Model1(Λ)
+    DΨ2 = obj.Model2(Λ)
+    Ψ, ∂Ψ, ∂∂Ψ = map((ψ1,ψ2) -> (x) -> ψ1(x) + ψ2(x), DΨ1, DΨ2)
+    return (Ψ, ∂Ψ, ∂∂Ψ)
+  end
+end
+
+function (+)(Model1::Elasto, Model2::Elasto)
+  ComposedElasticModel(Model1,Model2)
+end
+
+
 struct Yeoh3D{A} <: Mechano
     λ::Float64
     C10::Float64
@@ -513,10 +534,10 @@ mutable struct LinearElasticity3D{A} <: Mechano
 end
 
 
-struct VolumetricEnergy{A} <: Mechano
+struct VolumetricEnergy{A} <: Elasto
   λ::Float64
   Kinematic::A
-  function VolumetricEnergy(; λ::Float64, Kinematic::KinematicModel=Kinematics(Mechano))
+  function VolumetricEnergy(; λ::Float64, Kinematic::KinematicModel=Kinematics(Elasto))
     new{typeof(Kinematic)}(λ, Kinematic)
   end
 
@@ -877,6 +898,30 @@ struct NonlinearIncompressibleMooneyRivlin2D_CV{A} <: Mechano
   end
 
 end
+
+
+struct EightChain{A} <: Elasto
+  μ::Float64
+  N::Float64
+  Kinematic::A
+  function EightChain(; μ::Float64, N::Float64, Kinematic::KinematicModel=Kinematics(Elasto))
+    new{typeof(Kinematic)}(μ,N)
+  end
+
+  function (obj::EightChain)(Λ::Float64=1.0)
+    Ψ(F) = begin
+      C = F' * F
+      C_iso = det(C)^(-2/3) * C
+      β = sqrt(tr(C_iso) / 3 / obj.N)
+      L = β * (3.0 - β^2) / (1.0 - β^2)
+      obj.μ * obj.N * (β*L + log(L / sinh(L)))
+    end
+    ∂Ψ∂F(F) = ForwardDiff.gradient(Ψ, get_array(F))
+    ∂Ψ∂FF(F) = ForwardDiff.jacobian(∂Ψ∂F, get_array(F))
+    return (Ψ, TensorValue ∘ ∂Ψ∂F, TensorValue ∘ ∂Ψ∂FF)
+  end
+end
+
 
 struct TransverseIsotropy3D{A} <: Mechano
   μ::Float64
