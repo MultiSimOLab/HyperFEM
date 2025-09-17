@@ -19,15 +19,15 @@ end
   B = TensorValue(5.0, 6.0, 7.0, 8.0)
   u = VectorValue(1.0, 2.0)
   v = VectorValue(3.0, 4.0)
-  @test u ⊗ v   == TensorValue(3.0, 6.0, 4.0, 8.0)
-  @test u ⊗₁² v == TensorValue(3.0, 6.0, 4.0, 8.0)
+  @test u ⊗ v     == TensorValue(3.0, 6.0, 4.0, 8.0)
+  @test u ⊗₁² v   == TensorValue(3.0, 6.0, 4.0, 8.0)
   @test A ⊗ B     == TensorValue(5.0, 10.0, 15.0, 20.0, 6.0, 12.0, 18.0, 24.0, 7.0, 14.0, 21.0, 28.0, 8.0, 16.0, 24.0, 32.0)
   @test A ⊗₁₂³⁴ B == TensorValue(5.0, 10.0, 15.0, 20.0, 6.0, 12.0, 18.0, 24.0, 7.0, 14.0, 21.0, 28.0, 8.0, 16.0, 24.0, 32.0)
   @test A ⊗₁₃²⁴ B == TensorValue(5.0, 10.0, 6.0, 12.0, 15.0, 20.0, 18.0, 24.0, 7.0, 14.0, 8.0, 16.0, 21.0, 28.0, 24.0, 32.0)
   @test A ⊗₁₄²³ B == TensorValue(5.0, 10.0, 6.0, 12.0, 7.0, 14.0, 8.0, 16.0, 15.0, 20.0, 18.0, 24.0, 21.0, 28.0, 24.0, 32.0)
-  @test u ⊗₁²³ A == TensorValue{2,4}(1.0, 2.0, 2.0, 4.0, 3.0, 6.0, 4.0, 8.0)
-  @test A ⊗₁₂³ u == TensorValue{2,4}(1.0, 2.0, 3.0, 4.0, 2.0, 4.0, 6.0, 8.0)
-  @test A ⊗₁₃² u == TensorValue{2,4}(1.0, 2.0, 2.0, 4.0, 3.0, 4.0, 6.0, 8.0)
+  @test u ⊗₁²³ A  == TensorValue{2,4}(1.0, 2.0, 2.0, 4.0, 3.0, 6.0, 4.0, 8.0)
+  @test A ⊗₁₂³ u  == TensorValue{2,4}(1.0, 2.0, 3.0, 4.0, 2.0, 4.0, 6.0, 8.0)
+  @test A ⊗₁₃² u  == TensorValue{2,4}(1.0, 2.0, 2.0, 4.0, 3.0, 4.0, 6.0, 8.0)
 end
 
 
@@ -79,6 +79,9 @@ end
   @test inner(H,A) == TensorValue(90.0, 100.0, 110.0, 120.0)
   @test inner(G,A) == VectorValue(50.0, 60.0)
   @test inner(G,V) == TensorValue(35.0, 46.0, 57.0, 68.0)
+  @test H ⊙ A     == TensorValue(90.0, 100.0, 110.0, 120.0)
+  @test G ⊙ A     == VectorValue(50.0, 60.0)
+  @test G ⊙ V     == TensorValue(35.0, 46.0, 57.0, 68.0)
 end
 
 
