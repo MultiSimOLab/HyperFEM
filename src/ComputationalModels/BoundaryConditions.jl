@@ -10,6 +10,8 @@ struct MultiFieldBC <: BoundaryCondition
     BoundaryCondition::Vector{BoundaryCondition}
 end
 
+include("EvolutionFunctions.jl")
+
 
 struct MultiFieldTC{A} <: TimedependentCondition
     vh::A # could be a multifield or single field
