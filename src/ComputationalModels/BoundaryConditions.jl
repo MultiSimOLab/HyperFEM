@@ -139,6 +139,15 @@ end
 
 function residual_Neumann(::NothingBC, kwargs...) end
 
+"""
+    residual_Neumann(...)::Function
+
+Return the Neumann residual as a FUNCTION.
+"""
+function residual_Neumann(bc::NeumannBC, dΓ::Vector, Λ::Float64)
+    v -> mapreduce((fi, dΓi) -> ∫(v ⋅ fi(Λ))dΓi, +, bc.values, dΓ)
+end
+
 function residual_Neumann(bc::NeumannBC, v, dΓ, Λ)
     bc_func_ = Vector{Function}(undef, length(bc.tags))
     for (i, f) in enumerate(bc.values)
