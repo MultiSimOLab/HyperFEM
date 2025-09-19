@@ -909,16 +909,57 @@ struct EightChain{A} <: Elasto
   end
 
   function (obj::EightChain)(Λ::Float64=1.0)
+    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    μ, N = obj.μ, obj.N
+
     Ψ(F) = begin
       C = F' * F
-      C_iso = det(C)^(-2/3) * C
-      β = sqrt(tr(C_iso) / 3 / obj.N)
+      C_iso = J(F)^(-2/3) * C
+      β = sqrt(tr(C_iso) / 3 / N)
       L = β * (3.0 - β^2) / (1.0 - β^2)
-      obj.μ * obj.N * (β*L + log(L / sinh(L)))
+      μ * N * (β * L + log(L / sinh(L)))
     end
-    ∂Ψ∂F(F) = ForwardDiff.gradient(Ψ, get_array(F))
-    ∂Ψ∂FF(F) = ForwardDiff.jacobian(∂Ψ∂F, get_array(F))
-    return (Ψ, TensorValue ∘ ∂Ψ∂F, TensorValue ∘ ∂Ψ∂FF)
+
+    ∂Ψ∂F(F) = begin
+      C = F' * F
+      C_iso = J(F)^(-2 / 3) * C
+      β = sqrt(tr(C_iso) / 3 / N)
+      L = β * (3.0 - β^2) / (1.0 - β^2)
+      ∂β∂I1_ = 0.5 / sqrt(tr(C_iso) * 3 * N)
+      ∂L∂I1_ = ((3 * (1 - β^2)^2 + 2 * β * (3 * β - β^3)) / (1 - β^2)^2) * ∂β∂I1_
+      n = (∂L∂I1_ * sinh(L) - L * cosh(L) * ∂L∂I1_)
+      d = (L * sinh(L))
+      ∂Ψ∂I1_ = μ * N * (∂β∂I1_ * L + β * ∂L∂I1_ + n / d)
+      ∂I1_∂F = 2 * J(F)^(-2 / 3) * F
+      ∂I1_∂J = -(2 / 3) * J(F)^(-5 / 3) * tr(C)
+      ∂Ψ∂I1_ * (∂I1_∂F + ∂I1_∂J * H(F))
+    end
+
+    ∂Ψ∂FF(F) = begin
+      H_ = H(F)
+      C = F' * F
+      C_iso = det(F)^(-2 / 3) * C
+      β = sqrt(tr(C_iso) / 3 / N)
+      L = β * (3.0 - β^2) / (1.0 - β^2)
+      ∂β∂I1_ = 0.5 / sqrt(tr(C_iso) * 3 * N)
+      ∂L∂I1_ = ((3 * (1 - β^2)^2 + 2 * β * (3 * β - β^3)) / (1 - β^2)^2) * ∂β∂I1_
+      ∂β∂I1I1_ = -(3 * N) / (4 * (3 * N * tr(C_iso))^(3 / 2))
+      ∂L∂I1I1_ = ((4 * β * (β^2 + 3)) / (1 - β^2)^3) * ∂β∂I1_^2 + ((3 * (1 - β^2)^2 + 2 * β * (3 * β - β^3)) / (1 - β^2)^2) * ∂β∂I1I1_
+      ∂I1_∂F = 2 * det(F)^(-2 / 3) * F
+      ∂I1_∂J = -(2 / 3) * det(F)^(-5 / 3) * tr(C)
+      ∂I1_∂F∂F = 2 * det(F)^(-2 / 3) * I9
+      ∂I1_∂J∂J = (10 / 9) * det(F)^(-8 / 3) * tr(C)
+      ∂I1_∂F∂J = -(4 / 3) * det(F)^(-5 / 3) * F
+      n = (∂L∂I1_ * sinh(L) - L * cosh(L) * ∂L∂I1_)
+      d = (L * sinh(L))
+      ∂n∂I1_ = ∂L∂I1I1_ * sinh(L) + ∂L∂I1_ * ∂L∂I1_* cosh(L) - ∂L∂I1_^2 * cosh(L) - L * sinh(L) * ∂L∂I1_^2 - L * cosh(L) * ∂L∂I1I1_
+      ∂d∂I1_ = ∂L∂I1_ * sinh(L) + L * ∂L∂I1_* cosh(L)
+      ∂Ψ∂I1_ = μ * N * (∂β∂I1_ * L + β * ∂L∂I1_ + n / d)
+      ∂Ψ∂I1I1_ = μ * N * (∂β∂I1I1_ * L + 2 * ∂β∂I1_ * ∂L∂I1_ + β * ∂L∂I1I1_ + (∂n∂I1_ * d - n * ∂d∂I1_) / d^2)
+      ∂Ψ∂I1I1_ * ((∂I1_∂F + ∂I1_∂J * H_) ⊗ (∂I1_∂F + ∂I1_∂J * H_)) + ∂Ψ∂I1_ * (∂I1_∂F∂F + ∂I1_∂F∂J ⊗ H_ + H_ ⊗ ∂I1_∂F∂J + ∂I1_∂J∂J * (H_ ⊗ H_) + I9 × (∂I1_∂J * F))
+    end
+    
+    return (Ψ, ∂Ψ∂F, ∂Ψ∂FF)
   end
 end
 

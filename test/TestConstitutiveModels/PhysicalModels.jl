@@ -4,6 +4,7 @@ using JSON
 using StaticArrays
 using Test
 using HyperFEM.PhysicalModels
+using BenchmarkTools
 
 
 import Base: -
@@ -37,6 +38,30 @@ function test_derivatives_3D_(model::PhysicalModel; rtol=1e-14, kwargs...)
   test_derivatives__(model, ∇u3, rtol=rtol, kwargs...)
 end
 
+
+function benchmark_derivatives__(model::PhysicalModel, ∇u)
+  Ψ, ∂Ψu, ∂Ψuu = model()
+  ∂Ψu_(F) = TensorValue(ForwardDiff.gradient(Ψ, get_array(F)))
+  ∂Ψuu_(F) = TensorValue(ForwardDiff.hessian(Ψ, get_array(F)))
+
+  F, _, _ = get_Kinematics(model.Kinematic)
+  print("Analyitical ∂Ψu  | ")
+  @btime $∂Ψu($F($∇u))
+  print("Numerical ∂Ψu    | ")
+  @btime $∂Ψu_($F($∇u))
+  print("Analyitical ∂Ψuu | ")
+  @btime $∂Ψuu($F($∇u))
+  print("Numerical ∂Ψuu   | ")
+  @btime $∂Ψuu_($F($∇u))
+end
+
+function benchmark_derivatives_2D_(model::PhysicalModel)
+  benchmark_derivatives__(model, ∇u2)
+end
+
+function benchmark_derivatives_3D_(model::PhysicalModel)
+  benchmark_derivatives__(model, ∇u3)
+end
 
 
 @testset "NonlinearMooneyRivlin_CV" begin
@@ -138,6 +163,12 @@ end
 @testset "NonlinearIncompressibleMooneyRivlin2D_CV" begin
   model = NonlinearIncompressibleMooneyRivlin2D_CV(λ=(μParams[1] + μParams[2]) * 1e2, μ=μParams[1], α=μParams[3], γ=3.0)
   test_derivatives_2D_(model)
+end
+
+
+@testset "EightChain" begin
+  model = EightChain(μ=μParams[1], N=μParams[2])
+  test_derivatives_3D_(model, rtol=1e-13)
 end
 
 
@@ -701,12 +732,6 @@ end
 @testset "Hessian∇JRegularization" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
   ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
-
-  μParams = [6456.9137547089595, 896.4633794151492,
-    1.999999451256222,
-    1.9999960497608036,
-    11747.646562400318,
-    0.7841068624959612, 1.5386288924587603]
   model = ARAP2D(μ=μParams[1])
   modelreg = Hessian∇JRegularization(Mechano=model)
 
