@@ -30,7 +30,7 @@ end
  
 function residual(physicalmodel::Mechano, u, v, dΩ, Λ=1.0)
     DΨ= physicalmodel(Λ)
-       F,_,_ = get_Kinematics(physicalmodel.Kinematic; Λ=Λ)
+    F,_,_ = get_Kinematics(physicalmodel.Kinematic; Λ=Λ)
     ∂Ψu=DΨ[2]
 
     ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘(∇(u)'))))dΩ
@@ -39,10 +39,37 @@ end
 
 function jacobian(physicalmodel::Mechano, u, du, v, dΩ, Λ=1.0)
     DΨ= physicalmodel(Λ)
-      F,_,_ = get_Kinematics(physicalmodel.Kinematic; Λ=Λ)
+    F,_,_ = get_Kinematics(physicalmodel.Kinematic; Λ=Λ)
     ∂Ψuu=DΨ[3]
     ∫(∇(v)' ⊙ ((∂Ψuu ∘ (F∘(∇(u)'))) ⊙ (∇(du)')))dΩ
 end
+
+"""
+    residual(...)::Function
+
+Return the residual for a visco-elastic model as a FUNCTION.
+"""
+function residual(model::ViscoElastic, un, vars, dΩ; t, Δt)
+    _, ∂Ψu, _ = model(t, Δt=Δt)
+    F, _, _   = get_Kinematics(model.Kinematic, Λ=t)
+    (u, v) -> ∫(∇(v)' ⊙ (∂Ψu∘(F∘∇(u)', F∘∇(un)', vars...)))dΩ
+end
+
+"""
+    jacobian(...)::Function
+
+Return the jacobian for a visco-elastic model as a FUNCTION.
+"""
+function jacobian(model::ViscoElastic, un, vars, dΩ; t, Δt)
+    _, _, ∂Ψuu = model(t, Δt=Δt)
+    F, _, _   = get_Kinematics(model.Kinematic, Λ=t)
+    (u, du, v) -> ∫(∇(v)' ⊙ (inner ∘ (∂Ψuu∘(F∘∇(u)', F∘∇(un)', vars...), ∇(du)')))dΩ
+end
+
+
+# ===================
+# Mass term
+# ===================
 
 function mass_term(u, v, Coeff, dΩ)
     ∫(Coeff* (u⋅v))dΩ
