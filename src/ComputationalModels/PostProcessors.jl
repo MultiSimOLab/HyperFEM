@@ -97,6 +97,31 @@ function Cauchy(physmodel::ThermoElectroMechano, uh, φh, θh, Ω, dΩ, Λ=1.0)
 end
 
 
+function Cauchy(model::ViscoElastic, uh, unh, state_vars, Ω, dΩ, t, Δt)
+    _, ∂Ψu, _ = model(Δt=Δt)
+    F, _, _ = get_Kinematics(model.Kinematic)
+    σ = ∂Ψu ∘ (F∘∇(uh), F∘∇(unh), state_vars...)
+    return interpolate_σ_everywhere(σ, Ω, dΩ)
+end
+
+
+function interpolate_σ_everywhere(σ, Ω, dΩ)
+    ref_L2 = ReferenceFE(lagrangian, Float64, 0)
+    ref_fe = ReferenceFE(lagrangian, Float64, 1)
+    VL2 = FESpace(Ω, ref_L2, conformity=:L2)
+    V = FESpace(Ω, ref_fe, conformity=:H1)
+    n1 = VectorValue(1.0, 0.0, 0.0)
+    n2 = VectorValue(0.0, 1.0, 0.0)
+    n3 = VectorValue(0.0, 0.0, 1.0)
+    σ11h = interpolate_everywhere(L2_Projection(n1 ⋅ σ ⋅ n1, dΩ, VL2), V)
+    σ12h = interpolate_everywhere(L2_Projection(n1 ⋅ σ ⋅ n2, dΩ, VL2), V)
+    σ13h = interpolate_everywhere(L2_Projection(n1 ⋅ σ ⋅ n3, dΩ, VL2), V)
+    σ22h = interpolate_everywhere(L2_Projection(n2 ⋅ σ ⋅ n2, dΩ, VL2), V)
+    σ23h = interpolate_everywhere(L2_Projection(n2 ⋅ σ ⋅ n3, dΩ, VL2), V)
+    σ33h = interpolate_everywhere(L2_Projection(n3 ⋅ σ ⋅ n3, dΩ, VL2), V)
+    ph   = interpolate_everywhere(L2_Projection(tr ∘ σ, dΩ, VL2), V)
+    return (σ11h, σ12h, σ13h, σ22h, σ23h, σ33h, ph)
+end
 
 
 function Entropy(physmodel::ThermoElectroMechano, uh, φh, θh, Ω, dΩ, Λ=1.0)

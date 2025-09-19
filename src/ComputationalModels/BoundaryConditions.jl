@@ -139,6 +139,15 @@ end
 
 function residual_Neumann(::NothingBC, kwargs...) end
 
+"""
+    residual_Neumann(...)::Function
+
+Return the Neumann residual as a FUNCTION.
+"""
+function residual_Neumann(bc::NeumannBC, dΓ::Vector, Λ::Float64)
+    v -> mapreduce((fi, dΓi) -> ∫(v ⋅ fi(Λ))dΓi, +, bc.values, dΓ)
+end
+
 function residual_Neumann(bc::NeumannBC, v, dΓ, Λ)
     bc_func_ = Vector{Function}(undef, length(bc.tags))
     for (i, f) in enumerate(bc.values)
@@ -155,20 +164,22 @@ function residual_Neumann(bc::NeumannBC, v, dΓ, Λ⁺, Λ⁻)
     return mapreduce(f -> f(v), +, bc_func_)
 end
 
-function get_Neumann_dΓ(model, ::NothingBC, degree)
+"""
+    get_Neumann_dΓ(...)::Vector{Gridap.CellData.GenericMeasure}
+
+Return a collection of boundary triangulations at the specified Neumann boundaries.
+"""
+function get_Neumann_dΓ(model, ::NothingBC, degree::Int)
     Vector{Gridap.CellData.GenericMeasure}(undef, 1)
 end
 
-function get_Neumann_dΓ(model, bc::NeumannBC, degree)
-    dΓ = Vector{Gridap.CellData.GenericMeasure}(undef, length(bc.tags))
-    for i in 1:length(bc.tags)
-        Γ = BoundaryTriangulation(model, tags=bc.tags[i])
-        dΓ[i] = Measure(Γ, degree)
-    end
-    return dΓ
+function get_Neumann_dΓ(model, bc::NeumannBC, degree::Int)
+    all_Γ = map(tag -> BoundaryTriangulation(model, tags=tag), bc.tags)
+    all_dΓ = map(Γi -> Measure(Γi, degree), all_Γ)
+    all_dΓ
 end
 
-function get_Neumann_dΓ(model, bc::MultiFieldBC, degree::Int64)
+function get_Neumann_dΓ(model, bc::MultiFieldBC, degree::Int)
     dΓ = Vector{Vector{Gridap.CellData.GenericMeasure}}(undef, length(bc.BoundaryCondition))
     for (i, bc_i) in enumerate(bc.BoundaryCondition)
         dΓ[i] = get_Neumann_dΓ(model, bc_i, degree)
