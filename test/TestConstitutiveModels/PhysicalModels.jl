@@ -141,6 +141,12 @@ end
 end
 
 
+@testset "EightChain" begin
+  model = EightChain(μ=μParams[1], N=μParams[2])
+  test_derivatives_3D_(model, rtol=1e-13)
+end
+
+
 @testset "TransverseIsotropy2D" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
   ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
