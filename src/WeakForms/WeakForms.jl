@@ -47,7 +47,29 @@ end
 """
     residual(...)::Function
 
-Return the residual for a visco-elastic model as a FUNCTION.
+Return the residual for an elastic model as a Function.
+"""
+function residual(model::Elasto, un, vars, dΩ; t, Δt)
+    _, ∂Ψu, _ = model(t)
+    F, _, _   = get_Kinematics(model.Kinematic, Λ=t)
+    (u, v) -> ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘∇(u)')))dΩ
+end
+
+"""
+    jacobian(...)::Function
+
+Return the jacobian for an elastic model as a Function.
+"""
+function jacobian(model::Elasto, un, vars, dΩ; t, Δt)
+    _, _, ∂Ψuu = model(t)
+    F, _, _   = get_Kinematics(model.Kinematic, Λ=t)
+    (u, du, v) -> ∫(∇(v)' ⊙ (inner ∘ (∂Ψuu∘(F∘∇(u)'), ∇(du)')))dΩ
+end
+
+"""
+    residual(...)::Function
+
+Return the residual for a visco-elastic model as a Function.
 """
 function residual(model::ViscoElastic, un, vars, dΩ; t, Δt)
     _, ∂Ψu, _ = model(t, Δt=Δt)
@@ -58,7 +80,7 @@ end
 """
     jacobian(...)::Function
 
-Return the jacobian for a visco-elastic model as a FUNCTION.
+Return the jacobian for a visco-elastic model as a Function.
 """
 function jacobian(model::ViscoElastic, un, vars, dΩ; t, Δt)
     _, _, ∂Ψuu = model(t, Δt=Δt)
