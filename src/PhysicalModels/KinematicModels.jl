@@ -18,7 +18,7 @@ struct Kinematics{A,B} <: KinematicModel
 
     function Kinematics(::Type{Visco}; F::Function=(∇u) -> one(∇u) + ∇u)
         C(F) = F' * F
-        Ce(C,Uvα⁻¹) = Uvα⁻¹ * C * Uvα⁻¹
+        Ce(C,Uvα⁻¹) = Uvα⁻¹' * C * Uvα⁻¹
         metrics = (F, C, Ce)
         A = typeof(metrics)
         new{A,Visco}(metrics)
