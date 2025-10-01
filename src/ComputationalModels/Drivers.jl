@@ -172,9 +172,9 @@ function solve!(m::StaticNonlinearModel;
         else
             print_message(nls.log, "\nSTEP: $Λ_, Λ: $Λ\n")
             Λ_ += 1
-            x⁻ .= x
             # Write to PVD
             post(Λ)
+            x⁻ .= x
         end
         #  GC.gc()
 
