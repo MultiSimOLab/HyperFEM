@@ -97,8 +97,16 @@ function Cauchy(physmodel::ThermoElectroMechano, uh, φh, θh, Ω, dΩ, Λ=1.0)
 end
 
 
+function Cauchy(model::Elasto, uh, unh, state_vars, Ω, dΩ, t, Δt)
+    _, ∂Ψu, _ = model(t)
+    F, _, _ = get_Kinematics(model.Kinematic)
+    σ = ∂Ψu ∘ (F∘∇(uh))
+    return interpolate_σ_everywhere(σ, Ω, dΩ)
+end
+
+
 function Cauchy(model::ViscoElastic, uh, unh, state_vars, Ω, dΩ, t, Δt)
-    _, ∂Ψu, _ = model(Δt=Δt)
+    _, ∂Ψu, _ = model(t, Δt=Δt)
     F, _, _ = get_Kinematics(model.Kinematic)
     σ = ∂Ψu ∘ (F∘∇(uh), F∘∇(unh), state_vars...)
     return interpolate_σ_everywhere(σ, Ω, dΩ)
