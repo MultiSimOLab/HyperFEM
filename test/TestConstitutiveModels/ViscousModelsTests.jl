@@ -5,8 +5,6 @@ using HyperFEM.TensorAlgebra
 using HyperFEM.PhysicalModels
 using StaticArrays
 using Test
-import Base:≈
-≈(a::MultiValue, b::MultiValue; kwargs...) = ≈(get_array(a), get_array(b); kwargs...)
 
 
 μ      = 1.367e4  # Pa
