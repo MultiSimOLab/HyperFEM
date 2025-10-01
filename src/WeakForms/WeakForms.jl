@@ -27,65 +27,39 @@ end
 # ===================
 # Mechanics
 # ===================
- 
-function residual(physicalmodel::Mechano, u, v, dΩ, Λ=1.0)
-    DΨ= physicalmodel(Λ)
-    F,_,_ = get_Kinematics(physicalmodel.Kinematic; Λ=Λ)
-    ∂Ψu=DΨ[2]
 
-    ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘(∇(u)'))))dΩ
+"""
+    residual(...)::Gridap.CellData.Integrand
 
-end
-
-function jacobian(physicalmodel::Mechano, u, du, v, dΩ, Λ=1.0)
-    DΨ= physicalmodel(Λ)
-    F,_,_ = get_Kinematics(physicalmodel.Kinematic; Λ=Λ)
-    ∂Ψuu=DΨ[3]
-    ∫(∇(v)' ⊙ ((∂Ψuu ∘ (F∘(∇(u)'))) ⊙ (∇(du)')))dΩ
+Calculate the residual using the given constitutive model and finite element functions.
+"""
+function residual(physicalmodel::Mechano, u, v, dΩ, Λ=1.0, Δt=0.0, vars...)
+  _, ∂Ψu, _ = physicalmodel(Λ)
+  F, _, _   = get_Kinematics(physicalmodel.Kinematic; Λ=Λ)
+  ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘∇(u)')))dΩ
 end
 
 """
-    residual(...)::Function
+    jacobian(...)::Gridap.CellData.Integrand
 
-Return the residual for an elastic model as a Function.
+Calculate the jacobian using the given constitutive model and finite element functions.
 """
-function residual(model::Elasto, un, vars, dΩ; t, Δt)
-    _, ∂Ψu, _ = model(t)
-    F, _, _   = get_Kinematics(model.Kinematic, Λ=t)
-    (u, v) -> ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘∇(u)')))dΩ
+function jacobian(physicalmodel::Mechano, u, du, v, dΩ, Λ=1.0, Δt=0.0, vars...)
+  _, _, ∂Ψuu = physicalmodel(Λ)
+  F, _, _    = get_Kinematics(physicalmodel.Kinematic; Λ=Λ)
+  ∫(∇(v)' ⊙ ((∂Ψuu ∘ (F∘∇(u)')) ⊙ ∇(du)'))dΩ
 end
 
-"""
-    jacobian(...)::Function
-
-Return the jacobian for an elastic model as a Function.
-"""
-function jacobian(model::Elasto, un, vars, dΩ; t, Δt)
-    _, _, ∂Ψuu = model(t)
-    F, _, _   = get_Kinematics(model.Kinematic, Λ=t)
-    (u, du, v) -> ∫(∇(v)' ⊙ (inner ∘ (∂Ψuu∘(F∘∇(u)'), ∇(du)')))dΩ
+function residual(physicalmodel::ViscoElastic, u, v, dΩ, t, Δt, un, A)
+  _, ∂Ψu, _ = physicalmodel(t, Δt=Δt)
+  F, _, _   = get_Kinematics(physicalmodel.Kinematic, Λ=t)
+  ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘∇(u)', F∘∇(un)', A...)))dΩ
 end
 
-"""
-    residual(...)::Function
-
-Return the residual for a visco-elastic model as a Function.
-"""
-function residual(model::ViscoElastic, un, vars, dΩ; t, Δt)
-    _, ∂Ψu, _ = model(t, Δt=Δt)
-    F, _, _   = get_Kinematics(model.Kinematic, Λ=t)
-    (u, v) -> ∫(∇(v)' ⊙ (∂Ψu∘(F∘∇(u)', F∘∇(un)', vars...)))dΩ
-end
-
-"""
-    jacobian(...)::Function
-
-Return the jacobian for a visco-elastic model as a Function.
-"""
-function jacobian(model::ViscoElastic, un, vars, dΩ; t, Δt)
-    _, _, ∂Ψuu = model(t, Δt=Δt)
-    F, _, _   = get_Kinematics(model.Kinematic, Λ=t)
-    (u, du, v) -> ∫(∇(v)' ⊙ (inner ∘ (∂Ψuu∘(F∘∇(u)', F∘∇(un)', vars...), ∇(du)')))dΩ
+function jacobian(physicalmodel::ViscoElastic, u, du, v, dΩ, t, Δt, un, A)
+  _, _, ∂Ψuu = physicalmodel(t, Δt=Δt)
+  F, _, _   = get_Kinematics(physicalmodel.Kinematic, Λ=t)
+  ∫(∇(v)' ⊙ (inner ∘ (∂Ψuu∘(F∘∇(u)', F∘∇(un)', A...), ∇(du)')))dΩ
 end
 
 
