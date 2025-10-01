@@ -45,7 +45,6 @@ end
 # @code_warntype (A ⊗₁₃²⁴ B)
 # @code_warntype (D × A)
 
- 
 
 @testset "cross" begin
   A = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
@@ -60,11 +59,7 @@ end
   @test norm(B × C) == 1.104276381618298e-6
   @test norm(D × A) == 0.00012378691368638284
   @test norm(get_array(A) × get_array(B))== 6.246230863488799e-5
-
-
-  
-
- end
+end
 
 
 @testset "inner" begin
@@ -123,4 +118,11 @@ end
   H = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0)
   @test contraction_IP_PJKL(A,H) == TensorValue(7.0, 10.0, 15.0, 22.0, 23.0, 34.0, 31.0, 46.0, 39.0, 58.0, 47.0, 70.0, 55.0, 82.0, 63.0, 94.0)
   @test contraction_IP_JPKL(A,H) == TensorValue(10.0, 14.0, 14.0, 20.0, 26.0, 38.0, 30.0, 44.0, 42.0, 62.0, 46.0, 68.0, 58.0, 86.0, 62.0, 92.0)
+end
+
+
+@testset "sqrt" begin
+  A = TensorValue(1.:9...)
+  A = A'*A + I3
+  @test isapprox(sqrt(A), TensorValue(sqrt(get_array(A))), rtol=1e-14)
 end
