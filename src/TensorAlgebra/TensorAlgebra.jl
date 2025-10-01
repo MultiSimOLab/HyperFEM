@@ -53,7 +53,7 @@ export Ellipsoid
 Compute the square root of a 3x3 matrix by means of eigen decomposition.
 """
 function sqrt(A::TensorValue{3})
-  λ, Q = eigen(get_array(A))  # TODO: the get_array must be removed as long as it is supported after https://github.com/gridap/Gridap.jl/pull/1157
+  λ, Q = eigen(A)
   λ = sqrt.(λ)
   TensorValue{3}(λ[1]*Q[1:3]*Q[1:3]' + λ[2]*Q[4:6]*Q[4:6]' + λ[3]*Q[7:9]*Q[7:9]')
 end

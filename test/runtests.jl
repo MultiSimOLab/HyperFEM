@@ -9,10 +9,6 @@ using Gridap.TensorValues
 using HyperFEM: jacobian, IterativeSolver, solve!
 using BenchmarkTools
 
-import Base.isapprox
-
-isapprox(A::MultiValue, B::MultiValue; kwargs...) = isapprox(get_array(A), get_array(B); kwargs...)
-
 
 @testset "HyperFEMTests" verbose = true begin
 

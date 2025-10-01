@@ -157,7 +157,7 @@ function JacobianReturnMapping(γα, Ce, Se, Se_trial, ∂Se∂Ce, F, λα)
     ∂res1_∂λα = -(1-γα) * Ge
     ∂res2_∂Ce = Ge
     res = [get_array(res1)[:]; res2]
-    ∂res = MMatrix{10,10}(zeros(10, 10))
+    ∂res = MMatrix{10,10}(zeros(10, 10))  # TODO: It'd be nice to use hvcat: ∂res = [∂res1_Ce ∂res1_∂λα; ∂res2_∂Ce 0.0]
     ∂res[1:9, 1:9] = get_array(∂res1_∂Ce)
     ∂res[1:9, 10] = get_array(∂res1_∂λα)[:]
     ∂res[10, 1:9] = (get_array(∂res2_∂Ce)[:])'
@@ -309,10 +309,9 @@ end
 
 function Energy(obj::ViscousIncompressible, Δt::Float64,
                 Ψe::Function, Se_::Function, ∂Se∂Ce_::Function,
-                F::TensorValue, Fn::TensorValue, stateVars::VectorValue)
-  state_vars = get_array(stateVars)
-  Uvn = TensorValue{3,3}(Tuple(state_vars[1:9]))  # TODO: Update tensor slicing until next Gridap version has been released
-  λαn = state_vars[10]
+                F::TensorValue, Fn::TensorValue, A::VectorValue)
+  Uvn = TensorValue{3,3}(A[1:9]...)
+  λαn = A[10]
   #------------------------------------------
   # Get kinematics
   #------------------------------------------
@@ -343,17 +342,16 @@ end
 - `∂Se∂Ce_`: 2nd Piola Derivatives (function of C)
 - `F`: Current deformation gradient
 - `Fn`: Previous deformation gradient
-- `stateVars`: State variables (Uvα and λα)
+- `A`: State variables (Uvα and λα)
 
 # Return
 - `Pα::Gridap.TensorValues.TensorValue`
 """
 function Piola(obj::ViscousIncompressible, Δt::Float64,
                 Se_::Function, ∂Se∂Ce_::Function,
-                F::TensorValue, Fn::TensorValue, stateVars::VectorValue)
-  state_vars = get_array(stateVars)
-  Uvn = TensorValue{3,3}(Tuple(state_vars[1:9]))  # TODO: Update tensor slicing until next Gridap version has been released
-  λαn = state_vars[10]
+                F::TensorValue, Fn::TensorValue, A::VectorValue)
+  Uvn = TensorValue{3,3}(A[1:9]...)
+  λαn = A[10]
   #------------------------------------------
   # Get kinematics
   #------------------------------------------
@@ -386,17 +384,16 @@ Visco-Elastic model for incompressible case
 - `∂Se∂Ce_`: 2nd Piola Derivatives (function of C)
 - `∇u_`: Current deformation gradient
 - `∇un_`: Previous deformation gradient
-- `stateVars`: State variables (Uvα and λα)
+- `A`: State variables (Uvα and λα)
 
 # Return
 - `Cα::Gridap.TensorValues.TensorValue`
 """
 function Tangent(obj::ViscousIncompressible, Δt::Float64,
                  Se_::Function, ∂Se∂Ce_::Function,
-                 F::TensorValue, Fn::TensorValue, stateVars::VectorValue)
-  state_vars = get_array(stateVars)
-  Uvn = TensorValue{3,3}(Tuple(state_vars[1:9]))  # TODO: Update tensor slicing until next Gridap version has been released
-  λαn = state_vars[10]
+                 F::TensorValue, Fn::TensorValue, A::VectorValue)
+  Uvn = TensorValue{3,3}(A[1:9]...)
+  λαn = A[10]
   #------------------------------------------
   # Get kinematics
   #------------------------------------------
@@ -432,7 +429,7 @@ end
     - `∂Se∂Ce_::Function`: Piola Derivatives (function of C)
     - `∇u_::TensorValue`
     - `∇un_::TensorValue`
-    - `stateVars::VectorValue`: State variables (10-component vector gathering Uvα and λα)
+    - `A::VectorValue`: State variables (10-component vector gathering Uvα and λα)
 
     # Return
     - `::bool`: indicates whether the state variables should be updated
@@ -440,10 +437,9 @@ end
 """
 function ReturnMapping(obj::ViscousIncompressible, Δt::Float64,
                        Se_::Function, ∂Se∂Ce_::Function,
-                       F::TensorValue, Fn::TensorValue, stateVars::VectorValue)
-  state_vars = get_array(stateVars)
-  Uvn = TensorValue{3,3}(Tuple(state_vars[1:9]))  # TODO: Update tensor slicing until next Gridap version has been released
-  λαn = state_vars[10]
+                       F::TensorValue, Fn::TensorValue, A::VectorValue)
+  Uvn = TensorValue{3,3}(A[1:9]...)
+  λαn = A[10]
   #------------------------------------------
   # Get kinematics
   #------------------------------------------
@@ -468,10 +464,9 @@ end
 
 function ViscousDissipation(obj::ViscousIncompressible, Δt::Float64,
                        Se_::Function, ∂Se∂Ce_::Function,
-                       F::TensorValue, Fn::TensorValue, stateVars::VectorValue)
-  state_vars = get_array(stateVars)
-  Uvn = TensorValue{3,3}(Tuple(state_vars[1:9]))  # TODO: Update tensor slicing until next Gridap version has been released
-  λαn = state_vars[10]
+                       F::TensorValue, Fn::TensorValue, A::VectorValue)
+  Uvn = TensorValue{3,3}(A[1:9]...)
+  λαn = A[10]
   #------------------------------------------
   # Get kinematics
   #------------------------------------------
