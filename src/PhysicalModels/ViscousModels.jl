@@ -15,9 +15,10 @@ struct ViscousIncompressible{T} <: Visco
   end
   function (obj::ViscousIncompressible)(Λ::Float64=1.0; Δt::Float64)
     Ψe, Se, ∂Se∂Ce       = obj.ShortTerm(KinematicDescription{:SecondPiola}())
+    Ψ(F, Fn, state)      = Energy(obj, Δt, Ψe, Se, ∂Se∂Ce, F, Fn, state)
     ∂Ψ∂F(F, Fn, state)   = Piola(obj, Δt, Se, ∂Se∂Ce, F, Fn, state)
     ∂Ψ∂F∂F(F, Fn, state) = Tangent(obj, Δt, Se, ∂Se∂Ce, F, Fn, state)
-    return Ψe, ∂Ψ∂F, ∂Ψ∂F∂F
+    return Ψ, ∂Ψ∂F, ∂Ψ∂F∂F
   end
 end
 
@@ -117,7 +118,6 @@ function return_mapping_algorithm!(obj::ViscousIncompressible, Δt::Float64,
   for _ in 1:maxiter
     #---------- Update -----------#
     Δu = -∂res \ res[:]
-    # Ce += reshape(Δu[1:end-1], 3, 3)
     Ce += TensorValue{3,3}(Tuple(Δu[1:end-1]))  # TODO: Check reconstruction of TensorValue. ERROR: MethodError: no method matching (TensorValue{3, 3})(::Vector{Float64})
     λα += Δu[end]
     #---- Residual and jacobian ---------#
@@ -156,7 +156,7 @@ function JacobianReturnMapping(γα, Ce, Se, Se_trial, ∂Se∂Ce, F, λα)
     ∂res1_∂Ce = ∂Se∂Ce - (1-γα) * λα * ×ᵢ⁴(Ce)
     ∂res1_∂λα = -(1-γα) * Ge
     ∂res2_∂Ce = Ge
-    res = [get_array(res1)[:]; res2]  #TODO: Check the TensorValue interface
+    res = [get_array(res1)[:]; res2]
     ∂res = MMatrix{10,10}(zeros(10, 10))
     ∂res[1:9, 1:9] = get_array(∂res1_∂Ce)
     ∂res[1:9, 10] = get_array(∂res1_∂λα)[:]
@@ -180,7 +180,7 @@ Viscous 1st Piola-Kirchhoff stress
 - `Pα::SMatrix`
 """
 function ViscousPiola(Se::Function, Ce::TensorValue, invUv::TensorValue, F::TensorValue)
-    Sα = invUv * Se(Ce) * invUv
+    Sα = invUv' * Se(Ce) * invUv
     F * Sα
 end
 
@@ -232,7 +232,7 @@ end
 
 
 """
-Tangent operator of Ce for at fixed Uv
+Tangent operator of Ce at fixed Uv
 """
 function ∂Ce_∂C_Uvfixed(invUv)
   invUv ⊗₁₃²⁴ invUv
@@ -298,12 +298,38 @@ function ViscousTangentOperator(obj::ViscousIncompressible, Δt::Float64,
   # Sv:(D(δC_{Uvfixed})[ΔC])
   #------------------------------------------
   Sv = invUv_Se * invUv
-  C3 = Sv ⊗₁₃²⁴ I3
+  C3 = I3 ⊗₁₃²⁴ Sv
   #------------------------------------------
   # Total Contribution
   #------------------------------------------
   Cv = DCDF' * (C1 + C2) * DCDF + C3
   Cv
+end
+
+
+function Energy(obj::ViscousIncompressible, Δt::Float64,
+                Ψe::Function, Se_::Function, ∂Se∂Ce_::Function,
+                F::TensorValue, Fn::TensorValue, stateVars::VectorValue)
+  state_vars = get_array(stateVars)
+  Uvn = TensorValue{3,3}(Tuple(state_vars[1:9]))  # TODO: Update tensor slicing until next Gridap version has been released
+  λαn = state_vars[10]
+  #------------------------------------------
+  # Get kinematics
+  #------------------------------------------
+  invUvn  = inv(Uvn)
+  _, C_, Ce_ = get_Kinematics(obj.Kinematic)
+  C = C_(F)
+  Cn = C_(Fn)
+  Ceᵗʳ = Ce_(C, invUvn)
+  Cen  = Ce_(Cn, invUvn)
+  #------------------------------------------
+  # Return mapping algorithm
+  #------------------------------------------
+  Ce, _ = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, F, Ceᵗʳ, Cen, λαn)
+  #------------------------------------------
+  # Elastic energy
+  #------------------------------------------
+  Ψe(Ce)
 end
 
 

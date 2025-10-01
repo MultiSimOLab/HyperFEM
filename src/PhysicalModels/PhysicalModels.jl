@@ -443,8 +443,10 @@ end
 struct ComposedElasticModel <: Elasto
   Model1::Elasto
   Model2::Elasto
+  Kinematic
   function ComposedElasticModel(model1::Elasto,model2::Elasto)
-    new(model1,model2)
+    @assert model1.Kinematic === model2.Kinematic
+    new(model1,model2,model1.Kinematic)
   end
   function (obj::ComposedElasticModel)(Λ::Float64=1.0)
     DΨ1 = obj.Model1(Λ)
@@ -547,8 +549,8 @@ struct VolumetricEnergy{A} <: Elasto
     Ψ(F) = (λ / 2.0) * (J(F) - 1)^2 
     ∂Ψ_∂J(F) =  λ * (J(F) - 1)
     ∂Ψ2_∂J2(F) = λ
-    ∂Ψu(F) =  ∂Ψ_∂J(F) * H(F)
-    ∂Ψuu(F) =∂Ψ2_∂J2(F) * (H(F) ⊗ H(F)) + ×ᵢ⁴(∂Ψ_∂J(F) * F)
+    ∂Ψu(F) = ∂Ψ_∂J(F) * H(F)
+    ∂Ψuu(F) = ∂Ψ2_∂J2(F) * (H(F) ⊗ H(F)) + ×ᵢ⁴(∂Ψ_∂J(F) * F)
     return (Ψ, ∂Ψu, ∂Ψuu)
   end
 end
@@ -1102,16 +1104,16 @@ struct IncompressibleNeoHookean3D{A} <: Elasto
   function (obj::IncompressibleNeoHookean3D)(::KinematicDescription{:SecondPiola}, Λ::Float64=1.0)
     Ψ(C) = obj.μ / 2 * tr(C) * det(C)^(-1/3)
     S(C) = begin
-      J = det(C)
+      detC = det(C)
       invC = inv(C)
-      obj.μ * J^(-1/3) * I3 - obj.μ / 3 * tr(C) * J^(-1/3) * invC
+      obj.μ * detC^(-1/3) * I3 - obj.μ / 3 * tr(C) * detC^(-1/3) * invC
     end
     ∂S∂C(C) = begin
-      J = det(C)
+      detC = det(C)
       trC = tr(C)
       invC = inv(C)
       IinvC = I3 ⊗ invC
-      1/3 * obj.μ * J^(-1/3) * (4/3*trC*invC⊗invC -(IinvC+IinvC') -trC/J*×ᵢ⁴(C))
+      1/3 * obj.μ * detC^(-1/3) * (4/3*trC*invC⊗invC -(IinvC+IinvC') -trC/detC*×ᵢ⁴(C))
     end
     return (Ψ, S, ∂S∂C)
   end
