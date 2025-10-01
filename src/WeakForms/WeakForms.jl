@@ -9,8 +9,10 @@ export jacobian
 export mass_term
 export (+)
 
+import Gridap.Algebra:residual,jacobian
 import Base: +
 
+# ===================
 # Coupling management
 # ===================
 

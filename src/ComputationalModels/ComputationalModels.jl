@@ -9,6 +9,7 @@ using Gridap.TensorValues, Gridap.FESpaces, Gridap.Algebra
 using Gridap: createvtk
 using Gridap.MultiField
 using Gridap.FESpaces: get_assembly_strategy
+import Gridap: solve!
 
 using BlockArrays
 using GridapPETSc, GridapPETSc.PETSC
