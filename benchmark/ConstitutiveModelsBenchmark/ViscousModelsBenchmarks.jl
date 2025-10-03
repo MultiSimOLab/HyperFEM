@@ -21,8 +21,8 @@ function benchmark_viscous_model(model)
 end
 
 
-elasto = NeoHookean3D(λ=λ, μ=μ)
-visco = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=μ1), τ1)
+elasto = NeoHookean3D(λ=1e6, μ=1e3)
+visco = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=1e3), 10.)
 visco_elastic = GeneralizedMaxwell(elasto, visco)
 benchmark_viscous_model(visco);
 benchmark_viscous_model(visco_elastic);

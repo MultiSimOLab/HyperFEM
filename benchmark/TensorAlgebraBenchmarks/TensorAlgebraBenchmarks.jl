@@ -42,8 +42,6 @@ function _δδ_λ_2D(λ::Float64)
     λ)
 end
 
-@benchmark _δδ_μ_2D(1.0)
-@benchmark 1.0 * ((δᵢₖδⱼₗ2D + δᵢₗδⱼₖ2D))
+SUITE["δδ_μ_2d"] = @benchmark δᵢₖδⱼₗ2D + δᵢₗδⱼₖ2D
 
-@benchmark _δδ_λ_2D(1.0)
-@benchmark 1.0 * δᵢⱼδₖₗ2D
+SUITE["δδ_λ_2d"] = @benchmark 1.0 * δᵢⱼδₖₗ2D
