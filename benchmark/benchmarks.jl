@@ -2,3 +2,7 @@ using BenchmarkTools
 using HyperFEM
 
 const SUITE = BenchmarkGroup()
+
+include("TensorAlgebraBenchmarks/benchmarks.jl")
+
+include("ConstitutiveModelsBenchmark/benchmarks.jl")
