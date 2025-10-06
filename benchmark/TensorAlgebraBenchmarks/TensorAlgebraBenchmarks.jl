@@ -42,6 +42,5 @@ function _δδ_λ_2D(λ::Float64)
     λ)
 end
 
-SUITE["δδ_μ_2d"] = @benchmark δᵢₖδⱼₗ2D + δᵢₗδⱼₖ2D
-
-SUITE["δδ_λ_2d"] = @benchmark 1.0 * δᵢⱼδₖₗ2D
+SUITE["Tensor algebra"]["δδ_μ_2d"] = @benchmarkable δᵢₖδⱼₗ2D + δᵢₗδⱼₖ2D
+SUITE["Tensor algebra"]["δδ_λ_2d"] = @benchmarkable 1.0 * δᵢⱼδₖₗ2D
