@@ -4,7 +4,6 @@ using JSON
 using StaticArrays
 using Test
 using HyperFEM.PhysicalModels
-using BenchmarkTools
 
 
 import Base: -
@@ -36,31 +35,6 @@ end
 
 function test_derivatives_3D_(model::PhysicalModel; rtol=1e-14, kwargs...)
   test_derivatives__(model, ∇u3, rtol=rtol, kwargs...)
-end
-
-
-function benchmark_derivatives__(model::PhysicalModel, ∇u)
-  Ψ, ∂Ψu, ∂Ψuu = model()
-  ∂Ψu_(F) = TensorValue(ForwardDiff.gradient(Ψ, get_array(F)))
-  ∂Ψuu_(F) = TensorValue(ForwardDiff.hessian(Ψ, get_array(F)))
-
-  F, _, _ = get_Kinematics(model.Kinematic)
-  print("Analyitical ∂Ψu  | ")
-  @btime $∂Ψu($F($∇u))
-  print("Numerical ∂Ψu    | ")
-  @btime $∂Ψu_($F($∇u))
-  print("Analyitical ∂Ψuu | ")
-  @btime $∂Ψuu($F($∇u))
-  print("Numerical ∂Ψuu   | ")
-  @btime $∂Ψuu_($F($∇u))
-end
-
-function benchmark_derivatives_2D_(model::PhysicalModel)
-  benchmark_derivatives__(model, ∇u2)
-end
-
-function benchmark_derivatives_3D_(model::PhysicalModel)
-  benchmark_derivatives__(model, ∇u3)
 end
 
 
