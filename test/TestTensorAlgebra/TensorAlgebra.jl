@@ -2,7 +2,6 @@ using Gridap.TensorValues
 using Gridap.Arrays
 using HyperFEM.TensorAlgebra
 using Test
-using BenchmarkTools
 
 
 @testset "Jacobian regularization" begin
@@ -29,21 +28,6 @@ end
   @test A ⊗₁₂³ u  == TensorValue{2,4}(1.0, 2.0, 3.0, 4.0, 2.0, 4.0, 6.0, 8.0)
   @test A ⊗₁₃² u  == TensorValue{2,4}(1.0, 2.0, 2.0, 4.0, 3.0, 4.0, 6.0, 8.0)
 end
-
-
-# @benchmark (A ⊗₁₃²⁴ B)
-# @benchmark (A ⊗₁₂³ V1)
-# @benchmark (A ⊗₁₃² V1)
-# @benchmark (V1 ⊗₁²³ A)
-# @benchmark (A ⊗₁₃²⁴ B)
-# @benchmark (D × A)
-
-# @code_warntype (A ⊗₁₃²⁴ B)
-# @code_warntype (A ⊗₁₂³ V1)
-# @code_warntype (A ⊗₁₃² V1)
-# @code_warntype (V1 ⊗₁²³ A)
-# @code_warntype (A ⊗₁₃²⁴ B)
-# @code_warntype (D × A)
 
 
 @testset "cross" begin
@@ -106,10 +90,6 @@ end
   @test I3_ == I3
   @test I4_ == I4
   @test I9_ == I9
-  # @benchmark I2_
-  # @benchmark I2
-  # @benchmark I9_
-  # @benchmark I9
 end
 
 
