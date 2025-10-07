@@ -1,11 +1,6 @@
 using HyperFEM
 using Test
-using Gridap, GridapGmsh, GridapSolvers, DrWatson, TimerOutputs
-using GridapSolvers.NonlinearSolvers
-using Gridap.FESpaces
-using Gridap.CellData
-using Gridap.TensorValues
-using HyperFEM: jacobian, IterativeSolver, solve!
+using Gridap
 
 
 @testset "HyperFEMTests" verbose = true begin
@@ -21,4 +16,3 @@ using HyperFEM: jacobian, IterativeSolver, solve!
     end
 
 end;
-
