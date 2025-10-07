@@ -1,4 +1,4 @@
-@testset "WeakForms" verbose = true begin
+@testset "WeakForms" begin
 
     @time begin
         include("WeakForms.jl")

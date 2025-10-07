@@ -1,6 +1,6 @@
 using HyperFEM
 
-@testset "ConstitutiveModels" verbose = true begin
+@testset "ConstitutiveModels" begin
 
     @time begin
         include("PhysicalModels.jl")
