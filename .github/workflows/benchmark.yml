@@ -1,0 +1,16 @@
+# https://astroautomata.com/AirspeedVelocity.jl/stable/
+
+name: Benchmark
+
+on: [pull_request, workflow_dispatch]
+
+permissions:
+  pull-requests: write  # need to post comments
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: MilesCranmer/AirspeedVelocity.jl@action-v1
+        with:
+          julia-version: '1'

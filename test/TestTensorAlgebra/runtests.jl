@@ -1,4 +1,4 @@
-@testset "TensorAlgebra" verbose = true begin
+@testset "TensorAlgebra" begin
 
     @time begin
         include("TensorAlgebra.jl")
