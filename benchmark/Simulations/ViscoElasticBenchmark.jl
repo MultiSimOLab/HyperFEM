@@ -71,4 +71,4 @@ end
 post_model = PostProcessor(comp_model, driverpost; is_vtk=true, filepath=simdir)
 
 # Solve
-SUITE["Simulations"]["ViscoElastic"] = @benchmarkable solve!(comp_model; stepping=(nsteps=Int(t_end / Δt), maxbisec=1), post=post_model, ProjectDirichlet=true)
+SUITE["Simulations"]["ViscoElastic"] = @benchmarkable solve!(comp_model; stepping=(nsteps=Int(t_end / Δt), maxbisec=1), post=post_model, ProjectDirichlet=false)
