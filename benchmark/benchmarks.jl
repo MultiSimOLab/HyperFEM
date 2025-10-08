@@ -1,4 +1,5 @@
 using BenchmarkTools
+using Gridap
 using HyperFEM
 
 const SUITE = BenchmarkGroup()
