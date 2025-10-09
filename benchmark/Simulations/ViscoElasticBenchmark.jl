@@ -68,7 +68,7 @@ comp_model = StaticNonlinearModel(res, jac, Uu, Vu, D_bc; nls=nls_, xh=uh, xh⁻
 function driverpost(post; cons_model=cons_model, Δt=Δt, uh=uh, unh=unh, A=state_vars, Ω=Ω, dΩ=dΩ)
   updateStateVariables!(cons_model, Δt, uh, unh, A)
 end
-post_model = PostProcessor(comp_model, driverpost; is_vtk=true, filepath=simdir)
+post_model = PostProcessor(comp_model, driverpost; is_vtk=false, filepath="")
 
 # Solve
 SUITE["Simulations"]["ViscoElastic"] = @benchmarkable solve!(comp_model; stepping=(nsteps=Int(t_end / Δt), maxbisec=1), post=post_model, ProjectDirichlet=false)
