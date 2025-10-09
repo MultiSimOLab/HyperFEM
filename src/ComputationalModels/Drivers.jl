@@ -122,6 +122,8 @@ function solve!(m::StaticNonlinearModel;
     stepping=(nsteps=20, maxbisec=15), RestartState::Bool=false, ProjectDirichlet::Bool=true,
     post=PostProcessor())
 
+    ProjectDirichlet=true
+
     reset!(post)
     flagconv = 1 # convergence flag 0 (max bisections) 1 (max steps)
     U, V, ∆U = m.spaces
