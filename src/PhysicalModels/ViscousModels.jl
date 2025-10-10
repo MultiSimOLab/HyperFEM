@@ -6,12 +6,12 @@ using ..TensorAlgebra
 # Visco elastic models
 # =====================
 
-struct ViscousIncompressible{T} <: Visco
+struct ViscousIncompressible <: Visco
   ShortTerm::Elasto
   τ::Float64
-  Kinematic::T
-  function ViscousIncompressible(shortTerm, τ::Float64; kinematic::KinematicModel=Kinematics(Visco))
-    new{typeof(kinematic)}(shortTerm, τ, kinematic)
+  Kinematic::MechanicalKinematics
+  function ViscousIncompressible(shortTerm; τ::Float64, kinematic=Kinematics(Visco))
+    new(shortTerm, τ, kinematic)
   end
   function (obj::ViscousIncompressible)(Λ::Float64=1.0; Δt::Float64)
     Ψe, Se, ∂Se∂Ce       = obj.ShortTerm(KinematicDescription{:SecondPiola}())

@@ -1,7 +1,7 @@
 
 abstract type KinematicModel end
 
-struct KinematicDescription{Kind} end
+struct KinematicDescription{Kind} end  # Used in viscous models in order to get second-Piols. TODO: Remove
 
 get_Kinematics(::KinematicModel; Λ::Float64) = @abstractmethod
 
@@ -25,6 +25,10 @@ struct Kinematics{T} <: KinematicModel
         new{Magneto}(metrics)
     end
 end
+
+MechanicalKinematics = Kinematics{Mechano}
+ElectricKinematics = Kinematics{Electro}
+ThermalKinematics = Kinematics{Thermo}
 
 get_Kinematics(obj::Kinematics; Λ=1.0) = obj.metrics
 
