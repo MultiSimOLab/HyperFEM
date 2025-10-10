@@ -10,7 +10,7 @@ struct ViscousIncompressible{T} <: Visco
   ShortTerm::Elasto
   τ::Float64
   Kinematic::T
-  function ViscousIncompressible(shortTerm, τ::Float64; kinematic::KinematicModel=Kinematics(Visco))
+  function ViscousIncompressible(shortTerm, τ::Float64; kinematic::KinematicModel=Kinematics(Visco))  # TODO: Make τ keyword argument
     new{typeof(kinematic)}(shortTerm, τ, kinematic)
   end
   function (obj::ViscousIncompressible)(Λ::Float64=1.0; Δt::Float64)

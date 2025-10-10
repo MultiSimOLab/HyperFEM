@@ -56,7 +56,7 @@ function viscousbenchmark()
 
   # residual and jacobian
   uh = FEFunction(Uu, zero_free_values(Uu))
-  unh = FEFunction(Uu, zero_free_values(Uu))
+  unh = FEFunction(Uun, zero_free_values(Uun))
   state_vars = initializeStateVariables(cons_model, dΩ)
 
   res(Λ) = (u,v)->residual(cons_model, u, v, dΩ, t_end * Λ, Δt, unh, state_vars)
