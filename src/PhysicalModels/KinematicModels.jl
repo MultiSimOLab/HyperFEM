@@ -5,36 +5,31 @@ struct KinematicDescription{Kind} end
 
 get_Kinematics(::KinematicModel; Λ::Float64) = @abstractmethod
 
-struct Kinematics{A,B} <: KinematicModel
-    metrics::A
+struct Kinematics{T} <: KinematicModel
+    metrics
 
-    function Kinematics(::Type{T}; F::Function=(∇u) -> one(∇u) + ∇u) where {T <: Mechano}
+    function Kinematics(::Type{M}; F::Function=(∇u) -> one(∇u) + ∇u) where {M <: Mechano}
         J(F) = det(F)
         H(F) = det(F) * inv(F)'
         metrics = (F, H, J)
-        A = typeof(metrics)
-        new{A,T}(metrics)
+        new{M}(metrics)
     end
 
     function Kinematics(::Type{Electro}; E::Function=(∇φ) -> -∇φ)
         metrics = (E)
-        A = typeof(metrics)
-        new{A,Electro}(metrics)
+        new{Electro}(metrics)
     end
 
     function Kinematics(::Type{Magneto}; H::Function=(∇φ) -> -∇φ)
         metrics = (H)
-        A = typeof(metrics)
-        new{A,Magneto}(metrics)
+        new{Magneto}(metrics)
     end
-
 end
 
 get_Kinematics(obj::Kinematics; Λ=1.0) = obj.metrics
 
 
-
-function getIsoInvariants(obj::Kinematics{<:Function,Mechano})
+function getIsoInvariants(obj::Kinematics{Mechano})
     F, H, J = obj.metrics
     I1(F) = tr(F' * F)
     I2(F) = tr(H(F)' * H(F))
@@ -43,7 +38,7 @@ function getIsoInvariants(obj::Kinematics{<:Function,Mechano})
 end
 
 
-function getIsoInvariants(obj_m::Kinematics{<:Any,Mechano},obj_e::Kinematics{<:Any,Electro})
+function getIsoInvariants(obj_m::Kinematics{Mechano},obj_e::Kinematics{Electro})
     F, H, J = obj_m.metrics
     E = obj_e.metrics
     I1(F) = tr(F' * F)
@@ -54,47 +49,39 @@ function getIsoInvariants(obj_m::Kinematics{<:Any,Mechano},obj_e::Kinematics{<:A
     I5(E) = E ⋅ E
     return (I1, I2, I3, I4, I5)
 end
- 
-struct EvolutiveKinematics{A,B} <: KinematicModel
-    metrics::B
+
+struct EvolutiveKinematics{T} <: KinematicModel
+    metrics
+
     function EvolutiveKinematics(::Type{Mechano}; F::Function=(t) -> ((∇u) -> one(∇u) + ∇u))
         # F_(∇u) = one(∇u) + ∇u
         # F(t) = (∇u)->(Fmapping(t) ∘ F_)(∇u) 
         J(F) = det(F)
         H(F) = det(F) * inv(F)'
         metrics = (F, H, J)
-        B = typeof(metrics)
-        new{Mechano,B}(metrics)
+        new{Mechano}(metrics)
     end
 
     function EvolutiveKinematics(::Type{Mechano}, δ::Float64; F::Function=(t) -> ((∇u) -> one(∇u) + ∇u))
         # F_(∇u) = one(∇u) + ∇u
         # F(t) = (∇u)->(Fmapping(t) ∘ F_)(∇u) 
-        J_(F) = det(F)
-        J(F) =  0.5*(det(F)+sqrt(det(F) ^2+δ^2))
+        J(F) = 0.5*(det(F) + sqrt(det(F)^2 + δ^2))
         H(F) = J(F) * inv(F)'
         metrics = (F, H, J)
-        B = typeof(metrics)
-        new{Mechano,B}(metrics)
+        new{Mechano}(metrics)
     end
-
 
     function EvolutiveKinematics(::Type{Electro}; E::Function=(t) -> ((∇φ) -> -∇φ))
         metrics = (E)
-        B = typeof(metrics)
-        new{Electro,B}(metrics)
+        new{Electro}(metrics)
     end
+
     function EvolutiveKinematics(::Type{Magneto}; H::Function=(t) -> ((∇φ) -> -∇φ))
         metrics = (H)
-        B = typeof(metrics)
-        new{Magneto,B}(metrics)
+        new{Magneto}(metrics)
     end
 end
 
-get_Kinematics(obj::EvolutiveKinematics{Mechano,<:Any}; Λ=1.0) = (obj.metrics[1](Λ), obj.metrics[2], obj.metrics[3])
-get_Kinematics(obj::EvolutiveKinematics{Electro,<:Any}; Λ=1.0) = obj.metrics(Λ)
-get_Kinematics(obj::EvolutiveKinematics{Magneto,<:Any}; Λ=1.0) = obj.metrics(Λ)
-
-
-
-
+get_Kinematics(obj::EvolutiveKinematics{Mechano}; Λ=1.0) = (obj.metrics[1](Λ), obj.metrics[2], obj.metrics[3])
+get_Kinematics(obj::EvolutiveKinematics{Electro}; Λ=1.0) = obj.metrics(Λ)
+get_Kinematics(obj::EvolutiveKinematics{Magneto}; Λ=1.0) = obj.metrics(Λ)
