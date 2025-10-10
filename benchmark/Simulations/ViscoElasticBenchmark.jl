@@ -71,7 +71,7 @@ function viscousbenchmark()
   end
   post_model = PostProcessor(comp_model, driverpost; is_vtk=false, filepath="")
 
-  solve!(comp_model; stepping=(nsteps=Int(t_end / Δt), maxbisec=1), post=post_model, ProjectDirichlet=false)
+  solve!(comp_model; stepping=(nsteps=Int(t_end/Δt), maxbisec=1), post=post_model, ProjectDirichlet=true)
 end
 
 SUITE["Simulations"]["ViscoElastic"] = @benchmarkable viscousbenchmark()

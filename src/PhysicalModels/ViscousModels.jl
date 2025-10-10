@@ -10,8 +10,8 @@ struct ViscousIncompressible{T} <: Visco
   ShortTerm::Elasto
   τ::Float64
   Kinematic::T
-  function ViscousIncompressible(shortTerm, τ::Float64; Kinematic::KinematicModel=Kinematics(Visco))
-    new{typeof(Kinematic)}(shortTerm, τ, Kinematic)
+  function ViscousIncompressible(shortTerm, τ::Float64; kinematic::KinematicModel=Kinematics(Visco))
+    new{typeof(kinematic)}(shortTerm, τ, kinematic)
   end
   function (obj::ViscousIncompressible)(Λ::Float64=1.0; Δt::Float64)
     Ψe, Se, ∂Se∂Ce       = obj.ShortTerm(KinematicDescription{:SecondPiola}())
@@ -38,8 +38,8 @@ struct GeneralizedMaxwell{T} <: ViscoElastic
   LongTerm::Elasto
   Branches::NTuple{N,Visco} where N
   Kinematic::T
-  function GeneralizedMaxwell(longTerm::Elasto,branches::Visco...; Kinematic::KinematicModel=Kinematics(Elasto))
-    new{typeof(Kinematic)}(longTerm,branches)
+  function GeneralizedMaxwell(longTerm::Elasto, branches::Visco...; kinematic::KinematicModel=Kinematics(Elasto))
+    new{typeof(kinematic)}(longTerm,branches,kinematic)
   end
   function (obj::GeneralizedMaxwell)(Λ::Float64=1.0; Δt::Float64)
     Ψe, ∂Ψeu, ∂Ψeuu = obj.LongTerm(Λ)
@@ -64,19 +64,24 @@ function updateStateVariables!(model::GeneralizedMaxwell, Δt, u, un, stateVars)
 end
 
 
-"""
-  ViscousStrain(Ce::TensorValue, C::TensorValue)::TensorValue
-  
-Get viscous Uv and its inverse.
+"""Right Cauchy-Green deformation tensor."""
+function Cauchy(F::TensorValue)
+  F' · F
+end
 
-# Arguments
-- `Ce`
-- `C`
+
+"""Elastic right Cauchy-Green deformation tensor."""
+function ElasticCauchy(C::TensorValue, Uv⁻¹::TensorValue)
+  Uv⁻¹' · C · Uv⁻¹
+end
+
+"""
+Multiplicative decomposition of visous strain.
 
 # Return
-- `Ue`
-- `Uv`
-- `invUv`
+- `Ue::TensorValue`
+- `Uv::TensorValue`
+- `Uv⁻¹::TensorValue`
 """
 function ViscousStrain(Ce, C)
   Ue = sqrt(Ce)
@@ -109,10 +114,10 @@ Compute the elastic Cauchy deformation tensor and the incompressibility conditio
 """
 function return_mapping_algorithm!(obj::ViscousIncompressible, Δt::Float64,
                             Se::Function, ∂Se∂Ce::Function,
-                            F, Ce_trial, Ce, λα)
+                            C, Ce_trial, Ce, λα)
   γα = obj.τ / (obj.τ + Δt)
   Se_trial = Se(Ce_trial)
-  res, ∂res = JacobianReturnMapping(γα, Ce, Se(Ce), Se_trial, ∂Se∂Ce(Ce), F, λα)
+  res, ∂res = JacobianReturnMapping(γα, Ce, Se(Ce), Se_trial, ∂Se∂Ce(Ce), C, λα)
   maxiter = 20
   tol = 1e-6
   for _ in 1:maxiter
@@ -121,7 +126,7 @@ function return_mapping_algorithm!(obj::ViscousIncompressible, Δt::Float64,
     Ce += TensorValue{3,3}(Tuple(Δu[1:end-1]))  # TODO: Check reconstruction of TensorValue. ERROR: MethodError: no method matching (TensorValue{3, 3})(::Vector{Float64})
     λα += Δu[end]
     #---- Residual and jacobian ---------#
-    res, ∂res = JacobianReturnMapping(γα, Ce, Se(Ce), Se_trial, ∂Se∂Ce(Ce), F, λα)
+    res, ∂res = JacobianReturnMapping(γα, Ce, Se(Ce), Se_trial, ∂Se∂Ce(Ce), C, λα)
     #---- Monitor convergence ---------#
     if norm(res) < tol
       break
@@ -142,14 +147,13 @@ incompressible case
 - `res`
 - `∂res`
 """
-function JacobianReturnMapping(γα, Ce, Se, Se_trial, ∂Se∂Ce, F, λα)
-    detCe = det(Ce)
+function JacobianReturnMapping(γα, Ce, Se, Se_trial, ∂Se∂Ce, C, λα)
     Ge = cof(Ce)
     #--------------------------------
     # Residual
     #--------------------------------
     res1 = Se - γα * Se_trial - (1-γα) * λα * Ge
-    res2 = detCe - (det(F))^2
+    res2 = det(Ce) - det(C)
     #--------------------------------
     # Derivatives of residual
     #--------------------------------
@@ -278,7 +282,7 @@ function ViscousTangentOperator(obj::ViscousIncompressible, Δt::Float64,
   #------------------------------------------
   # Extract τv, Δt, μv
   #------------------------------------------
-  C = F' * F
+  C = Cauchy(F)
   DCe_DC = ∂Ce_∂C(obj, γα, ∂Se∂Ce_, invUvn, Ce, Ce_trial, λα, F)
   DCe_DC_Uvfixed = ∂Ce_∂C_Uvfixed(invUv)
   DCe_DinvUv = ∂Ce_∂invUv(C, invUv)
@@ -315,16 +319,15 @@ function Energy(obj::ViscousIncompressible, Δt::Float64,
   #------------------------------------------
   # Get kinematics
   #------------------------------------------
-  invUvn  = inv(Uvn)
-  _, C_, Ce_ = get_Kinematics(obj.Kinematic)
-  C = C_(F)
-  Cn = C_(Fn)
-  Ceᵗʳ = Ce_(C, invUvn)
-  Cen  = Ce_(Cn, invUvn)
+  invUvn = inv(Uvn)
+  C = Cauchy(F)
+  Cn = Cauchy(Fn)
+  Ceᵗʳ = ElasticCauchy(C, invUvn)
+  Cen  = ElasticCauchy(Cn, invUvn)
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------
-  Ce, _ = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, F, Ceᵗʳ, Cen, λαn)
+  Ce, _ = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, C, Ceᵗʳ, Cen, λαn)
   #------------------------------------------
   # Elastic energy
   #------------------------------------------
@@ -356,15 +359,14 @@ function Piola(obj::ViscousIncompressible, Δt::Float64,
   # Get kinematics
   #------------------------------------------
   invUvn  = inv(Uvn)
-  _, C_, Ce_ = get_Kinematics(obj.Kinematic)
-  C = C_(F)
-  Cn = C_(Fn)
-  Ceᵗʳ = Ce_(C, invUvn)
-  Cen  = Ce_(Cn, invUvn)
+  C = Cauchy(F)
+  Cn = Cauchy(Fn)
+  Ceᵗʳ = ElasticCauchy(C, invUvn)
+  Cen  = ElasticCauchy(Cn, invUvn)
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------
-  Ce, _ = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, F, Ceᵗʳ, Cen, λαn)
+  Ce, _ = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, C, Ceᵗʳ, Cen, λαn)
   #------------------------------------------
   # Get invUv and Pα
   #------------------------------------------
@@ -398,15 +400,14 @@ function Tangent(obj::ViscousIncompressible, Δt::Float64,
   # Get kinematics
   #------------------------------------------
   invUvn  = inv(Uvn)
-  _, C_, Ce_ = get_Kinematics(obj.Kinematic)
-  C = C_(F)
-  Cn = C_(Fn)
-  Ceᵗʳ = Ce_(C, invUvn)
-  Cen  = Ce_(Cn, invUvn)
+  C = Cauchy(F)
+  Cn = Cauchy(Fn)
+  Ceᵗʳ = ElasticCauchy(C, invUvn)
+  Cen  = ElasticCauchy(Cn, invUvn)
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------
-  Ce, λα = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, F, Ceᵗʳ, Cen, λαn)
+  Ce, λα = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, C, Ceᵗʳ, Cen, λαn)
   #------------------------------------------
   # Get invUv and Sα
   #------------------------------------------
@@ -444,15 +445,14 @@ function ReturnMapping(obj::ViscousIncompressible, Δt::Float64,
   # Get kinematics
   #------------------------------------------
   invUvn  = inv(Uvn)
-  _, C_, Ce_ = get_Kinematics(obj.Kinematic)
-  C = C_(F)
-  Cn = C_(Fn)
-  Ceᵗʳ = Ce_(C, invUvn)
-  Cen  = Ce_(Cn, invUvn)
+  C = Cauchy(F)
+  Cn = Cauchy(Fn)
+  Ceᵗʳ = ElasticCauchy(C, invUvn)
+  Cen  = ElasticCauchy(Cn, invUvn)
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------
-  Ce, λα = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, F, Ceᵗʳ, Cen, λαn)
+  Ce, λα = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, C, Ceᵗʳ, Cen, λαn)
   #------------------------------------------
   # Get Uv and λα
   #------------------------------------------
@@ -471,15 +471,14 @@ function ViscousDissipation(obj::ViscousIncompressible, Δt::Float64,
   # Get kinematics
   #------------------------------------------
   invUvn  = inv(Uvn)
-  _, C_, Ce_ = get_Kinematics(obj.Kinematic)
-  C = C_(F)
-  Cn = C_(Fn)
-  Ceᵗʳ = Ce_(C, invUvn)
-  Cen  = Ce_(Cn, invUvn)
+  C = Cauchy(F)
+  Cn = Cauchy(Fn)
+  Ceᵗʳ = ElasticCauchy(C, invUvn)
+  Cen  = ElasticCauchy(Cn, invUvn)
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------
-  Ce, λα = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, F, Ceᵗʳ, Cen, λαn)
+  Ce, λα = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, C, Ceᵗʳ, Cen, λαn)
   τ = obj.τ
   Se = Se_(Ce)
   invCCe = inv(2*∂Se∂Ce_(Ce))

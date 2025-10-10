@@ -450,7 +450,7 @@ struct ComposedElasticModel <: Elasto
   Model2::Elasto
   Kinematic
   function ComposedElasticModel(model1::Elasto,model2::Elasto)
-    @assert model1.Kinematic === model2.Kinematic
+    @assert model1.Kinematic == model2.Kinematic
     new(model1,model2,model1.Kinematic)
   end
   function (obj::ComposedElasticModel)(Λ::Float64=1.0)
@@ -912,7 +912,7 @@ struct EightChain{A} <: Elasto
   N::Float64
   Kinematic::A
   function EightChain(; μ::Float64, N::Float64, Kinematic::KinematicModel=Kinematics(Elasto))
-    new{typeof(Kinematic)}(μ,N)
+    new{typeof(Kinematic)}(μ,N,Kinematic)
   end
 
   function (obj::EightChain)(Λ::Float64=1.0)
