@@ -109,10 +109,10 @@ Compute the elastic Cauchy deformation tensor and the incompressibility conditio
 """
 function return_mapping_algorithm!(obj::ViscousIncompressible, Δt::Float64,
                             Se::Function, ∂Se∂Ce::Function,
-                            F, Ce_trial, Ce, λα)
+                            C, Ce_trial, Ce, λα)
   γα = obj.τ / (obj.τ + Δt)
   Se_trial = Se(Ce_trial)
-  res, ∂res = JacobianReturnMapping(γα, Ce, Se(Ce), Se_trial, ∂Se∂Ce(Ce), F, λα)
+  res, ∂res = JacobianReturnMapping(γα, Ce, Se(Ce), Se_trial, ∂Se∂Ce(Ce), C, λα)
   maxiter = 20
   tol = 1e-6
   for _ in 1:maxiter
@@ -121,7 +121,7 @@ function return_mapping_algorithm!(obj::ViscousIncompressible, Δt::Float64,
     Ce += TensorValue{3,3}(Tuple(Δu[1:end-1]))  # TODO: Check reconstruction of TensorValue. ERROR: MethodError: no method matching (TensorValue{3, 3})(::Vector{Float64})
     λα += Δu[end]
     #---- Residual and jacobian ---------#
-    res, ∂res = JacobianReturnMapping(γα, Ce, Se(Ce), Se_trial, ∂Se∂Ce(Ce), F, λα)
+    res, ∂res = JacobianReturnMapping(γα, Ce, Se(Ce), Se_trial, ∂Se∂Ce(Ce), C, λα)
     #---- Monitor convergence ---------#
     if norm(res) < tol
       break
@@ -142,14 +142,13 @@ incompressible case
 - `res`
 - `∂res`
 """
-function JacobianReturnMapping(γα, Ce, Se, Se_trial, ∂Se∂Ce, F, λα)
-    detCe = det(Ce)
+function JacobianReturnMapping(γα, Ce, Se, Se_trial, ∂Se∂Ce, C, λα)
     Ge = cof(Ce)
     #--------------------------------
     # Residual
     #--------------------------------
     res1 = Se - γα * Se_trial - (1-γα) * λα * Ge
-    res2 = detCe - (det(F))^2
+    res2 = det(Ce) - det(C)
     #--------------------------------
     # Derivatives of residual
     #--------------------------------
@@ -324,7 +323,7 @@ function Energy(obj::ViscousIncompressible, Δt::Float64,
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------
-  Ce, _ = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, F, Ceᵗʳ, Cen, λαn)
+  Ce, _ = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, C, Ceᵗʳ, Cen, λαn)
   #------------------------------------------
   # Elastic energy
   #------------------------------------------
@@ -364,7 +363,7 @@ function Piola(obj::ViscousIncompressible, Δt::Float64,
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------
-  Ce, _ = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, F, Ceᵗʳ, Cen, λαn)
+  Ce, _ = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, C, Ceᵗʳ, Cen, λαn)
   #------------------------------------------
   # Get invUv and Pα
   #------------------------------------------
@@ -406,7 +405,7 @@ function Tangent(obj::ViscousIncompressible, Δt::Float64,
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------
-  Ce, λα = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, F, Ceᵗʳ, Cen, λαn)
+  Ce, λα = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, C, Ceᵗʳ, Cen, λαn)
   #------------------------------------------
   # Get invUv and Sα
   #------------------------------------------
@@ -452,7 +451,7 @@ function ReturnMapping(obj::ViscousIncompressible, Δt::Float64,
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------
-  Ce, λα = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, F, Ceᵗʳ, Cen, λαn)
+  Ce, λα = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, C, Ceᵗʳ, Cen, λαn)
   #------------------------------------------
   # Get Uv and λα
   #------------------------------------------
@@ -479,7 +478,7 @@ function ViscousDissipation(obj::ViscousIncompressible, Δt::Float64,
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------
-  Ce, λα = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, F, Ceᵗʳ, Cen, λαn)
+  Ce, λα = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, C, Ceᵗʳ, Cen, λαn)
   τ = obj.τ
   Se = Se_(Ce)
   invCCe = inv(2*∂Se∂Ce_(Ce))
