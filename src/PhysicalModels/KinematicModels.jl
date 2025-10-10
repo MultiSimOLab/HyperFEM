@@ -3,10 +3,12 @@ abstract type KinematicModel end
 
 struct KinematicDescription{Kind} end  # Used in viscous models in order to get second-Piols. TODO: Remove
 
-get_Kinematics(::KinematicModel; Λ::Float64) = @abstractmethod
+get_Kinematics(::KinematicModel) = @abstractmethod
+get_Kinematics(::KinematicModel; ::Float64) = @abstractmethod
 
 struct Kinematics{T} <: KinematicModel
-    metrics
+
+    metrics::Union{Tuple,Function}
 
     function Kinematics(::Type{M}; F::Function=(∇u) -> one(∇u) + ∇u) where {M <: Mechano}
         J(F) = det(F)
