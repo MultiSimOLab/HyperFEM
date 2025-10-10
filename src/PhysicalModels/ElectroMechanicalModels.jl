@@ -2,9 +2,24 @@
 struct ElectroMechModel{A,B} <: ElectroMechano
   Mechano::Mechano
   Electro::Electro
-  function ElectroMechModel(; Mechano::Mechano, Electro::Electro)
-    A, B = typeof(Mechano), typeof(Electro)
-    new{A,B}(Mechano, Electro)
+  function ElectroMechModel(mechano::Mechano, electro::Electro)
+    new{Mechano,Electro}(mechano,electro)
+  end
+  #=
+  ERROR: MethodError: no method matching ElectroMechModel(; Mechano::GeneralizedMaxwell{Kinematics{Mechano}}, Electro::IdealDielectric{Kinematics{Electro}})
+  The type `ElectroMechModel` exists, but no method is defined for this combination of argument types when trying to construct it.
+  
+  That looks reasonable, but it’s misleading because of how keyword arguments work in Julia:
+  > 
+  A keyword constructor is not a “normal” constructor signature.
+  When you call ElectroMechModel(Mechano=..., Electro=...), Julia looks for a keyword-based outer constructor, not the inner one you wrote.
+
+  But inside a struct, all constructors are inner constructors, which do not support keyword arguments directly.
+  So your inner constructor is never called.
+  =#
+  function ElectroMechModel(; mechano::Mechano, electro::Electro)
+    A, B = typeof(mechano), typeof(electro)
+    new{A,B}(mechano, electro)
   end
 
   function (obj::ElectroMechModel{Mechano,Electro})(Λ::Float64=1.0)
@@ -31,6 +46,8 @@ struct ElectroMechModel{A,B} <: ElectroMechano
     return (Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ)
   end
 end
+
+ViscoElectricModel{E} = ElectroMechModel{ViscoElastic,E}
 
 
 function _getCoupling(mec::Mechano, elec::Electro, Λ::Float64)
