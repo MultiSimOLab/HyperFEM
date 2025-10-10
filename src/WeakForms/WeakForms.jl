@@ -3,6 +3,7 @@ module WeakForms
 using Gridap
 using HyperFEM.TensorAlgebra
 using HyperFEM.PhysicalModels
+using HyperFEM.PhysicalModels:ViscoElectricModel
 
 export residual
 export jacobian

@@ -77,7 +77,7 @@ end
 # Stagered residual
 # -----------------
 
-function residual(physicalmodel::ViscoElectricModel, ::Type{Mechano}, (u, φ), v, dΩ, Λ=1.0, Δt, un, A)
+function residual(physicalmodel::ViscoElectricModel, ::Type{Mechano}, (u, φ), v, dΩ, Λ, Δt, un, A)
     DΨ    = physicalmodel(Λ)
     F,_,_ = get_Kinematics(physicalmodel.Mechano.Kinematic; Λ=Λ)
     E     = get_Kinematics(physicalmodel.Electro.Kinematic; Λ=Λ)
@@ -85,7 +85,7 @@ function residual(physicalmodel::ViscoElectricModel, ::Type{Mechano}, (u, φ), v
     ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘∇(u'), F∘∇(un)', A..., E∘∇(φ))))dΩ
 end
 
-function residual(physicalmodel::ViscoElectricModel, ::Type{Electro}, (u, φ), vφ, dΩ, Λ=1.0, Δt, un, A)
+function residual(physicalmodel::ViscoElectricModel, ::Type{Electro}, (u, φ), vφ, dΩ, Λ, Δt, un, A)
     DΨ    = physicalmodel(Λ)
     F,_,_ = get_Kinematics(physicalmodel.Mechano.Kinematic; Λ=Λ)
     E     = get_Kinematics(physicalmodel.Electro.Kinematic; Λ=Λ)
@@ -97,7 +97,7 @@ end
 # Stagered jacobian
 # -----------------
 
-function jacobian(physicalmodel::ViscoElectricModel, ::Type{Mechano}, (u, φ), du, v, dΩ, Λ=1.0, Δt, un, A)
+function jacobian(physicalmodel::ViscoElectricModel, ::Type{Mechano}, (u, φ), du, v, dΩ, Λ, Δt, un, A)
     DΨ    = physicalmodel(Λ, Δt=Δt)
     F,_,_ = get_Kinematics(physicalmodel.Mechano.Kinematic; Λ=Λ)
     E     = get_Kinematics(physicalmodel.Electro.Kinematic; Λ=Λ)
@@ -105,7 +105,7 @@ function jacobian(physicalmodel::ViscoElectricModel, ::Type{Mechano}, (u, φ), d
     ∫(∇(v)' ⊙ ((∂Ψuu ∘ (F∘∇(u)', F∘∇(un)', A..., E∘(∇(φ)))) ⊙ (∇(du)')))dΩ
 end
 
-function jacobian(physicalmodel::ViscoElectricModel, ::Type{Electro}, (u, φ), dφ, vφ, dΩ, Λ=1.0, Δt, un, A)
+function jacobian(physicalmodel::ViscoElectricModel, ::Type{Electro}, (u, φ), dφ, vφ, dΩ, Λ, Δt, un, A)
     DΨ    = physicalmodel(Λ, Δt=Δt)
     F,_,_ = get_Kinematics(physicalmodel.Mechano.Kinematic; Λ=Λ)
     E     = get_Kinematics(physicalmodel.Electro.Kinematic; Λ=Λ)
@@ -113,7 +113,7 @@ function jacobian(physicalmodel::ViscoElectricModel, ::Type{Electro}, (u, φ), d
     ∫(∇(vφ)' ⋅ ((∂Ψφφ ∘ (F∘∇(u)', F∘∇(un)', A..., E∘(∇(φ)))) ⋅ ∇(dφ)))dΩ
 end
 
-function jacobian(physicalmodel::ViscoElectricModel, ::Type{ElectroMechano}, (u, φ), (du, dφ), (v, vφ), dΩ, Λ=1.0, Δt, un, A)
+function jacobian(physicalmodel::ViscoElectricModel, ::Type{ElectroMechano}, (u, φ), (du, dφ), (v, vφ), dΩ, Λ, Δt, un, A)
     DΨ    = physicalmodel(Λ, Δt=Δt)
     F,_,_ = get_Kinematics(physicalmodel.Mechano.Kinematic; Λ=Λ)
     E     = get_Kinematics(physicalmodel.Electro.Kinematic; Λ=Λ)
@@ -126,12 +126,12 @@ end
 # Monolithic strategy
 # -------------------
 
-function residual(physicalmodel::ViscoElectricModel, (u, φ), (v, vφ), dΩ, Λ=1.0, Δt, un, A)
+function residual(physicalmodel::ViscoElectricModel, (u, φ), (v, vφ), dΩ, Λ, Δt, un, A)
     residual(physicalmodel, Mechano, (u, φ), v, dΩ, Λ, Δt, un, A) +
     residual(physicalmodel, Electro, (u, φ), vφ, dΩ, Λ, Δt, un, A)
 end
 
-function jacobian(physicalmodel::ViscoElectricModel, (u, φ), (du, dφ), (v, vφ), dΩ, Λ=1.0, Δt, un, A)
+function jacobian(physicalmodel::ViscoElectricModel, (u, φ), (du, dφ), (v, vφ), dΩ, Λ, Δt, un, A)
     jacobian(physicalmodel, Mechano, (u, φ), du, v, dΩ, Λ, Δt, un, A) +
     jacobian(physicalmodel, Electro, (u, φ), dφ, vφ, dΩ, Λ, Δt, un, A) +
     jacobian(physicalmodel, ElectroMechano, (u, φ), (du, dφ), (v, vφ), dΩ, Λ, Δt, un, A)
