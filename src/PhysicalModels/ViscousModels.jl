@@ -64,19 +64,24 @@ function updateStateVariables!(model::GeneralizedMaxwell, Δt, u, un, stateVars)
 end
 
 
-"""
-  ViscousStrain(Ce::TensorValue, C::TensorValue)::TensorValue
-  
-Get viscous Uv and its inverse.
+"""Right Cauchy-Green deformation tensor."""
+function Cauchy(F::TensorValue)
+  F' · F
+end
 
-# Arguments
-- `Ce`
-- `C`
+
+"""Elastic right Cauchy-Green deformation tensor."""
+function ElasticCauchy(C::TensorValue, Uv⁻¹::TensorValue)
+  Uv⁻¹' · C · Uv⁻¹
+end
+
+"""
+Multiplicative decomposition of visous strain.
 
 # Return
-- `Ue`
-- `Uv`
-- `invUv`
+- `Ue::TensorValue`
+- `Uv::TensorValue`
+- `Uv⁻¹::TensorValue`
 """
 function ViscousStrain(Ce, C)
   Ue = sqrt(Ce)
@@ -277,7 +282,7 @@ function ViscousTangentOperator(obj::ViscousIncompressible, Δt::Float64,
   #------------------------------------------
   # Extract τv, Δt, μv
   #------------------------------------------
-  C = F' * F
+  C = Cauchy(F)
   DCe_DC = ∂Ce_∂C(obj, γα, ∂Se∂Ce_, invUvn, Ce, Ce_trial, λα, F)
   DCe_DC_Uvfixed = ∂Ce_∂C_Uvfixed(invUv)
   DCe_DinvUv = ∂Ce_∂invUv(C, invUv)
@@ -314,12 +319,11 @@ function Energy(obj::ViscousIncompressible, Δt::Float64,
   #------------------------------------------
   # Get kinematics
   #------------------------------------------
-  invUvn  = inv(Uvn)
-  _, C_, Ce_ = get_Kinematics(obj.Kinematic)
-  C = C_(F)
-  Cn = C_(Fn)
-  Ceᵗʳ = Ce_(C, invUvn)
-  Cen  = Ce_(Cn, invUvn)
+  invUvn = inv(Uvn)
+  C = Cauchy(F)
+  Cn = Cauchy(Fn)
+  Ceᵗʳ = ElasticCauchy(C, invUvn)
+  Cen  = ElasticCauchy(Cn, invUvn)
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------
@@ -355,11 +359,10 @@ function Piola(obj::ViscousIncompressible, Δt::Float64,
   # Get kinematics
   #------------------------------------------
   invUvn  = inv(Uvn)
-  _, C_, Ce_ = get_Kinematics(obj.Kinematic)
-  C = C_(F)
-  Cn = C_(Fn)
-  Ceᵗʳ = Ce_(C, invUvn)
-  Cen  = Ce_(Cn, invUvn)
+  C = Cauchy(F)
+  Cn = Cauchy(Fn)
+  Ceᵗʳ = ElasticCauchy(C, invUvn)
+  Cen  = ElasticCauchy(Cn, invUvn)
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------
@@ -397,11 +400,10 @@ function Tangent(obj::ViscousIncompressible, Δt::Float64,
   # Get kinematics
   #------------------------------------------
   invUvn  = inv(Uvn)
-  _, C_, Ce_ = get_Kinematics(obj.Kinematic)
-  C = C_(F)
-  Cn = C_(Fn)
-  Ceᵗʳ = Ce_(C, invUvn)
-  Cen  = Ce_(Cn, invUvn)
+  C = Cauchy(F)
+  Cn = Cauchy(Fn)
+  Ceᵗʳ = ElasticCauchy(C, invUvn)
+  Cen  = ElasticCauchy(Cn, invUvn)
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------
@@ -443,11 +445,10 @@ function ReturnMapping(obj::ViscousIncompressible, Δt::Float64,
   # Get kinematics
   #------------------------------------------
   invUvn  = inv(Uvn)
-  _, C_, Ce_ = get_Kinematics(obj.Kinematic)
-  C = C_(F)
-  Cn = C_(Fn)
-  Ceᵗʳ = Ce_(C, invUvn)
-  Cen  = Ce_(Cn, invUvn)
+  C = Cauchy(F)
+  Cn = Cauchy(Fn)
+  Ceᵗʳ = ElasticCauchy(C, invUvn)
+  Cen  = ElasticCauchy(Cn, invUvn)
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------
@@ -470,11 +471,10 @@ function ViscousDissipation(obj::ViscousIncompressible, Δt::Float64,
   # Get kinematics
   #------------------------------------------
   invUvn  = inv(Uvn)
-  _, C_, Ce_ = get_Kinematics(obj.Kinematic)
-  C = C_(F)
-  Cn = C_(Fn)
-  Ceᵗʳ = Ce_(C, invUvn)
-  Cen  = Ce_(Cn, invUvn)
+  C = Cauchy(F)
+  Cn = Cauchy(Fn)
+  Ceᵗʳ = ElasticCauchy(C, invUvn)
+  Cen  = ElasticCauchy(Cn, invUvn)
   #------------------------------------------
   # Return mapping algorithm
   #------------------------------------------

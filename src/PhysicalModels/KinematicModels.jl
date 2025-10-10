@@ -8,20 +8,12 @@ get_Kinematics(::KinematicModel; Λ::Float64) = @abstractmethod
 struct Kinematics{A,B} <: KinematicModel
     metrics::A
 
-    function Kinematics(::Union{Type{Mechano},Type{Elasto}}; F::Function=(∇u) -> one(∇u) + ∇u)
+    function Kinematics(::Type{T}; F::Function=(∇u) -> one(∇u) + ∇u) where {T <: Mechano}
         J(F) = det(F)
         H(F) = det(F) * inv(F)'
         metrics = (F, H, J)
         A = typeof(metrics)
-        new{A,Mechano}(metrics)
-    end
-
-    function Kinematics(::Type{Visco}; F::Function=(∇u) -> one(∇u) + ∇u)
-        C(F) = F' * F
-        Ce(C,Uvα⁻¹) = Uvα⁻¹' * C * Uvα⁻¹
-        metrics = (F, C, Ce)
-        A = typeof(metrics)
-        new{A,Visco}(metrics)
+        new{A,T}(metrics)
     end
 
     function Kinematics(::Type{Electro}; E::Function=(∇φ) -> -∇φ)
@@ -49,7 +41,7 @@ function getIsoInvariants(obj::Kinematics{<:Function,Mechano})
     I3(F) = J(F)
     return (I1, I2, I3)
 end
- 
+
 
 function getIsoInvariants(obj_m::Kinematics{<:Any,Mechano},obj_e::Kinematics{<:Any,Electro})
     F, H, J = obj_m.metrics
