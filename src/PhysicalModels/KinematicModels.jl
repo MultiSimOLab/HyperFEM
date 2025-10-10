@@ -12,7 +12,7 @@ struct Kinematics{T} <: KinematicModel
         J(F) = det(F)
         H(F) = det(F) * inv(F)'
         metrics = (F, H, J)
-        new{M}(metrics)
+        new{Mechano}(metrics)
     end
 
     function Kinematics(::Type{Electro}; E::Function=(∇φ) -> -∇φ)
