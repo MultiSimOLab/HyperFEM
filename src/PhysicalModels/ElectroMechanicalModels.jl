@@ -1,10 +1,12 @@
 
-struct ElectroMechModel{A,B} <: ElectroMechano
-  Mechano::Mechano
-  Electro::Electro
-  function ElectroMechModel(mechano::Mechano, electro::Electro)
-    new{Mechano,Electro}(mechano,electro)
+struct ElectroMechModel{M<:Mechano, E<:Electro} <: ElectroMechano
+  mechano::M
+  electro::E
+
+  function ElectroMechModel(m::M, e::E) where {M<:Mechano, E<:Electro}
+    new{M,E}(m,e)
   end
+
   #=
   ERROR: MethodError: no method matching ElectroMechModel(; Mechano::GeneralizedMaxwell{Kinematics{Mechano}}, Electro::IdealDielectric{Kinematics{Electro}})
   The type `ElectroMechModel` exists, but no method is defined for this combination of argument types when trying to construct it.
@@ -17,14 +19,11 @@ struct ElectroMechModel{A,B} <: ElectroMechano
   But inside a struct, all constructors are inner constructors, which do not support keyword arguments directly.
   So your inner constructor is never called.
   =#
-  function ElectroMechModel(; mechano::Mechano, electro::Electro)
-    A, B = typeof(mechano), typeof(electro)
-    new{A,B}(mechano, electro)
-  end
+# ElectroMechModel(; mechano::M, electro::E) where {M<:Mechano, E<:Electro} = ElectroMechModel{M,E}(mechano, electro)
 
-  function (obj::ElectroMechModel{Mechano,Electro})(Λ::Float64=1.0)
-    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.Mechano(Λ)
-    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.Mechano, obj.Electro, Λ)
+  function (obj::ElectroMechModel)(Λ::Float64=1.0)
+    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano(Λ)
+    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.mechano, obj.electro, Λ)
     Ψ(F, E) = Ψm(F) + Ψem(F, E)
     ∂Ψu(F, E) = ∂Ψm_u(F) + ∂Ψem_u(F, E)
     ∂Ψφ(F, E) = ∂Ψem_φ(F, E)
@@ -34,9 +33,9 @@ struct ElectroMechModel{A,B} <: ElectroMechano
     return (Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ)
   end
   
-  function (obj::ElectroMechModel{ViscoElastic,Electro})(Λ::Float64=1.0)
-    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.Mechano(Λ)
-    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.Mechano, obj.Electro, Λ)
+  function (obj::ElectroMechModel{<:ViscoElastic,<:Electro})(Λ::Float64=1.0; Δt)
+    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano(Λ, Δt=Δt)
+    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.mechano, obj.electro, Λ)
     Ψ(F, Fn, A, E) = Ψm(F, Fn, A) + Ψem(F, E)
     ∂Ψu(F, Fn, A, E) = ∂Ψm_u(F, Fn, A) + ∂Ψem_u(F, E)
     ∂Ψφ(F, Fn, A, E) = ∂Ψem_φ(F, E)
@@ -47,7 +46,7 @@ struct ElectroMechModel{A,B} <: ElectroMechano
   end
 end
 
-ViscoElectricModel{E} = ElectroMechModel{ViscoElastic,E}
+ViscoElectricModel = ElectroMechModel{<:ViscoElastic,<:Electro}
 
 
 function _getCoupling(mec::Mechano, elec::Electro, Λ::Float64)
