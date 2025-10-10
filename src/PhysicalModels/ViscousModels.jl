@@ -10,8 +10,8 @@ struct ViscousIncompressible{T} <: Visco
   ShortTerm::Elasto
   τ::Float64
   Kinematic::T
-  function ViscousIncompressible(shortTerm, τ::Float64; Kinematic::KinematicModel=Kinematics(Visco))
-    new{typeof(Kinematic)}(shortTerm, τ, Kinematic)
+  function ViscousIncompressible(shortTerm, τ::Float64; kinematic::KinematicModel=Kinematics(Visco))
+    new{typeof(kinematic)}(shortTerm, τ, kinematic)
   end
   function (obj::ViscousIncompressible)(Λ::Float64=1.0; Δt::Float64)
     Ψe, Se, ∂Se∂Ce       = obj.ShortTerm(KinematicDescription{:SecondPiola}())
@@ -38,8 +38,8 @@ struct GeneralizedMaxwell{T} <: ViscoElastic
   LongTerm::Elasto
   Branches::NTuple{N,Visco} where N
   Kinematic::T
-  function GeneralizedMaxwell(longTerm::Elasto,branches::Visco...; Kinematic::KinematicModel=Kinematics(Elasto))
-    new{typeof(Kinematic)}(longTerm,branches)
+  function GeneralizedMaxwell(longTerm::Elasto, branches::Visco...; kinematic::KinematicModel=Kinematics(Elasto))
+    new{typeof(kinematic)}(longTerm,branches,kinematic)
   end
   function (obj::GeneralizedMaxwell)(Λ::Float64=1.0; Δt::Float64)
     Ψe, ∂Ψeu, ∂Ψeuu = obj.LongTerm(Λ)
