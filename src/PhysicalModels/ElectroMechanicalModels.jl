@@ -51,7 +51,6 @@ function _getCoupling(mec::Mechano, elec::Electro, Λ::Float64)
   ∂Ψem_∂J(F, E) = (+elec.ε / (2.0 * J(F)^2.0)) * HEHE(F, E)
   ∂Ψem_∂E(F, E) = (-elec.ε / (J(F))) * (H(F)' * HE(F, E))
   ∂Ψem_u(F, E) = ∂Ψem_∂H(F, E) × F + ∂Ψem_∂J(F, E) * H(F)
-  # ∂Ψem_φ(F, E) = -∂Ψem_∂E(F, E)
   ∂Ψem_φ(F, E) = ∂Ψem_∂E(F, E)
 
   # Second Derivatives #
