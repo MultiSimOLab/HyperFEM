@@ -1324,8 +1324,8 @@ end
 struct FlexoElectroModel{A} <: FlexoElectro
   ElectroMechano::A
   κ::Float64
-  function FlexoElectroModel(; Mechano::Mechano, Electro::Electro, κ=1.0)
-    physmodel = ElectroMechModel(Mechano=Mechano, Electro=Electro)
+  function FlexoElectroModel(; mechano::Mechano, electro::Electro, κ=1.0)
+    physmodel = ElectroMechModel(mechano=mechano, electro=electro)
     A = typeof(physmodel)
     new{A}(physmodel, κ)
   end
