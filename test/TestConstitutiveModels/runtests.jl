@@ -1,4 +1,5 @@
 using HyperFEM
+using Test
 
 @testset "ConstitutiveModels" begin
 
@@ -8,6 +9,10 @@ using HyperFEM
 
     @time begin
         include("ViscousModelsTests.jl")
+    end
+
+    @time begin
+        include("ElectroMechanicalTests.jl")
     end
 
 end
