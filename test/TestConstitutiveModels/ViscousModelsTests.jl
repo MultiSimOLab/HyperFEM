@@ -75,7 +75,7 @@ function test_viscous_derivatives_numerical(model; rtolP=1e-12, rtolH=1e-12)
   Fn = TensorValue(1.:9...) * 5e-4 + I3
   Uvn = isochoric_F(TensorValue(1.,2.,3.,2.,4.,5.,3.,5.,6.) * 2e-4 + I3)
   λvn = 1e-3
-  Avn = VectorValue(Uvn.data..., λvn)
+  Avn = VectorValue(Uvn..., λvn)
   piola = richardson_expansion((F, ϵ) -> numerical_piola(F -> Ψ(F, Fn, Avn), F, ϵ), F, 1e-5)
   tangent = richardson_expansion((F, ϵ) -> numerical_tangent(F -> Ψ(F, Fn, Avn), F, ϵ), F, 1e-4)
   @test isapprox(∂Ψu(F, Fn, Avn), piola, rtol=rtolP)
@@ -140,7 +140,7 @@ end
   Fvn  =  2e-2*TensorValue(1.0,2.0,3.0,4.0,5.0,8.7,6.5,4.3,6.5) + I3
   Cvn  =  Fvn'*Fvn
   Uvn  =  sqrt(Cvn)
-  Avn  =  VectorValue(Uvn.data...,0.0)
+  Avn  =  VectorValue(Uvn...,0.0)
   @test isapprox(norm(∂Ψu(F, Fn, Avn)), 0.20303772905627682, rtol=1e-10)
   @test isapprox(norm(∂Ψuu(F, Fn, Avn)), 4.847586088299776, rtol=1e-10)
 end
