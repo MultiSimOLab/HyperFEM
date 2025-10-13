@@ -65,7 +65,6 @@ function _getCoupling(mec::Mechano, elec::Electro, Λ::Float64)
 
   ∂Ψem_EH(F, E) = (-elec.ε / (J(F))) * ((I3 ⊗₁₃² HE(F, E)) + (H(F)' ⊗₁₂³ E))
   ∂Ψem_EJ(F, E) = (+elec.ε / (J(F))^2.0) * (H(F)' * HE(F, E))
-
   ∂Ψem_φu(F, E) = (∂Ψem_EH(F, E) × F) + (∂Ψem_EJ(F, E) ⊗₁²³ H(F))
 
   ∂Ψem_φφ(F, E) = (-elec.ε / (J(F))) * (H(F)' * H(F))
