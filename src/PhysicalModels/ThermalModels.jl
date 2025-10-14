@@ -22,7 +22,3 @@ struct ThermalModel <: Thermo
   end
 
 end
- 
-function trAA(A::TensorValue{3, 3, T, N}) where {T, N}
-  return sum(A.data[i]*A.data[i] for i in 1:N)
-end
