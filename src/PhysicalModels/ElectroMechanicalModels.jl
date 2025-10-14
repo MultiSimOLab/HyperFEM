@@ -79,3 +79,27 @@ function _getCoupling(mec::Mechano, elec::Electro, Λ::Float64)
 
   return (Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ)
 end
+
+
+struct FlexoElectroModel{A} <: FlexoElectro
+  ElectroMechano::A
+  κ::Float64
+  function FlexoElectroModel(; mechano::Mechano, electro::Electro, κ=1.0)
+    physmodel = ElectroMechModel(mechano=mechano, electro=electro)
+    A = typeof(physmodel)
+    new{A}(physmodel, κ)
+  end
+  function (obj::FlexoElectroModel)(Λ::Float64=1.0)
+    e₁ = VectorValue(1.0, 0.0, 0.0)
+    e₂ = VectorValue(0.0, 1.0, 0.0)
+    e₃ = VectorValue(0.0, 0.0, 1.0)
+    # Φ(ϕ₁,ϕ₂,ϕ₃)=ϕ₁ ⊗₁² e₁+ϕ₂ ⊗₁² e₂+ϕ₃ ⊗₁² e₃
+    f1(δϕ) = δϕ ⊗₁² e₁
+    f2(δϕ) = δϕ ⊗₁² e₂
+    f3(δϕ) = δϕ ⊗₁² e₃
+    Φ(ϕ₁, ϕ₂, ϕ₃) = (f1 ∘ (ϕ₁) + f2 ∘ (ϕ₂) + f3 ∘ (ϕ₃))
+
+    Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = obj.ElectroMechano(Λ)
+    return Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ, Φ
+  end
+end

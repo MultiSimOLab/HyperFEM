@@ -66,7 +66,6 @@ export ThermoElectroMechano
 export ThermoMechano
 export ThermoElectro
 export FlexoElectro
-
 export EnergyInterpolationScheme
 
 export KinematicDescription
@@ -75,6 +74,15 @@ export DerivativeStrategy
 export initializeStateVariables
 export updateStateVariables!
 export update_state!
+
+export Kinematics
+export KinematicModel
+export EvolutiveKinematics
+export get_Kinematics
+export getIsoInvariants
+
+export HessianRegularization
+export Hessian∇JRegularization
 
 struct DerivativeStrategy{Kind} end
 
@@ -106,18 +114,11 @@ include("MagneticModels.jl")
 
 include("ElectricalModels.jl")
 
+include("ThermalModels.jl")
+
 include("ElectroMechanicalModels.jl")
 
 include("PINNs.jl")
-
-export Kinematics
-export KinematicModel
-export EvolutiveKinematics
-export get_Kinematics
-export getIsoInvariants
-
-export HessianRegularization
-export Hessian∇JRegularization
 
 
 # ============================================
@@ -134,63 +135,10 @@ end
 
 
 # ===================
-# Thermal models
-# ===================
-
-struct ThermalModel <: Thermo
-  Cv::Float64
-  θr::Float64
-  α::Float64
-  κ::Float64
-  γv::Float64
-  γd::Float64
-  function ThermalModel(; Cv::Float64, θr::Float64, α::Float64, κ::Float64=10.0, γv::Float64=1.0, γd::Float64=1.0)
-    new(Cv, θr, α, κ, γv, γd)
-  end
-
-  function (obj::ThermalModel)(Λ::Float64=1.0)
-    Ψ(δθ) = obj.Cv * (δθ - (δθ + obj.θr) * log((δθ + obj.θr) / obj.θr))
-    ∂Ψθ(δθ) = -obj.Cv * log((δθ + obj.θr) / obj.θr)
-    ∂Ψθθ(δθ) = -obj.Cv / (δθ + obj.θr)
-    return (Ψ, ∂Ψθ, ∂Ψθθ)
-  end
-
-end
- 
-function trAA(A::TensorValue{3, 3, T, N}) where {T, N}
-  return sum(A.data[i]*A.data[i] for i in 1:N)
-end
-
-
-
-# ===================
 # MultiPhysicalModel models
 # ===================
 
 
-struct FlexoElectroModel{A} <: FlexoElectro
-  ElectroMechano::A
-  κ::Float64
-  function FlexoElectroModel(; mechano::Mechano, electro::Electro, κ=1.0)
-    physmodel = ElectroMechModel(mechano=mechano, electro=electro)
-    A = typeof(physmodel)
-    new{A}(physmodel, κ)
-  end
-  function (obj::FlexoElectroModel)(Λ::Float64=1.0)
-    e₁ = VectorValue(1.0, 0.0, 0.0)
-    e₂ = VectorValue(0.0, 1.0, 0.0)
-    e₃ = VectorValue(0.0, 0.0, 1.0)
-    # Φ(ϕ₁,ϕ₂,ϕ₃)=ϕ₁ ⊗₁² e₁+ϕ₂ ⊗₁² e₂+ϕ₃ ⊗₁² e₃
-    f1(δϕ) = δϕ ⊗₁² e₁
-    f2(δϕ) = δϕ ⊗₁² e₂
-    f3(δϕ) = δϕ ⊗₁² e₃
-    Φ(ϕ₁, ϕ₂, ϕ₃) = (f1 ∘ (ϕ₁) + f2 ∘ (ϕ₂) + f3 ∘ (ϕ₃))
-
-    Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = obj.ElectroMechano(Λ)
-    return Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ, Φ
-  end
-
-end
 
 
 struct ThermoMechModel{A,B,C,D} <: ThermoMechano
