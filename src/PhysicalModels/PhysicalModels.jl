@@ -8,6 +8,7 @@ using ForwardDiff
 using LinearAlgebra
 using ..TensorAlgebra
 using ..TensorAlgebra: _∂H∂F_2D
+using ..TensorAlgebra: trAA
 using StaticArrays
 
 import Base: +
@@ -116,6 +117,8 @@ include("ElectricalModels.jl")
 
 include("ThermalModels.jl")
 
+include("ThermoMechanicalModels.jl")
+
 include("ElectroMechanicalModels.jl")
 
 include("MagnetoMechanicalModels.jl")
@@ -134,15 +137,6 @@ function initializeStateVariables(::PhysicalModel, points::Measure)
 end
 
 function updateStateVariables!(::Any, ::PhysicalModel, vars...)
-end
-
-
-# ============================================
-# Miscelaneous functions
-# ============================================
-
-function trAA(A::TensorValue{3, 3, T, N}) where {T, N}
-  return sum(A.data[i]*A.data[i] for i in 1:N)
 end
 
 end

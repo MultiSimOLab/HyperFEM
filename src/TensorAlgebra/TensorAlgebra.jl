@@ -34,148 +34,23 @@ export sqrt
 export cof
 export contraction_IP_JPKL
 export contraction_IP_PJKL
- 
 
-include("FunctionalAlgebra.jl")
 export Box
 export Ellipsoid
+
+include("FlatIndexing.jl")
+
+include("FunctionalAlgebra.jl")
+
+include("TensorsDefinitions.jl")
+
+include("Functions.jl")
 
 # outer ⊗ \otimes
 # inner ⊙ \odot
 # cross × \times
 # sum +
 # dot ⋅ * 
-
-
-"""
-    sqrt(A::TensorValue{3})::TensorValue{3}
-
-Compute the square root of a 3x3 matrix by means of eigen decomposition.
-"""
-function sqrt(A::TensorValue{3})
-  λ, Q = eigen(A)
-  λ = sqrt.(λ)
-  TensorValue{3}(λ[1]*Q[1:3]*Q[1:3]' + λ[2]*Q[4:6]*Q[4:6]' + λ[3]*Q[7:9]*Q[7:9]')
-end
-
-
-"""
-    cof(A::TensorValue)::TensorValue
-
-Calculate the cofactor of a matrix.
-"""
-function cof(A::TensorValue)
-  return det(A)*inv(A')
-end
-
-
-"""Return the linear index of a N-dimensional tensor"""
-_flat_idx(i::Int, j::Int, N::Int) = i + N*(j-1)
-_flat_idx(i::Int, j::Int, k::Int, l::Int, N::Int) = _flat_idx(_flat_idx(i,j,N), _flat_idx(k,l,N), N*N)
-
-"""Return the cartesian indices of an N-dimensional second-order tensor"""
-_full_idx2(α::Int, N::Int) = ((α-1)%N+1 ,(α-1)÷N+1)
-
-"""Return the cartesian indices of an N-dimensional fourth-order tensor"""
-_full_idx4(α::Int, β::Int, N::Int) = (_full_idx2(α,N)..., _full_idx2(β,N)...)
-_full_idx4(α::Int, N::Int) = _full_idx4(_full_idx2(α,N*N)...,N)
-
-
-# =====================
-# Identity matrix
-# =====================
-
-"""The scaling N×N matrix"""
-const I_(N) = TensorValue{N,N,Float64}(ntuple(α -> begin
-  i,j = _full_idx2(α,N)
-  i==j ? 1.0 : 0.0
-end,N*N))
-
-"""
-    I2::TensorValue{2}
-
-Identity matrix 2D
-"""
-const I2 = I_(2)
-
-"""
-    I3::TensorValue{3}
-
-Identity matrix 3D
-"""
-const I3 = I_(3)
-
-"""
-    I4::TensorValue{4}
-
-Identity fourth-order tensor 2D
-"""
-const I4 = I_(4)
-
-"""
-    I9::TensorValue{9}
-
-Identity fourth-order tensor 3D
-"""
-const I9 = I_(9)
-
-
-# =====================
-# Delta Kronecker
-# =====================
-
-"""
-    _Kroneckerδδ(δδ::Function, N::Int)::TensorValue{N*N,N*N,Float64}
-
-Delta Kronecker outer product according to the `δδ(i,j,k,l)` function"""
-function _Kroneckerδδ(δδ::Function, N::Int)
-  TensorValue{N*N,N*N,Float64}(ntuple(α -> begin
-    i, j, k, l = _full_idx4(α,N)
-    δδ(i,j,k,l) ? 1.0 : 0.0
-  end,
-  N*N*N*N))
-end
-
-"""
-    δᵢⱼδₖₗ2D::TensorValue{4}
-
-Delta Kronecker outer product 2D"""
-const δᵢⱼδₖₗ2D = _Kroneckerδδ((i,j,k,l) -> i==j && k==l, 2)
-
-"""
-    δᵢₖδⱼₗ2D::TensorValue{4}
-
-Delta Kronecker outer product 2D"""
-const δᵢₖδⱼₗ2D = _Kroneckerδδ((i,j,k,l) -> i==k && j==l, 2)
-
-"""
-    δᵢₗδⱼₖ2D::TensorValue{4}
-
-Delta Kronecker outer product 2D"""
-const δᵢₗδⱼₖ2D = _Kroneckerδδ((i,j,k,l) -> i==l && j==k, 2)
-
-"""
-    δᵢⱼδₖₗ3D::TensorValue{9}
-
-Delta Kronecker outer product 3D"""
-const δᵢⱼδₖₗ3D = _Kroneckerδδ((i,j,k,l) -> i==j && k==l, 3)
-
-"""
-    δᵢₖδⱼₗ3D::TensorValue{9}
-
-Delta Kronecker outer product 3D"""
-const δᵢₖδⱼₗ3D = _Kroneckerδδ((i,j,k,l) -> i==k && j==l, 3)
-
-"""
-    δᵢₗδⱼₖ3D::TensorValue{9}
-
-Delta Kronecker outer product 3D"""
-const δᵢₗδⱼₖ3D = _Kroneckerδδ((i,j,k,l) -> i==l && j==k, 3)
-
-
-function _∂H∂F_2D()
-  TensorValue(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0)
-end
 
 
 function Gridap.TensorValues.outer(A::TensorValue{D,D,Float64}, B::TensorValue{D,D,Float64}) where {D}
