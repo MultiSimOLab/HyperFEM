@@ -45,8 +45,8 @@ function initializeStateVariables(obj::ElectroMechano, points::Measure)
 end
 
 function updateStateVariables!(state, obj::ElectroMechano, args...)
-  updateStateVariables!(state[1], obj.mechano, vars)
-  updateStateVariables!(state[2], obj.electro, vars)
+  updateStateVariables!(state[1], obj.mechano, args)
+  updateStateVariables!(state[2], obj.electro, args)
 end
 
 
