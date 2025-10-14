@@ -66,7 +66,7 @@ end
 @testset "Assembly Jacobian ElectroMechanics" begin
     modelMR = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
     modelID = IdealDielectric(ε=4.0)
-    modelelectro = ElectroMechModel(Mechano=modelMR, Electro=modelID)
+    modelelectro = ElectroMechModel(mechano=modelMR, electro=modelID)
 
     partition = (1, 1, 1)
     pmin = Point(0.0, 0.0, 0.0)

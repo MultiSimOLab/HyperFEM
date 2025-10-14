@@ -14,7 +14,7 @@ function benchmark_viscous_model()
   J = det(F)
   Uvn *= J^(-1/3)
   λvn = 1e-3
-  Avn = VectorValue(Uvn.data..., λvn)
+  Avn = VectorValue(Uvn..., λvn)
   SUITE["Constitutive models"]["Visco-elastic Ψ"] = @benchmarkable $Ψ($F, $Fn, $Avn)
   SUITE["Constitutive models"]["Visco-elastic ∂Ψu"] = @benchmarkable $∂Ψu($F, $Fn, $Avn)
   SUITE["Constitutive models"]["Visco-elastic ∂Ψuu"] = @benchmarkable $∂Ψuu($F, $Fn, $Avn)

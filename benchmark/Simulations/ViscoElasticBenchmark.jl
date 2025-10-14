@@ -56,7 +56,7 @@ function viscousbenchmark()
 
   # residual and jacobian
   uh = FEFunction(Uu, zero_free_values(Uu))
-  unh = FEFunction(Uu, zero_free_values(Uu))
+  unh = FEFunction(Uun, zero_free_values(Uun))
   state_vars = initializeStateVariables(cons_model, dΩ)
 
   res(Λ) = (u,v)->residual(cons_model, u, v, dΩ, t_end * Λ, Δt, unh, state_vars)
@@ -67,7 +67,7 @@ function viscousbenchmark()
   comp_model = StaticNonlinearModel(res, jac, Uu, Vu, D_bc; nls=nls_, xh=uh, xh⁻=unh)
 
   function driverpost(post; cons_model=cons_model, Δt=Δt, uh=uh, unh=unh, A=state_vars, Ω=Ω, dΩ=dΩ)
-    updateStateVariables!(cons_model, Δt, uh, unh, A)
+    updateStateVariables!(A, cons_model, Δt, uh, unh)
   end
   post_model = PostProcessor(comp_model, driverpost; is_vtk=false, filepath="")
 

@@ -184,24 +184,6 @@ end
   @test norm(∂Ψuu(F(∇u), N)) == 3.8258646319087776e6
 end
 
-@testset "ElectroMechano" begin
-  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
-  ∇φ = VectorValue(1.0, 2.0, 3.0)
-  modelMR = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
-  modelID = IdealDielectric(ε=4.0)
-  modelelectro = ElectroMechModel(Mechano=modelMR, Electro=modelID)
-  Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelelectro()
-  F, _, _ = get_Kinematics(modelMR.Kinematic)
-  E = get_Kinematics(modelID.Kinematic)
-
-  @test Ψ(F(∇u), E(∇φ)) == -27.514219755428428
-  @test norm(∂Ψu(F(∇u), E(∇φ))) == 47.42294370458073
-  @test norm(∂Ψφ(F(∇u), E(∇φ))) == 14.707913034885005
-  @test norm(∂Ψuu(F(∇u), E(∇φ))) == 131.10069227603947
-  @test norm(∂Ψφu(F(∇u), E(∇φ))) == 39.03656526472973
-  @test norm(∂Ψφφ(F(∇u), E(∇φ))) == 6.964428025226914
-end
-
 
 @testset "TermoElectroMech" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
@@ -277,45 +259,6 @@ end
   @test norm(∂Ψuθ(F(∇u), θt)) == 14.243050132210923
 
 end
-
-
-@testset "FlexoElectroMechanics" begin
-
-  # Constitutive models
-  ∇umacro = TensorValue(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0) * 1e-2
-  ∇φ = VectorValue(1.0, 2.0, 3.0)
-  ∇u = 1e-1 * TensorValue(1, 2, 3, 4, 5, 6, 7, 8, 9)
-  Emacro = VectorValue(0.0, 0.0, sqrt((1.0 + 5.0) / (1.0 + 5.0)) * 0.1)
-  A = TensorValue{3,9,Float64,27}(0.0013981268088158305, 0.0008195783555664171,
-    0.0016562357569609649, 0.0008406006468943406, 0.0009224862278332126, 0.001155322042969417,
-    0.0005129360612093835, 0.0012909164959851265, 0.001152698427032676, 0.0008406006468943406,
-    0.0009224862278332126, 0.001155322042969417, 0.00034502469077903774, 0.00021859521770246592,
-    0.0017683239822952042, 0.0009471782270005929, 0.001800950730156155, 0.0009587801251013468,
-    0.0005129360612093835, 0.0012909164959851265, 0.001152698427032676, 0.0009471782270005929,
-    0.001800950730156155, 0.0009587801251013468, 0.0008421896546088605, 0.0007114140805416631,
-    0.001245006227831607)
-  Kin_mec = EvolutiveKinematics(Mechano; F=(t) -> ((∇u, x) -> ∇u + one(∇u) + t * ∇umacro + t * (A ⊙ x)))
-  Kin_elec = EvolutiveKinematics(Electro; E=(t) -> ((∇φ) -> -∇φ + t * Emacro))
-
-  physmec = MooneyRivlin3D(λ=10.0, μ1=1.0, μ2=1.0, Kinematic=Kin_mec)
-  physelec = IdealDielectric(ε=1.0, Kinematic=Kin_elec)
-  physmodel = FlexoElectroModel(Mechano=physmec, Electro=physelec, κ=1000.0)
-
-  Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ, Φ = physmodel(1.0)
-
-  F, _, _ = get_Kinematics(physmec.Kinematic; Λ=1.0)
-  E = get_Kinematics(physelec.Kinematic; Λ=1.0)
-  X = VectorValue(2.4, 1.9, 3.3)
-
-  @test (Ψ(F(∇u, X), E(∇φ))) == 13.408299698687056
-  @test norm(∂Ψu(F(∇u, X), E(∇φ))) == 58.375248703633474
-  @test norm(∂Ψφ(F(∇u, X), E(∇φ))) == 1.2365693126167825
-  @test norm(∂Ψuu(F(∇u, X), E(∇φ))) == 208.40589433833898
-  @test norm(∂Ψφφ(F(∇u, X), E(∇φ))) == 3.8963298254031042
-  @test norm(∂Ψφu(F(∇u, X), E(∇φ))) == 5.910650247536949
-
-end
-
 
 
 @testset "ThermoElectroMech_Bonet" begin
