@@ -26,12 +26,12 @@ struct ElectroMechModel{M<:Mechano, E<:Electro} <: ElectroMechano
   function (obj::ElectroMechModel{<:ViscoElastic,<:Electro})(Λ::Float64=1.0; Δt)
     Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano(Λ, Δt=Δt)
     Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.mechano, obj.electro, Λ)
-    Ψ(F, Fn, A, E) = Ψm(F, Fn, A) + Ψem(F, E)
-    ∂Ψu(F, Fn, A, E) = ∂Ψm_u(F, Fn, A) + ∂Ψem_u(F, E)
-    ∂Ψφ(F, Fn, A, E) = ∂Ψem_φ(F, E)
-    ∂Ψuu(F, Fn, A, E) = ∂Ψm_uu(F, Fn, A) + ∂Ψem_uu(F, E)
-    ∂Ψφu(F, Fn, A, E) = ∂Ψem_φu(F, E)
-    ∂Ψφφ(F, Fn, A, E) = ∂Ψem_φφ(F, E)
+    Ψ(F, Fn, E, A...) = Ψm(F, Fn, A...) + Ψem(F, E)
+    ∂Ψu(F, Fn, E, A...) = ∂Ψm_u(F, Fn, A...) + ∂Ψem_u(F, E)
+    ∂Ψφ(F, Fn, E, A...) = ∂Ψem_φ(F, E)
+    ∂Ψuu(F, Fn, E, A...) = ∂Ψm_uu(F, Fn, A...) + ∂Ψem_uu(F, E)
+    ∂Ψφu(F, Fn, E, A...) = ∂Ψem_φu(F, E)
+    ∂Ψφφ(F, Fn, E, A...) = ∂Ψem_φφ(F, E)
     return (Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ)
   end
 end
@@ -39,14 +39,11 @@ end
 ViscoElectricModel = ElectroMechModel{<:ViscoElastic,<:Electro}
 
 function initializeStateVariables(obj::ElectroMechano, points::Measure)
-  A = initializeStateVariables(obj.mechano, points)
-  B = initializeStateVariables(obj.electro, points)
-  (A, B)
+  initializeStateVariables(obj.mechano, points)
 end
 
 function updateStateVariables!(state, obj::ElectroMechano, args...)
-  updateStateVariables!(state[1], obj.mechano, args)
-  updateStateVariables!(state[2], obj.electro, args)
+  updateStateVariables!(state, obj.mechano, args)
 end
 
 
