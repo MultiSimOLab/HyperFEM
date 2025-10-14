@@ -102,6 +102,10 @@ include("MechanicalModels.jl")
 
 include("ViscousModels.jl")
 
+include("MagneticModels.jl")
+
+include("ElectricalModels.jl")
+
 include("ElectroMechanicalModels.jl")
 
 include("PINNs.jl")
@@ -128,17 +132,6 @@ function updateStateVariables!(::Any, ::PhysicalModel, vars...)
 end
 
 
-# ===================
-# Electro models
-# ===================
-
-struct IdealDielectric{A} <: Electro
-  ε::Float64
-  Kinematic::A
-  function IdealDielectric(; ε::Float64, Kinematic::KinematicModel=Kinematics(Electro))
-    new{typeof(Kinematic)}(ε, Kinematic)
-  end
-end
 
 # ===================
 # Thermal models
