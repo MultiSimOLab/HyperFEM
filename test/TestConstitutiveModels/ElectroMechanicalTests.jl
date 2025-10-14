@@ -74,8 +74,8 @@ end
   λvn = 1e-3
   Avn = VectorValue(Uvn..., λvn)
   Ψ, ∂Ψu, ∂Ψuu = model(Δt=0.01)
-  @show ∂Ψu(F(∇u), F(∇un), Avn, E(∇φ))
-  @show ∂Ψuu(F(∇u), F(∇un), Avn, E(∇φ))
+  @show ∂Ψu(F(∇u), F(∇un), E(∇φ), Avn)
+  @show ∂Ψuu(F(∇u), F(∇un), E(∇φ), Avn)
 end
 
 
@@ -94,6 +94,6 @@ end
   λvn = 1e-3
   Avn = VectorValue(Uvn..., λvn)
   Ψ, ∂Ψu, ∂Ψuu = model(Δt=0.01)
-  @show ∂Ψu(F(∇u), F(∇un), (Avn, Avn), E(∇φ))
-  @show ∂Ψuu(F(∇u), F(∇un), (Avn, Avn), E(∇φ))
+  @show ∂Ψu(F(∇u), F(∇un), E(∇φ), Avn, Avn)
+  @show ∂Ψuu(F(∇u), F(∇un), E(∇φ), Avn, Avn)
 end

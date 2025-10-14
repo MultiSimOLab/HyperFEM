@@ -9,16 +9,16 @@
 
 function residual(physicalmodel::ElectroMechano, ::Type{Mechano}, (u, φ), v, dΩ, Λ=1.0)
     DΨ    = physicalmodel(Λ)
-    F,_,_ = get_Kinematics(physicalmodel.Mechano.Kinematic; Λ=Λ)
-    E     = get_Kinematics(physicalmodel.Electro.Kinematic; Λ=Λ)
+    F,_,_ = get_Kinematics(physicalmodel.mechano.Kinematic; Λ=Λ)
+    E     = get_Kinematics(physicalmodel.electro.Kinematic; Λ=Λ)
     ∂Ψu   = DΨ[2]
     ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘∇(u)', E∘∇(φ))))dΩ
 end
 
 function residual(physicalmodel::ElectroMechano, ::Type{Electro}, (u, φ), vφ, dΩ, Λ=1.0)
     DΨ    = physicalmodel(Λ)
-    F,_,_ = get_Kinematics(physicalmodel.Mechano.Kinematic; Λ=Λ)
-    E     = get_Kinematics(physicalmodel.Electro.Kinematic; Λ=Λ)
+    F,_,_ = get_Kinematics(physicalmodel.mechano.Kinematic; Λ=Λ)
+    E     = get_Kinematics(physicalmodel.electro.Kinematic; Λ=Λ)
     ∂Ψφ   = DΨ[3]
     -1.0*∫(∇(vφ) ⋅ (∂Ψφ ∘ (F∘∇(u)', E∘∇(φ))))dΩ
 end
@@ -29,24 +29,24 @@ end
 
 function jacobian(physicalmodel::ElectroMechano, ::Type{Mechano}, (u, φ), du, v, dΩ, Λ=1.0)
     DΨ    = physicalmodel(Λ)
-    F,_,_ = get_Kinematics(physicalmodel.Mechano.Kinematic; Λ=Λ)
-    E     = get_Kinematics(physicalmodel.Electro.Kinematic; Λ=Λ)
+    F,_,_ = get_Kinematics(physicalmodel.mechano.Kinematic; Λ=Λ)
+    E     = get_Kinematics(physicalmodel.electro.Kinematic; Λ=Λ)
     ∂Ψuu  = DΨ[4]
     ∫(∇(v)' ⊙ ((∂Ψuu ∘ (F∘∇(u)', E∘∇(φ))) ⊙ ∇(du)'))dΩ
 end
 
 function jacobian(physicalmodel::ElectroMechano, ::Type{Electro}, (u, φ), dφ, vφ, dΩ, Λ=1.0)
     DΨ    = physicalmodel(Λ)
-    F,_,_ = get_Kinematics(physicalmodel.Mechano.Kinematic; Λ=Λ)
-    E     = get_Kinematics(physicalmodel.Electro.Kinematic; Λ=Λ)
+    F,_,_ = get_Kinematics(physicalmodel.mechano.Kinematic; Λ=Λ)
+    E     = get_Kinematics(physicalmodel.electro.Kinematic; Λ=Λ)
     ∂Ψφφ  = DΨ[6]
     ∫(∇(vφ)' ⋅ ((∂Ψφφ ∘ (F∘∇(u)', E∘∇(φ))) ⋅ ∇(dφ)))dΩ
 end
 
 function jacobian(physicalmodel::ElectroMechano, ::Type{ElectroMechano}, (u, φ), (du, dφ), (v, vφ), dΩ, Λ=1.0)
     DΨ    = physicalmodel(Λ)
-    F,_,_ = get_Kinematics(physicalmodel.Mechano.Kinematic; Λ=Λ)
-    E     = get_Kinematics(physicalmodel.Electro.Kinematic; Λ=Λ)
+    F,_,_ = get_Kinematics(physicalmodel.mechano.Kinematic; Λ=Λ)
+    E     = get_Kinematics(physicalmodel.electro.Kinematic; Λ=Λ)
     ∂Ψφu  = DΨ[5]
     -1.0*∫(∇(dφ) ⋅ ((∂Ψφu ∘ (F∘∇(u)', E∘∇(φ))) ⊙ ∇(v)'))dΩ -
         ∫(∇(vφ) ⋅ ((∂Ψφu ∘ (F∘∇(u)', E∘∇(φ))) ⊙ ∇(du)'))dΩ 
