@@ -67,7 +67,7 @@ function viscousbenchmark()
   comp_model = StaticNonlinearModel(res, jac, Uu, Vu, D_bc; nls=nls_, xh=uh, xh⁻=unh)
 
   function driverpost(post; cons_model=cons_model, Δt=Δt, uh=uh, unh=unh, A=state_vars, Ω=Ω, dΩ=dΩ)
-    updateStateVariables!(cons_model, Δt, uh, unh, A)
+    updateStateVariables!(A, cons_model, Δt, uh, unh)
   end
   post_model = PostProcessor(comp_model, driverpost; is_vtk=false, filepath="")
 

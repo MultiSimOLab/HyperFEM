@@ -122,7 +122,7 @@ function initializeStateVariables(::PhysicalModel, points::Measure)
   return nothing
 end
 
-function updateStateVariables!(::PhysicalModel, vars...)
+function updateStateVariables!(::Any, ::PhysicalModel, vars...)
 end
 
 # ============================================

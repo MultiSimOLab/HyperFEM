@@ -38,6 +38,17 @@ end
 
 ViscoElectricModel = ElectroMechModel{<:ViscoElastic,<:Electro}
 
+function initializeStateVariables(obj::ElectroMechano, points::Measure)
+  A = initializeStateVariables(obj.mechano, points)
+  B = initializeStateVariables(obj.electro, points)
+  (A, B)
+end
+
+function updateStateVariables!(state, obj::ElectroMechano, args...)
+  updateStateVariables!(state[1], obj.mechano, vars)
+  updateStateVariables!(state[2], obj.electro, vars)
+end
+
 
 function _getCoupling(mec::Mechano, elec::Electro, Λ::Float64)
   _, H, J = get_Kinematics(mec.Kinematic; Λ=Λ)

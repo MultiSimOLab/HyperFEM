@@ -27,7 +27,7 @@ function initializeStateVariables(::ViscousIncompressible, points::Measure)
   CellState(v, points)
 end
 
-function updateStateVariables!(obj::ViscousIncompressible, Δt, u, un, stateVar)
+function updateStateVariables!(stateVar, obj::ViscousIncompressible, Δt, u, un)
   F, _, _ = get_Kinematics(obj.Kinematic)
   _, Se, ∂Se∂Ce = obj.ShortTerm(KinematicDescription{:SecondPiola}())
   return_mapping(A, F, Fn) = ReturnMapping(obj, Δt, Se, ∂Se∂Ce, F, Fn, A)
@@ -56,10 +56,10 @@ function initializeStateVariables(model::GeneralizedMaxwell, points::Measure)
   map(b -> initializeStateVariables(b, points), model.Branches)
 end
 
-function updateStateVariables!(model::GeneralizedMaxwell, Δt, u, un, stateVars)
+function updateStateVariables!(stateVars, model::GeneralizedMaxwell, Δt, u, un)
   @assert length(model.Branches) == length(stateVars)
   for (branch, state) in zip(model.Branches, stateVars)
-    updateStateVariables!(branch, Δt, u, un, state)
+    updateStateVariables!(state, branch, Δt, u, un)
   end
 end
 
