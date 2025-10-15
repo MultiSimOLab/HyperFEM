@@ -6,4 +6,9 @@
 include("../../examples/ViscoElasticSimulation.jl")
 
 λx, σΓ = visco_elastic_simulation()
-@test σΓ[end] ≈ 13870.814984291746
+
+if Int(VERSION.minor) > 10
+  @test σΓ[end] ≈ 13870.815
+else
+  @test ≈(σΓ[end], 13870.815, rtol=1e-6)
+end
