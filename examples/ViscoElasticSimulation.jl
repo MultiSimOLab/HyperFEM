@@ -87,7 +87,7 @@ function visco_elastic_simulation()
 end
 
 
-if abspath(PROGRAM_FILE) == @__FILE__ is true
+if abspath(PROGRAM_FILE) == @__FILE__
   using Plots
   λx, σΓ = visco_elastic_simulation()
   plot(λx, σΓ)
