@@ -2,7 +2,7 @@ abstract type AbstractPostProcessor end
 get_pvd(::AbstractPostProcessor) = @abstractmethod
 vtk_save(::AbstractPostProcessor) = @abstractmethod
 
-
+include("PostMetrics.jl")
 
 
 mutable struct PostProcessor{A,B,C} <:AbstractPostProcessor
@@ -71,6 +71,10 @@ function (obj::PostProcessor{<:DynamicNonlinearModel,<:Any,<:Any})(Λ)
     obj.cache[1](obj, obj.cache[2]...)
 end
 
+function Jacobian(uh)
+  F, _, J = Kinematics(Mechano).metrics
+  J ∘ F ∘ ∇(uh)
+end
 
 function Cauchy(physmodel::ThermoElectroMechano, uh, φh, θh, Ω, dΩ, Λ=1.0)
     DΨ = physmodel(Λ)
@@ -168,15 +172,9 @@ function D0(physmodel::ThermoElectroMechano, uh, φh, θh, Ω, dΩ, Λ=1.0)
 end
 
 
-
-
-
-
-
-function L2_Projection(Field, dΩ, VFE)
-    a(Fieldh, v) = ∫(Fieldh * v) * dΩ
-    l(v) = ∫(v * Field) * dΩ
-    op = AffineFEOperator(a, l, VFE, VFE)
-    return solve(op)
+function L2_Projection(u, dΩ, V)
+    a(w, v) = ∫(w * v) * dΩ
+    l(v)    = ∫(v * u) * dΩ
+    op      = AffineFEOperator(a, l, V, V)
+    solve(op)
 end
-

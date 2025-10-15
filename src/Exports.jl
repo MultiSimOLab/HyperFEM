@@ -113,6 +113,7 @@ end
 @publish ComputationalModels  PostProcessor
 @publish ComputationalModels  StaggeredModel
 @publish ComputationalModels  Cauchy
+@publish ComputationalModels  Jacobian
 @publish ComputationalModels  Entropy
 @publish ComputationalModels  D0
 @publish ComputationalModels  reset!
