@@ -111,6 +111,7 @@ end
 @publish ComputationalModels  GmshDiscreteModel
 @publish ComputationalModels  updateBC!
 @publish ComputationalModels  PostProcessor
+@publish ComputationalModels  PostMetrics
 @publish ComputationalModels  StaggeredModel
 @publish ComputationalModels  Cauchy
 @publish ComputationalModels  Jacobian
