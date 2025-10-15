@@ -91,7 +91,8 @@ struct StaticNonlinearModel{A,B,C,D,E} <: ComputationalModel
 
         ∆U = TrialFESpace(U, dirbc, 0.0)
         TrialFESpace!(U, dirbc, 0.0)
-        spaces = (U, V, ∆U)
+        Un = get_fe_space(xh⁻)
+        spaces = (U, V, ∆U, Un)
         x = get_free_dof_values(xh)
         x⁻ = get_free_dof_values(xh⁻)
         # x⁻ = zero_free_values(U)
@@ -124,7 +125,7 @@ function solve!(m::StaticNonlinearModel;
 
     reset!(post)
     flagconv = 1 # convergence flag 0 (max bisections) 1 (max steps)
-    U, V, ∆U = m.spaces
+    U, V, ∆U, Un = m.spaces
     TrialFESpace!(U, m.dirichlet, 0.0)
     nls, nls_cache, x, x⁻, assem_U = m.caches
 
@@ -149,7 +150,8 @@ function solve!(m::StaticNonlinearModel;
         end
        #@show α
         Λ -= ∆Λ
-        ∆Λ= α*∆Λ
+        ∆Λ = α*∆Λ
+        TrialFESpace!(Un, m.dirichlet, Λ)
         Λ += ∆Λ
 
         # U.dirichlet_values .+= α*∆U.dirichlet_values
