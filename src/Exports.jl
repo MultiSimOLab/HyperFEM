@@ -117,6 +117,9 @@ end
 @publish ComputationalModels  Entropy
 @publish ComputationalModels  D0
 @publish ComputationalModels  reset!
+@publish ComputationalModels  interpolate_L2_tensor
+@publish ComputationalModels  interpolate_L2_vector
+@publish ComputationalModels  interpolate_L2_scalar
 @publish ComputationalModels  DirichletCoupling
 @publish ComputationalModels  evaluate!
 @publish ComputationalModels  InterpolableBC
