@@ -486,7 +486,7 @@ end
 
   modelMR = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
   modelID = HardMagnetic(μ=1.2566e-6, αr=40e-3, χe=0.0, χr=8.0)
-  modelmagneto = MagnetoMechModel(Mechano=modelMR, Magneto=modelID)
+  modelmagneto = MagnetoMechModel(modelID, modelMR)
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelmagneto()
   F, _, _ = get_Kinematics(modelMR.Kinematic)
   H0 = get_Kinematics(modelID.Kinematic)
@@ -527,7 +527,7 @@ end
 
   modelMR = MooneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
   modelID = IdealMagnetic2D(μ=1.2566e-6, χe=0.0)
-  modelmagneto = MagnetoMechModel(Mechano=modelMR, Magneto=modelID)
+  modelmagneto = MagnetoMechModel(modelID, modelMR)
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelmagneto()
   F, _, _ = get_Kinematics(modelMR.Kinematic)
   H0 = get_Kinematics(modelID.Kinematic)
@@ -569,7 +569,7 @@ end
 
   modelMR = MooneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
   modelID = HardMagnetic2D(μ=1.2566e-6, αr=40e-3, χe=0.0, χr=8.0)
-  modelmagneto = MagnetoMechModel(Mechano=modelMR, Magneto=modelID)
+  modelmagneto = MagnetoMechModel(modelID, modelMR)
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelmagneto()
   F, _, _ = get_Kinematics(modelMR.Kinematic)
   H0 = get_Kinematics(modelID.Kinematic)

@@ -51,7 +51,7 @@ struct ThermoElectroMech_Govindjee{A,B,C} <: ThermoElectroMechano
 
   function (obj::ThermoElectroMech_Govindjee)(Λ::Float64=1.0)
     Ψm, _, _ = obj.Mechano(Λ)
-    Ψem, _, _, _, _, _ = _getCoupling(obj.Mechano, obj.Electro, Λ)
+    Ψem, _, _, _, _, _ = _getCoupling(obj.Electro, obj.Mechano, Λ)
     f(δθ) = obj.fθ(δθ)
     df(δθ) = obj.dfdθ(δθ)
     g(δθ) = obj.gθ(δθ)
