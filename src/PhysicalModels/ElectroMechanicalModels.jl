@@ -1,14 +1,14 @@
 
-struct ElectroMechModel{M<:Mechano, E<:Electro} <: ElectroMechano
-  mechano::M
+struct ElectroMechModel{E<:Electro, M<:Mechano} <: ElectroMechano
   electro::E
+  mechano::M
 
-  function ElectroMechModel(mechano::M, electro::E) where {M<:Mechano, E<:Electro}
-    new{M,E}(mechano,electro)
+  function ElectroMechModel(electro::E, mechano::M) where {E<:Electro, M<:Mechano}
+    new{E,M}(electro, mechano)
   end
 
-  function ElectroMechModel(;mechano::M, electro::E) where {M<:Mechano, E<:Electro}
-    new{M,E}(mechano,electro)
+  function ElectroMechModel(; electro::E, mechano::M) where {E<:Electro, M<:Mechano}
+    new{E,M}(electro, mechano)
   end
 
   function (obj::ElectroMechModel)(Λ::Float64=1.0)
@@ -23,7 +23,7 @@ struct ElectroMechModel{M<:Mechano, E<:Electro} <: ElectroMechano
     return (Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ)
   end
   
-  function (obj::ElectroMechModel{<:ViscoElastic,<:Electro})(Λ::Float64=1.0; Δt)
+  function (obj::ElectroMechModel{<:Electro,<:ViscoElastic})(Λ::Float64=1.0; Δt)
     Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano(Λ, Δt=Δt)
     Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.mechano, obj.electro, Λ)
     Ψ(F, Fn, E, A...) = Ψm(F, Fn, A...) + Ψem(F, E)
@@ -36,7 +36,7 @@ struct ElectroMechModel{M<:Mechano, E<:Electro} <: ElectroMechano
   end
 end
 
-ViscoElectricModel = ElectroMechModel{<:ViscoElastic,<:Electro}
+ViscoElectricModel = ElectroMechModel{<:Electro,<:ViscoElastic}
 
 function initializeStateVariables(obj::ElectroMechano, points::Measure)
   initializeStateVariables(obj.mechano, points)
@@ -81,14 +81,20 @@ function _getCoupling(mec::Mechano, elec::Electro, Λ::Float64)
 end
 
 
-struct FlexoElectroModel{A} <: FlexoElectro
-  ElectroMechano::A
+struct FlexoElectroModel{EM<:ElectroMechano} <: FlexoElectro
+  electromechano::EM
   κ::Float64
-  function FlexoElectroModel(; mechano::Mechano, electro::Electro, κ=1.0)
-    physmodel = ElectroMechModel(mechano=mechano, electro=electro)
-    A = typeof(physmodel)
-    new{A}(physmodel, κ)
+
+  function FlexoElectroModel(electro::E, mechano::M; κ=1.0) where {E <: Electro, M <: Mechano}
+    physmodel = ElectroMechModel(electro, mechano)
+    new{ElectroMechModel{E,M}}(physmodel, κ)
   end
+
+  function FlexoElectroModel(; electro::E, mechano::M, κ=1.0) where {E <: Electro, M <: Mechano}
+    physmodel = ElectroMechModel(electro, mechano)
+    new{ElectroMechModel{E,M}}(physmodel, κ)
+  end
+
   function (obj::FlexoElectroModel)(Λ::Float64=1.0)
     e₁ = VectorValue(1.0, 0.0, 0.0)
     e₂ = VectorValue(0.0, 1.0, 0.0)
@@ -99,7 +105,7 @@ struct FlexoElectroModel{A} <: FlexoElectro
     f3(δϕ) = δϕ ⊗₁² e₃
     Φ(ϕ₁, ϕ₂, ϕ₃) = (f1 ∘ (ϕ₁) + f2 ∘ (ϕ₂) + f3 ∘ (ϕ₃))
 
-    Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = obj.ElectroMechano(Λ)
+    Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = obj.electromechano(Λ)
     return Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ, Φ
   end
 end

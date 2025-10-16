@@ -66,7 +66,7 @@ end
   viscous_branch1 = ViscousIncompressible(short_term, τ=6.)
   visco_elastic = GeneralizedMaxwell(hyper_elastic, viscous_branch1)
   dielectric = IdealDielectric(ε=1.0)
-  model = ElectroMechModel(visco_elastic, dielectric)
+  model = ElectroMechModel(dielectric, visco_elastic)
   F, _, _ = get_Kinematics(model.mechano.Kinematic)
   E       = get_Kinematics(model.electro.Kinematic)
   Uvn = TensorValue(1.,2.,3.,2.,4.,5.,3.,5.,6.) * 2e-4 + I3
@@ -86,7 +86,7 @@ end
   viscous_branch2 = ViscousIncompressible(short_term, τ=60.)
   visco_elastic = GeneralizedMaxwell(hyper_elastic, viscous_branch1, viscous_branch2)
   dielectric = IdealDielectric(ε=1.0)
-  model = ElectroMechModel(visco_elastic, dielectric)
+  model = ElectroMechModel(dielectric, visco_elastic)
   F, _, _ = get_Kinematics(model.mechano.Kinematic)
   E       = get_Kinematics(model.electro.Kinematic)
   Uvn = TensorValue(1.,2.,3.,2.,4.,5.,3.,5.,6.) * 2e-4 + I3
