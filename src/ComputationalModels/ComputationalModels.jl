@@ -87,4 +87,8 @@ export Jacobian
 export Entropy
 export D0
 export reset!
+export interpolate_L2_tensor
+export interpolate_L2_vector
+export interpolate_L2_scalar
+
 end

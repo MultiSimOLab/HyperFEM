@@ -3,6 +3,9 @@ module PostMetrics
 using Gridap
 using HyperFEM.PhysicalModels
 
+export component_LInf
+export volume_diff
+
 """
     component_LInf(::FEFunction, ::Symbol, ::Triangulation)::Float64
 

@@ -102,37 +102,28 @@ end
 
 
 function Cauchy(model::Elasto, uh, unh, state_vars, Ω, dΩ, t, Δt)
-    _, ∂Ψu, _ = model(t)
-    F, _, _ = get_Kinematics(model.Kinematic)
-    σ = ∂Ψu ∘ (F∘∇(uh))
-    return interpolate_σ_everywhere(σ, Ω, dΩ)
+    σh = Cauchy(model, uh)
+    interpolate_L2_tensor(σh, Ω, dΩ)
 end
 
 
 function Cauchy(model::ViscoElastic, uh, unh, state_vars, Ω, dΩ, t, Δt)
-    _, ∂Ψu, _ = model(t, Δt=Δt)
-    F, _, _ = get_Kinematics(model.Kinematic)
-    σ = ∂Ψu ∘ (F∘∇(uh), F∘∇(unh), state_vars...)
-    return interpolate_σ_everywhere(σ, Ω, dΩ)
+    σh = Cauchy(model, uh, unh, state_vars, Δt)
+    interpolate_L2_tensor(σh, Ω, dΩ)
 end
 
 
-function interpolate_σ_everywhere(σ, Ω, dΩ)
-    ref_L2 = ReferenceFE(lagrangian, Float64, 0)
-    ref_fe = ReferenceFE(lagrangian, Float64, 1)
-    VL2 = FESpace(Ω, ref_L2, conformity=:L2)
-    V = FESpace(Ω, ref_fe, conformity=:H1)
-    n1 = VectorValue(1.0, 0.0, 0.0)
-    n2 = VectorValue(0.0, 1.0, 0.0)
-    n3 = VectorValue(0.0, 0.0, 1.0)
-    σ11h = interpolate_everywhere(L2_Projection(n1 ⋅ σ ⋅ n1, dΩ, VL2), V)
-    σ12h = interpolate_everywhere(L2_Projection(n1 ⋅ σ ⋅ n2, dΩ, VL2), V)
-    σ13h = interpolate_everywhere(L2_Projection(n1 ⋅ σ ⋅ n3, dΩ, VL2), V)
-    σ22h = interpolate_everywhere(L2_Projection(n2 ⋅ σ ⋅ n2, dΩ, VL2), V)
-    σ23h = interpolate_everywhere(L2_Projection(n2 ⋅ σ ⋅ n3, dΩ, VL2), V)
-    σ33h = interpolate_everywhere(L2_Projection(n3 ⋅ σ ⋅ n3, dΩ, VL2), V)
-    ph   = interpolate_everywhere(L2_Projection(tr ∘ σ, dΩ, VL2), V)
-    return (σ11h, σ12h, σ13h, σ22h, σ23h, σ33h, ph)
+function Cauchy(model::Elasto, uh, vars...)
+    _, ∂Ψu, _ = model()
+    F, _, _ = get_Kinematics(model.Kinematic)
+    ∂Ψu ∘ (F∘∇(uh))
+end
+
+
+function Cauchy(model::ViscoElastic, uh, unh, states, Δt)
+    _, ∂Ψu, _ = model(Δt=Δt)
+    F, _, _ = get_Kinematics(model.Kinematic)
+    ∂Ψu ∘ (F∘∇(uh), F∘∇(unh), states...)
 end
 
 
@@ -169,6 +160,49 @@ function D0(physmodel::ThermoElectroMechano, uh, φh, θh, Ω, dΩ, Λ=1.0)
     D0_2h = interpolate_everywhere(L2_Projection(n2 ⋅(∂ΨE ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)), dΩ, VL2), V)
     D0_3h = interpolate_everywhere(L2_Projection(n3 ⋅(∂ΨE ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)), dΩ, VL2), V)
     return (D0_1h,D0_2h,D0_3h)
+end
+
+
+function interpolate_L2_tensor(A, Ω, dΩ, Γ=Ω)
+    refL2 = ReferenceFE(lagrangian, Float64, 0)
+    reffe = ReferenceFE(lagrangian, Float64, 1)
+    VL2 = FESpace(Ω, refL2, conformity=:L2)
+    VH1 = FESpace(Γ, reffe, conformity=:H1)
+    n1 = VectorValue(1.0, 0.0, 0.0)
+    n2 = VectorValue(0.0, 1.0, 0.0)
+    n3 = VectorValue(0.0, 0.0, 1.0)
+    A11 = interpolate_everywhere(L2_Projection(n1 ⋅ A ⋅ n1, dΩ, VL2), VH1)
+    A12 = interpolate_everywhere(L2_Projection(n1 ⋅ A ⋅ n2, dΩ, VL2), VH1)
+    A13 = interpolate_everywhere(L2_Projection(n1 ⋅ A ⋅ n3, dΩ, VL2), VH1)
+    A22 = interpolate_everywhere(L2_Projection(n2 ⋅ A ⋅ n2, dΩ, VL2), VH1)
+    A23 = interpolate_everywhere(L2_Projection(n2 ⋅ A ⋅ n3, dΩ, VL2), VH1)
+    A33 = interpolate_everywhere(L2_Projection(n3 ⋅ A ⋅ n3, dΩ, VL2), VH1)
+    trA = interpolate_everywhere(L2_Projection(tr ∘ A,     dΩ, VL2), VH1)
+    (A11, A12, A13, A22, A23, A33, trA)
+end
+
+
+function interpolate_L2_vector(b, Ω, dΩ, Γ=Ω)
+    refL2 = ReferenceFE(lagrangian, Float64, 0)
+    reffe = ReferenceFE(lagrangian, Float64, 1)
+    VL2 = FESpace(Ω, refL2, conformity=:L2)
+    VH1 = FESpace(Γ, reffe, conformity=:H1)
+    n1 = VectorValue(1.0, 0.0, 0.0)
+    n2 = VectorValue(0.0, 1.0, 0.0)
+    n3 = VectorValue(0.0, 0.0, 1.0)
+    b1 = interpolate_everywhere(L2_Projection(n1 ⋅ b, dΩ, VL2), VH1)
+    b1 = interpolate_everywhere(L2_Projection(n2 ⋅ b, dΩ, VL2), VH1)
+    b1 = interpolate_everywhere(L2_Projection(n3 ⋅ b, dΩ, VL2), VH1)
+    (b1, b2, b3)
+end
+
+
+function interpolate_L2_scalar(x, Ω, dΩ, Γ=Ω)
+    refL2 = ReferenceFE(lagrangian, Float64, 0)
+    reffe = ReferenceFE(lagrangian, Float64, 1)
+    VL2 = FESpace(Ω, refL2, conformity=:L2)
+    VH1 = FESpace(Γ, reffe, conformity=:H1)
+    interpolate_everywhere(L2_Projection(x, dΩ, VL2), VH1)
 end
 
 

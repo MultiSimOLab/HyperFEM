@@ -1,18 +1,15 @@
+using Gridap
 using HyperFEM
 using Test
-using Gridap
 
 
 @testset "HyperFEMTests" verbose = true begin
 
-    @time begin
-        include("../test/TestConstitutiveModels/runtests.jl")
-    end
-    @time begin
-        include("./TestTensorAlgebra/runtests.jl")
-    end
-    @time begin
-        include("../test/TestWeakForms/runtests.jl")
-    end
+    include("TestConstitutiveModels/runtests.jl")
 
+    include("TestTensorAlgebra/runtests.jl")
+
+    include("TestWeakForms/runtests.jl")
+
+    include("SimulationsTests/runtests.jl")
 end;
