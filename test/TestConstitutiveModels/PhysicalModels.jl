@@ -626,7 +626,7 @@ end
   ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
 
   model = ARAP2D_regularized(μ=μParams[1])
-  modelreg = HessianRegularization(Mechano=model)
+  modelreg = HessianRegularization(model)
 
   Ψ, ∂Ψu, ∂Ψuu = modelreg()
   F, _, J_ = get_Kinematics(modelreg.Kinematic)
@@ -650,7 +650,7 @@ end
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
   ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
   model = ARAP2D(μ=μParams[1])
-  modelreg = Hessian∇JRegularization(Mechano=model)
+  modelreg = Hessian∇JRegularization(model)
 
   Ψ, ∂Ψu, ∂Ψuu = modelreg()
   F, _, J_ = get_Kinematics(modelreg.Kinematic)

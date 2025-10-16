@@ -36,6 +36,11 @@ struct Hessian∇JRegularization{M<:Mechano,B} <: Mechano
   δ::Float64
   κ::Float64
   Kinematic::B
+  
+  function Hessian∇JRegularization(mechano::M; δ::Float64=1.0e-6, κ::Float64=1.0) where {M <: Mechano}
+    new{M,typeof(mechano.Kinematic)}(mechano, δ, κ, mechano.Kinematic)
+  end
+
   function Hessian∇JRegularization(; mechano::M, δ::Float64=1.0e-6, κ::Float64=1.0) where {M <: Mechano}
     new{M,typeof(mechano.Kinematic)}(mechano, δ, κ, mechano.Kinematic)
   end
