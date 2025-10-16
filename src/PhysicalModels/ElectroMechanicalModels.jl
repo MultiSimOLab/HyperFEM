@@ -13,7 +13,7 @@ struct ElectroMechModel{E<:Electro, M<:Mechano} <: ElectroMechano
 
   function (obj::ElectroMechModel)(Λ::Float64=1.0)
     Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano(Λ)
-    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.mechano, obj.electro, Λ)
+    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.electro, obj.mechano, Λ)
     Ψ(F, E) = Ψm(F) + Ψem(F, E)
     ∂Ψu(F, E) = ∂Ψm_u(F) + ∂Ψem_u(F, E)
     ∂Ψφ(F, E) = ∂Ψem_φ(F, E)
@@ -25,7 +25,7 @@ struct ElectroMechModel{E<:Electro, M<:Mechano} <: ElectroMechano
   
   function (obj::ElectroMechModel{<:Electro,<:ViscoElastic})(Λ::Float64=1.0; Δt)
     Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano(Λ, Δt=Δt)
-    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.mechano, obj.electro, Λ)
+    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.electro, obj.mechano, Λ)
     Ψ(F, Fn, E, A...) = Ψm(F, Fn, A...) + Ψem(F, E)
     ∂Ψu(F, Fn, E, A...) = ∂Ψm_u(F, Fn, A...) + ∂Ψem_u(F, E)
     ∂Ψφ(F, Fn, E, A...) = ∂Ψem_φ(F, E)
@@ -47,7 +47,7 @@ function updateStateVariables!(state, obj::ElectroMechano, args...)
 end
 
 
-function _getCoupling(mec::Mechano, elec::Electro, Λ::Float64)
+function _getCoupling(elec::Electro, mec::Mechano, Λ::Float64)
   _, H, J = get_Kinematics(mec.Kinematic; Λ=Λ)
 
   # Energy #
