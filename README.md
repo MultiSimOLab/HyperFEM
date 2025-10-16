@@ -9,7 +9,7 @@ src="https://github.com/jmartfrut/HyperFEM/blob/main/docs/imgs/logo.png?raw=true
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://jmartfrut.github.io/HyperFEM.jl/stable/)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://jmartfrut.github.io/HyperFEM.jl/dev/)
-[![Build Status](https://github.com/jmartfrut/HyperFEM.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/jmartfrut/HyperFEM.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![Build Status](https://github.com/MultiSimOLab/HyperFEM/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/MultiSimOLab/HyperFEM/actions/workflows/ci.yml?branch=main)
 [![Coverage](https://codecov.io/gh/jmartfrut/HyperFEM.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/jmartfrut/HyperFEM.jl)
 
 # **M**ultiphysics-informed **D**esign of **T**unable **S**mart **M**aterials
@@ -48,7 +48,7 @@ geomodel = GmshDiscreteModel("./test/models/test_static_EM.msh")
 # Constitutive model
 physmodel_mec = NeoHookean3D(λ=10.0, μ=1.0)
 physmodel_elec = IdealDielectric(ε=1.0)
-physmodel = ElectroMechModel(Mechano=physmodel_mec, Electro=physmodel_elec)
+physmodel = ElectroMechModel(mechano=physmodel_mec, electro=physmodel_elec)
 
 # Setup integration
 order = 1
