@@ -3,20 +3,24 @@
 # MultiPhysicalModel models
 # ===================
 
-struct ThermoMechModel{A,B,C,D} <: ThermoMechano
-  Thermo::A
-  Mechano::B
-  fθ::C
-  dfdθ::D
-  function ThermoMechModel(; Thermo::Thermo, Mechano::Mechano, fθ::Function, dfdθ::Function)
-    A, B, C, D = typeof(Thermo), typeof(Mechano), typeof(fθ), typeof(dfdθ)
-    new{A,B,C,D}(Thermo, Mechano, fθ, dfdθ)
+struct ThermoMechModel{T<:Thermo,M<:Mechano} <: ThermoMechano
+  thermo::T
+  mechano::M
+  fθ::Function
+  dfdθ::Function
+
+  function ThermoMechModel(thermo::T, mechano::M; fθ::Function, dfdθ::Function) where {T <: Thermo, M <: Mechano}
+    new{T,M}(thermo, mechano, fθ, dfdθ)
+  end
+
+  function ThermoMechModel(; thermo::T, mechano::M, fθ::Function, dfdθ::Function) where {T <: Thermo, M <: Mechano}
+    new{T,M}(thermo, mechano, fθ, dfdθ)
   end
 
   function (obj::ThermoMechModel)(Λ::Float64=1.0)
-    Ψt, ∂Ψt_θ, ∂Ψt_θθ = obj.Thermo(Λ)
-    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.Mechano(Λ)
-    Ψtm, ∂Ψtm_u, ∂Ψtm_θ, ∂Ψtm_uu, ∂Ψtm_uθ, ∂Ψtm_θθ = _getCoupling(obj.Mechano, obj.Thermo, Λ)
+    Ψt, ∂Ψt_θ, ∂Ψt_θθ = obj.thermo(Λ)
+    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano(Λ)
+    Ψtm, ∂Ψtm_u, ∂Ψtm_θ, ∂Ψtm_uu, ∂Ψtm_uθ, ∂Ψtm_θθ = _getCoupling(obj.mechano, obj.thermo, Λ)
     f(δθ) = (obj.fθ(δθ)::Float64)
     df(δθ) = (obj.dfdθ(δθ)::Float64)
     Ψ(F, δθ) = f(δθ) * (Ψm(F)) + (Ψt(δθ) + Ψtm(F, δθ))
@@ -31,30 +35,34 @@ struct ThermoMechModel{A,B,C,D} <: ThermoMechano
 end
 
 
-struct ThermoMech_EntropicPolyconvex{A,B,C,D,E} <: ThermoMechano
-  Thermo::A
-  Mechano::B
+struct ThermoMech_EntropicPolyconvex{T<:Thermo,M<:Mechano} <: ThermoMechano
+  thermo::T
+  mechano::M
   β::Float64
-  G::C
-  ϕ::D
-  s::E
-  function ThermoMech_EntropicPolyconvex(; Thermo::Thermo, Mechano::Mechano, β::Float64, G::Function, ϕ::Function, s::Function)
-    A, B, C, D, E = typeof(Thermo), typeof(Mechano), typeof(G), typeof(ϕ), typeof(s)
-    new{A,B,C,D,E}(Thermo, Mechano, β, G, ϕ, s)
+  G::Function
+  ϕ::Function
+  s::Function
+
+  function ThermoMech_EntropicPolyconvex(thermo::T, mechano::M; β::Float64, G::Function, ϕ::Function, s::Function) where {T <: Thermo, M <: Mechano}
+    new{T,M}(thermo, mechano, β, G, ϕ, s)
+  end
+
+  function ThermoMech_EntropicPolyconvex(; thermo::T, mechano::M, β::Float64, G::Function, ϕ::Function, s::Function) where {T <: Thermo, M <: Mechano}
+    new{T,M}(thermo, mechano, β, G, ϕ, s)
   end
 
   function (obj::ThermoMech_EntropicPolyconvex)(Λ::Float64=1.0)
-    Ψt, _, _ = obj.Thermo(Λ)
-    Ψm, _, _ = obj.Mechano(Λ)
-    θr = obj.Thermo.θr
-    Cv = obj.Thermo.Cv
-    α = obj.Thermo.α
+    Ψt, _, _ = obj.thermo(Λ)
+    Ψm, _, _ = obj.mechano(Λ)
+    θr = obj.thermo.θr
+    Cv = obj.thermo.Cv
+    α = obj.thermo.α
     β = obj.β
     G = obj.G
     ϕ = obj.ϕ
     s = obj.s
 
-    _, H, J = get_Kinematics(obj.Mechano.Kinematic; Λ=Λ)
+    _, H, J = get_Kinematics(obj.mechano.Kinematic; Λ=Λ)
 
     I1(F) = tr(F' * F)
     I2(F) = tr(H(F)' * H(F))

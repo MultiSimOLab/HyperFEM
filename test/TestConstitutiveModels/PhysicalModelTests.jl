@@ -211,6 +211,7 @@ end
   @test norm(∂Ψφθ(F(∇u), E(∇φ), θt)) == 14.707913034885005
 end
 
+
 @testset "TermoMech" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   θt = 3.4 - 1.0
@@ -218,7 +219,7 @@ end
   modelT = ThermalModel(Cv=1.0, θr=1.0, α=2.0)
   f(δθ::Float64)::Float64 = (δθ + 1.0) / 1.0
   df(δθ::Float64)::Float64 = 1.0
-  modelTM = ThermoMechModel(Thermo=modelT, Mechano=modelMR, fθ=f, dfdθ=df)
+  modelTM = ThermoMechModel(modelT, modelMR, fθ=f, dfdθ=df)
   Ψ, ∂Ψu, ∂Ψθ, ∂Ψuu, ∂Ψθθ, ∂Ψuθ = modelTM()
   F, _, _ = get_Kinematics(modelMR.Kinematic)
 
@@ -228,13 +229,10 @@ end
   @test norm(∂Ψuu(F(∇u), θt)) == 132.85408867418602
   @test norm(∂Ψθθ(F(∇u), θt)) == 0.29411764705882354
   @test norm(∂Ψuθ(F(∇u), θt)) == 21.074087978716364
-
-
 end
 
 
 @testset "ThermoMech_EntropicPolyconvex" begin
-
   ∇u = 1e-1 * TensorValue(1, 2, 3, 4, 5, 6, 7, 8, 9)
   θt = 21.6
   modmec = MooneyRivlin3D(λ=10.0, μ1=1.0, μ2=1.0, ρ=1.0)
@@ -246,7 +244,7 @@ end
   γ₃ = 0.5
   s(I1, I2, I3) = 1 / 3 * ((I1 / 3.0)^γ₁ + (I2 / 3.0)^γ₂ + I3^γ₃)
   ϕ(x) = 2.0 * (x + 1.0) * log(x + 1.0) - 2.0 * x * (1 + log(2)) + 2.0 * (1 - log(2))
-  consmodel = ThermoMech_EntropicPolyconvex(Thermo=modterm, Mechano=modmec, β=β, G=G, ϕ=ϕ, s=s)
+  consmodel = ThermoMech_EntropicPolyconvex(modterm, modmec, β=β, G=G, ϕ=ϕ, s=s)
 
   Ψ, ∂Ψu, ∂Ψθ, ∂Ψuu, ∂Ψθθ, ∂Ψuθ = consmodel()
   F, _, _ = get_Kinematics(modmec.Kinematic)
@@ -257,7 +255,6 @@ end
   @test norm(∂Ψuu(F(∇u), θt)) == 2066.7910102392775
   @test norm(∂Ψθθ(F(∇u), θt)) == 0.46689338540182707
   @test norm(∂Ψuθ(F(∇u), θt)) == 14.243050132210923
-
 end
 
 
