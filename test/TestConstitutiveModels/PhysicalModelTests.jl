@@ -194,7 +194,7 @@ end
   modelT = ThermalModel(Cv=1.0, θr=1.0, α=2.0)
   f(δθ::Float64)::Float64 = (δθ + 1.0) / 1.0
   df(δθ::Float64)::Float64 = 1.0
-  modelTEM = ThermoElectroMechModel(Thermo=modelT, Electro=modelID, Mechano=modelMR, fθ=f, dfdθ=df)
+  modelTEM = ThermoElectroMechModel(modelT, modelID, modelMR, fθ=f, dfdθ=df)
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψθ, ∂Ψuu, ∂Ψφφ, ∂Ψθθ, ∂Ψφu, ∂Ψuθ, ∂Ψφθ = modelTEM()
   F, _, _ = get_Kinematics(modelMR.Kinematic)
   E = get_Kinematics(modelID.Kinematic)
@@ -267,7 +267,7 @@ end
   modelID = IdealDielectric(ε=1.0)
   modelT = ThermalModel(Cv=17.385, θr=293.0, α=0.00156331, γv=2.0, γd=2.0)
 
-  modelTEM = ThermoElectroMech_Bonet(Thermo=modelT, Electro=modelID, Mechano=modelMR)
+  modelTEM = ThermoElectroMech_Bonet(modelT, modelID, modelMR)
   Ψ, ∂Ψu, ∂ΨE, ∂Ψθ, ∂ΨFF, ∂ΨEE, ∂2Ψθθ, ∂ΨEF, ∂ΨFθ, ∂ΨEθ, η = modelTEM()
 
   F, _, _ = get_Kinematics(modelMR.Kinematic)
@@ -330,7 +330,7 @@ end
   g(δθ) = -0.33 * ((δθ + 293.0) / 293.0)^3
   dg(δθ) = -(3 * 0.33 / 293.0) * ((δθ + 293.0) / 293.0)^2
 
-  modelTEM = ThermoElectroMech_Govindjee(Thermo=modelT, Electro=modelID, Mechano=modelMR, fθ=f, dfdθ=df, gθ=g, dgdθ=dg, β=0.0)
+  modelTEM = ThermoElectroMech_Govindjee(modelT, modelID, modelMR, fθ=f, dfdθ=df, gθ=g, dgdθ=dg, β=0.0)
   Ψ, ∂Ψu, ∂ΨE, ∂Ψθ, ∂ΨFF, ∂ΨEE, ∂2Ψθθ, ∂ΨEF, ∂ΨFθ, ∂ΨEθ, η = modelTEM()
   F, _, _ = get_Kinematics(modelMR.Kinematic)
   E = get_Kinematics(modelID.Kinematic)

@@ -20,7 +20,7 @@ struct ThermoMechModel{T<:Thermo,M<:Mechano} <: ThermoMechano
   function (obj::ThermoMechModel)(Λ::Float64=1.0)
     Ψt, ∂Ψt_θ, ∂Ψt_θθ = obj.thermo(Λ)
     Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano(Λ)
-    Ψtm, ∂Ψtm_u, ∂Ψtm_θ, ∂Ψtm_uu, ∂Ψtm_uθ, ∂Ψtm_θθ = _getCoupling(obj.mechano, obj.thermo, Λ)
+    Ψtm, ∂Ψtm_u, ∂Ψtm_θ, ∂Ψtm_uu, ∂Ψtm_uθ, ∂Ψtm_θθ = _getCoupling(obj.thermo, obj.mechano, Λ)
     f(δθ) = (obj.fθ(δθ)::Float64)
     df(δθ) = (obj.dfdθ(δθ)::Float64)
     Ψ(F, δθ) = f(δθ) * (Ψm(F)) + (Ψt(δθ) + Ψtm(F, δθ))
@@ -93,7 +93,7 @@ struct ThermoMech_EntropicPolyconvex{T<:Thermo,M<:Mechano} <: ThermoMechano
 end
 
 
-function _getCoupling(mec::Mechano, term::Thermo, Λ::Float64)
+function _getCoupling(term::Thermo, mec::Mechano, Λ::Float64)
   _, H, J = get_Kinematics(mec.Kinematic; Λ=Λ)
 
   ∂Ψtm_∂J(F, δθ) = -6.0 * term.α * J(F) * δθ

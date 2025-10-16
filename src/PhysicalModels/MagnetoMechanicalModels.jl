@@ -3,17 +3,21 @@
 # Magneto mechanical models
 # ===============================
 
-struct MagnetoMechModel{A,B} <: MagnetoMechano
-  Mechano::A
-  Magneto::B
-  function MagnetoMechModel(; Mechano::Mechano, Magneto::Magneto)
-    A, B = typeof(Mechano), typeof(Magneto)
-    new{A,B}(Mechano, Magneto)
+struct MagnetoMechModel{MG<:Magneto,MC<:Mechano} <: MagnetoMechano
+  magneto::MG
+  mechano::MC
+
+  function MagnetoMechModel(magneto::MG, mechano::MC) where {MG <: Magneto, MC <: Mechano}
+    new{MG,MC}(magneto, mechano)
+  end
+  
+  function MagnetoMechModel(; magneto::MG, mechano::MC) where {MG <: Magneto, MC <: Mechano}
+    new{MG,MC}(magneto, mechano)
   end
 
   function (obj::MagnetoMechModel)(Λ::Float64=1.0)
-    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.Mechano(Λ)
-    Ψmm, ∂Ψmm_u, ∂Ψmm_φ, ∂Ψmm_uu, ∂Ψmm_φu, ∂Ψmm_φφ = _getCoupling(obj.Mechano, obj.Magneto, Λ)
+    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano(Λ)
+    Ψmm, ∂Ψmm_u, ∂Ψmm_φ, ∂Ψmm_uu, ∂Ψmm_φu, ∂Ψmm_φφ = _getCoupling(obj.magneto, obj.mechano, Λ)
 
     Ψ(F, ℋ₀, N) = Ψm(F) + Ψmm(F, ℋ₀, N)
     ∂Ψu(F, ℋ₀, N) = ∂Ψm_u(F) + ∂Ψmm_u(F, ℋ₀, N)
@@ -27,7 +31,7 @@ struct MagnetoMechModel{A,B} <: MagnetoMechano
 end
 
 
-function _getCoupling(::Mechano, mag::Union{IdealMagnetic,IdealMagnetic2D}, Λ::Float64)
+function _getCoupling(mag::Union{IdealMagnetic,IdealMagnetic2D}, ::Mechano, Λ::Float64)
   Ψmm, ∂Ψmm_∂u, ∂Ψmm_∂φ, ∂Ψmm_∂uu, ∂Ψmm_∂φu, ∂Ψmm_∂φφ = mag(Λ)
 
   Ψ(F, ℋ₀, N) = Ψmm(F, ℋ₀)
@@ -41,7 +45,7 @@ function _getCoupling(::Mechano, mag::Union{IdealMagnetic,IdealMagnetic2D}, Λ::
 end
 
 
-function _getCoupling(mec::Mechano, mag::HardMagnetic, Λ::Float64)
+function _getCoupling(mag::HardMagnetic, mec::Mechano, Λ::Float64)
 
   # Miguel Angel Moreno-Mateos, Mokarram Hossain, Paul Steinmann, Daniel Garcia-Gonzalez,
   # Hard magnetics in ultra-soft magnetorheological elastomers enhance fracture toughness and 
@@ -121,7 +125,7 @@ function _getCoupling(mec::Mechano, mag::HardMagnetic, Λ::Float64)
 end
 
 
-function _getCoupling(mec::Mechano, mag::HardMagnetic2D, Λ::Float64)
+function _getCoupling(mag::HardMagnetic2D, mec::Mechano, Λ::Float64)
 
   # Miguel Angel Moreno-Mateos, Mokarram Hossain, Paul Steinmann, Daniel Garcia-Gonzalez,
   # Hard magnetics in ultra-soft magnetorheological elastomers enhance fracture toughness and 

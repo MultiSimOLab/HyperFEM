@@ -1,20 +1,24 @@
 
-struct ThermoElectroMechModel{A,B,C} <: ThermoElectroMechano
-  Thermo::A
-  Electro::B
-  Mechano::C
+struct ThermoElectroMechModel{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectroMechano
+  thermo::T
+  electro::E
+  mechano::M
   fθ::Function
   dfdθ::Function
-  function ThermoElectroMechModel(; Thermo::Thermo, Electro::Electro, Mechano::Mechano, fθ::Function, dfdθ::Function)
-    A, B, C = typeof(Thermo), typeof(Electro), typeof(Mechano)
-    new{A,B,C}(Thermo, Electro, Mechano, fθ, dfdθ)
+  
+  function ThermoElectroMechModel(thermo::T, electro::E, mechano::M; fθ::Function, dfdθ::Function) where {T<:Thermo,E<:Electro,M<:Mechano}
+    new{T,E,M}(thermo, electro, mechano, fθ, dfdθ)
+  end
+
+  function ThermoElectroMechModel(; thermo::T, electro::E, mechano::M, fθ::Function, dfdθ::Function) where {T<:Thermo,E<:Electro,M<:Mechano}
+    new{T,E,M}(thermo, electro, mechano, fθ, dfdθ)
   end
 
   function (obj::ThermoElectroMechModel)(Λ::Float64=1.0)
-    Ψt, ∂Ψt_θ, ∂Ψt_θθ = obj.Thermo(Λ)
-    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.Mechano(Λ)
-    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.Mechano, obj.Electro, Λ)
-    Ψtm, ∂Ψtm_u, ∂Ψtm_θ, ∂Ψtm_uu, ∂Ψtm_uθ, ∂Ψtm_θθ = _getCoupling(obj.Mechano, obj.Thermo, Λ)
+    Ψt, ∂Ψt_θ, ∂Ψt_θθ = obj.thermo(Λ)
+    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano(Λ)
+    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.electro, obj.mechano, Λ)
+    Ψtm, ∂Ψtm_u, ∂Ψtm_θ, ∂Ψtm_uu, ∂Ψtm_uθ, ∂Ψtm_θθ = _getCoupling(obj.thermo, obj.mechano, Λ)
     f(δθ) = (obj.fθ(δθ)::Float64)
     df(δθ) = (obj.dfdθ(δθ)::Float64)
 
@@ -35,31 +39,35 @@ struct ThermoElectroMechModel{A,B,C} <: ThermoElectroMechano
 end
 
 
-struct ThermoElectroMech_Govindjee{A,B,C} <: ThermoElectroMechano
-  Thermo::A
-  Electro::B
-  Mechano::C
+struct ThermoElectroMech_Govindjee{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectroMechano
+  thermo::T
+  electro::E
+  mechano::M
   fθ::Function
   dfdθ::Function
   gθ::Function
   dgdθ::Function
   β::Float64
-  function ThermoElectroMech_Govindjee(; Thermo::Thermo, Electro::Electro, Mechano::Mechano, fθ::Function, dfdθ::Function, gθ::Function, dgdθ::Function, β::Float64=0.0)
-    A, B, C, = typeof(Thermo), typeof(Electro), typeof(Mechano)
-    new{A,B,C}(Thermo, Electro, Mechano, fθ, dfdθ, gθ, dgdθ, β)
+
+  function ThermoElectroMech_Govindjee(thermo::T, electro::E, mechano::M; fθ::Function, dfdθ::Function, gθ::Function, dgdθ::Function, β::Float64=0.0) where {T<:Thermo,E<:Electro,M<:Mechano}
+    new{T,E,M}(thermo, electro, mechano, fθ, dfdθ, gθ, dgdθ, β)
+  end
+
+  function ThermoElectroMech_Govindjee(; thermo::T, electro::E, mechano::M, fθ::Function, dfdθ::Function, gθ::Function, dgdθ::Function, β::Float64=0.0) where {T<:Thermo,E<:Electro,M<:Mechano}
+    new{T,E,M}(thermo, electro, mechano, fθ, dfdθ, gθ, dgdθ, β)
   end
 
   function (obj::ThermoElectroMech_Govindjee)(Λ::Float64=1.0)
-    Ψm, _, _ = obj.Mechano(Λ)
-    Ψem, _, _, _, _, _ = _getCoupling(obj.Electro, obj.Mechano, Λ)
+    Ψm, _, _ = obj.mechano(Λ)
+    Ψem, _, _, _, _, _ = _getCoupling(obj.electro, obj.mechano, Λ)
     f(δθ) = obj.fθ(δθ)
     df(δθ) = obj.dfdθ(δθ)
     g(δθ) = obj.gθ(δθ)
     dg(δθ) = obj.dgdθ(δθ)
 
-    _, _, J = get_Kinematics(obj.Mechano.Kinematic; Λ=Λ)
-    Ψer(F) = obj.Thermo.α * (J(F) - 1.0) * obj.Thermo.θr
-    ΨL1(δθ) = obj.Thermo.Cv * obj.Thermo.θr * (1 - obj.β) * ((δθ + obj.Thermo.θr) / obj.Thermo.θr * (1.0 - log((δθ + obj.Thermo.θr) / obj.Thermo.θr)) - 1.0)
+    _, _, J = get_Kinematics(obj.mechano.Kinematic; Λ=Λ)
+    Ψer(F) = obj.thermo.α * (J(F) - 1.0) * obj.thermo.θr
+    ΨL1(δθ) = obj.thermo.Cv * obj.thermo.θr * (1 - obj.β) * ((δθ + obj.thermo.θr) / obj.thermo.θr * (1.0 - log((δθ + obj.thermo.θr) / obj.thermo.θr)) - 1.0)
     ΨL3(δθ) = g(δθ) - g(0.0) - dg(0.0) * δθ
 
     Ψ(F, E, δθ) = f(δθ) * (Ψm(F) + Ψem(F, E)) + (1 - f(δθ)) * Ψer(F) + ΨL1(δθ) + ΨL3(δθ) * (Ψm(F) + Ψem(F, E))
@@ -94,18 +102,22 @@ struct ThermoElectroMech_Govindjee{A,B,C} <: ThermoElectroMechano
 end
 
 
-struct ThermoElectroMech_Bonet{A,B,C} <: ThermoElectroMechano
-  Thermo::A
-  Electro::B
-  Mechano::C
-  function ThermoElectroMech_Bonet(; Thermo::ThermalModel, Electro::Electro, Mechano::Mechano)
-    A, B, C, = typeof(Thermo), typeof(Electro), typeof(Mechano)
-    new{A,B,C}(Thermo, Electro, Mechano)
+struct ThermoElectroMech_Bonet{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectroMechano
+  thermo::T
+  electro::E
+  mechano::M
+  
+  function ThermoElectroMech_Bonet(thermo::T, electro::E, mechano::M) where {T<:Thermo,E<:Electro,M<:Mechano}
+    new{T,E,M}(thermo, electro, mechano)
+  end
+
+  function ThermoElectroMech_Bonet(; thermo::T, electro::E, mechano::M) where {T<:Thermo,E<:Electro,M<:Mechano}
+    new{T,E,M}(thermo, electro, mechano)
   end
 
   function (obj::ThermoElectroMech_Bonet)(Λ::Float64=1.0)
-   @unpack Cv,θr, α, κ, γv, γd =obj.Thermo
-    Ψem, ∂Ψem∂F, ∂Ψem∂E, ∂Ψem∂FF, ∂Ψem∂EF, ∂Ψem∂EE = _getCoupling(obj.Mechano, obj.Electro, Λ)
+    @unpack Cv,θr, α, κ, γv, γd = obj.thermo
+    Ψem, ∂Ψem∂F, ∂Ψem∂E, ∂Ψem∂FF, ∂Ψem∂EF, ∂Ψem∂EE = _getCoupling(obj.electro, obj.mechano, Λ)
     gd(δθ) = 1/(γd+1) * (((δθ+θr)/θr)^(γd+1) -1)
     ∂gd(δθ) = (δθ+θr)^γd / θr^(γd+1)
     ∂∂gd(δθ) = γd*(δθ+θr)^(γd-1) / θr^(γd+1)
@@ -113,7 +125,7 @@ struct ThermoElectroMech_Bonet{A,B,C} <: ThermoElectroMechano
     ∂gv(δθ) = (δθ+θr)^γv / θr^(γv+1)
     ∂∂gv(δθ) = γv*(δθ+θr)^(γv-1) / θr^(γv+1)
 
-    _, H, J = get_Kinematics(obj.Mechano.Kinematic; Λ=Λ)
+    _, H, J = get_Kinematics(obj.mechano.Kinematic; Λ=Λ)
 
     η(F)=α*(J(F) - 1.0)+Cv/γv
     ∂η∂J(F)=α
