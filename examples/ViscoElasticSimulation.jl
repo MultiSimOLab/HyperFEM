@@ -74,8 +74,7 @@ function visco_elastic_simulation()
   λx = Float64[]
   σΓ = Float64[]
   function driverpost(post)#; cons_model=cons_model, Δt=Δt, uh=uh, unh=unh, state_vars=state_vars, Ω=Ω, dΩ=dΩ)
-    σL2 = Cauchy(cons_model, uh, unh, state_vars, Δt)
-    σh11, _... = interpolate_L2_tensor(σL2, Ω, dΩ)
+    σh11, _... = Cauchy(cons_model, uh, unh, state_vars, Ω, dΩ, 0.0, Δt)
     σΓ1 = sum(∫(σh11)dΓ1) / sum(∫(1.0)dΓ1)
     push!(σΓ, σΓ1)
     push!(λx, 1.0 + component_LInf(uh, :x, Ω) / long)

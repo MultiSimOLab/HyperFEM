@@ -102,22 +102,12 @@ end
 
 
 function Cauchy(model::Elasto, uh, unh, state_vars, Ω, dΩ, t, Δt)
-    @warn """Cauchy(cons_model, uh, unh, A, Ω, dΩ...)
-    This method is deprecated, call separately the stress evaluation and the stress projection.
-    EXAMPLE:
-    σh = Cauchy(cons_model, uh)
-    σ11, σ12... = interpolate_L2_tensor(σh, Ω, dΩ)"""
     σh = Cauchy(model, uh)
     interpolate_L2_tensor(σh, Ω, dΩ)
 end
 
 
 function Cauchy(model::ViscoElastic, uh, unh, state_vars, Ω, dΩ, t, Δt)
-    @warn """Cauchy(cons_model, uh, unh, A, Ω, dΩ...)
-    This method is deprecated, call separately the stress evaluation and the stress projection.
-    EXAMPLE:
-    σh = Cauchy(cons_model, uh, unh, A)
-    σ11, σ12... = interpolate_L2_tensor(σh, Ω, dΩ)"""
     σh = Cauchy(model, uh, unh, state_vars, Δt)
     interpolate_L2_tensor(σh, Ω, dΩ)
 end
