@@ -7,7 +7,7 @@ using HyperFEM: jacobian
     modelT = ThermalModel(Cv=1.0, θr=1.0, α=2.0, κ=1.0)
     f(δθ::Float64)::Float64 = (δθ + 1.0) / 1.0
     df(δθ::Float64)::Float64 = 1.0
-    modelTM = ThermoMechModel(Thermo=modelT, Mechano=modelMR, fθ=f, dfdθ=df)
+    modelTM = ThermoMechModel(modelT, modelMR, fθ=f, dfdθ=df)
 
     partition = (1, 1, 1)
     pmin = Point(0.0, 0.0, 0.0)

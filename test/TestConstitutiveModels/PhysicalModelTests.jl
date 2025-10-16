@@ -194,7 +194,7 @@ end
   modelT = ThermalModel(Cv=1.0, θr=1.0, α=2.0)
   f(δθ::Float64)::Float64 = (δθ + 1.0) / 1.0
   df(δθ::Float64)::Float64 = 1.0
-  modelTEM = ThermoElectroMechModel(Thermo=modelT, Electro=modelID, Mechano=modelMR, fθ=f, dfdθ=df)
+  modelTEM = ThermoElectroMechModel(modelT, modelID, modelMR, fθ=f, dfdθ=df)
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψθ, ∂Ψuu, ∂Ψφφ, ∂Ψθθ, ∂Ψφu, ∂Ψuθ, ∂Ψφθ = modelTEM()
   F, _, _ = get_Kinematics(modelMR.Kinematic)
   E = get_Kinematics(modelID.Kinematic)
@@ -211,6 +211,7 @@ end
   @test norm(∂Ψφθ(F(∇u), E(∇φ), θt)) == 14.707913034885005
 end
 
+
 @testset "TermoMech" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   θt = 3.4 - 1.0
@@ -218,7 +219,7 @@ end
   modelT = ThermalModel(Cv=1.0, θr=1.0, α=2.0)
   f(δθ::Float64)::Float64 = (δθ + 1.0) / 1.0
   df(δθ::Float64)::Float64 = 1.0
-  modelTM = ThermoMechModel(Thermo=modelT, Mechano=modelMR, fθ=f, dfdθ=df)
+  modelTM = ThermoMechModel(modelT, modelMR, fθ=f, dfdθ=df)
   Ψ, ∂Ψu, ∂Ψθ, ∂Ψuu, ∂Ψθθ, ∂Ψuθ = modelTM()
   F, _, _ = get_Kinematics(modelMR.Kinematic)
 
@@ -228,13 +229,10 @@ end
   @test norm(∂Ψuu(F(∇u), θt)) == 132.85408867418602
   @test norm(∂Ψθθ(F(∇u), θt)) == 0.29411764705882354
   @test norm(∂Ψuθ(F(∇u), θt)) == 21.074087978716364
-
-
 end
 
 
 @testset "ThermoMech_EntropicPolyconvex" begin
-
   ∇u = 1e-1 * TensorValue(1, 2, 3, 4, 5, 6, 7, 8, 9)
   θt = 21.6
   modmec = MooneyRivlin3D(λ=10.0, μ1=1.0, μ2=1.0, ρ=1.0)
@@ -246,7 +244,7 @@ end
   γ₃ = 0.5
   s(I1, I2, I3) = 1 / 3 * ((I1 / 3.0)^γ₁ + (I2 / 3.0)^γ₂ + I3^γ₃)
   ϕ(x) = 2.0 * (x + 1.0) * log(x + 1.0) - 2.0 * x * (1 + log(2)) + 2.0 * (1 - log(2))
-  consmodel = ThermoMech_EntropicPolyconvex(Thermo=modterm, Mechano=modmec, β=β, G=G, ϕ=ϕ, s=s)
+  consmodel = ThermoMech_EntropicPolyconvex(modterm, modmec, β=β, G=G, ϕ=ϕ, s=s)
 
   Ψ, ∂Ψu, ∂Ψθ, ∂Ψuu, ∂Ψθθ, ∂Ψuθ = consmodel()
   F, _, _ = get_Kinematics(modmec.Kinematic)
@@ -257,7 +255,6 @@ end
   @test norm(∂Ψuu(F(∇u), θt)) == 2066.7910102392775
   @test norm(∂Ψθθ(F(∇u), θt)) == 0.46689338540182707
   @test norm(∂Ψuθ(F(∇u), θt)) == 14.243050132210923
-
 end
 
 
@@ -270,7 +267,7 @@ end
   modelID = IdealDielectric(ε=1.0)
   modelT = ThermalModel(Cv=17.385, θr=293.0, α=0.00156331, γv=2.0, γd=2.0)
 
-  modelTEM = ThermoElectroMech_Bonet(Thermo=modelT, Electro=modelID, Mechano=modelMR)
+  modelTEM = ThermoElectroMech_Bonet(modelT, modelID, modelMR)
   Ψ, ∂Ψu, ∂ΨE, ∂Ψθ, ∂ΨFF, ∂ΨEE, ∂2Ψθθ, ∂ΨEF, ∂ΨFθ, ∂ΨEθ, η = modelTEM()
 
   F, _, _ = get_Kinematics(modelMR.Kinematic)
@@ -333,7 +330,7 @@ end
   g(δθ) = -0.33 * ((δθ + 293.0) / 293.0)^3
   dg(δθ) = -(3 * 0.33 / 293.0) * ((δθ + 293.0) / 293.0)^2
 
-  modelTEM = ThermoElectroMech_Govindjee(Thermo=modelT, Electro=modelID, Mechano=modelMR, fθ=f, dfdθ=df, gθ=g, dgdθ=dg, β=0.0)
+  modelTEM = ThermoElectroMech_Govindjee(modelT, modelID, modelMR, fθ=f, dfdθ=df, gθ=g, dgdθ=dg, β=0.0)
   Ψ, ∂Ψu, ∂ΨE, ∂Ψθ, ∂ΨFF, ∂ΨEE, ∂2Ψθθ, ∂ΨEF, ∂ΨFθ, ∂ΨEθ, η = modelTEM()
   F, _, _ = get_Kinematics(modelMR.Kinematic)
   E = get_Kinematics(modelID.Kinematic)
@@ -489,7 +486,7 @@ end
 
   modelMR = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
   modelID = HardMagnetic(μ=1.2566e-6, αr=40e-3, χe=0.0, χr=8.0)
-  modelmagneto = MagnetoMechModel(Mechano=modelMR, Magneto=modelID)
+  modelmagneto = MagnetoMechModel(modelID, modelMR)
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelmagneto()
   F, _, _ = get_Kinematics(modelMR.Kinematic)
   H0 = get_Kinematics(modelID.Kinematic)
@@ -530,7 +527,7 @@ end
 
   modelMR = MooneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
   modelID = IdealMagnetic2D(μ=1.2566e-6, χe=0.0)
-  modelmagneto = MagnetoMechModel(Mechano=modelMR, Magneto=modelID)
+  modelmagneto = MagnetoMechModel(modelID, modelMR)
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelmagneto()
   F, _, _ = get_Kinematics(modelMR.Kinematic)
   H0 = get_Kinematics(modelID.Kinematic)
@@ -572,7 +569,7 @@ end
 
   modelMR = MooneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
   modelID = HardMagnetic2D(μ=1.2566e-6, αr=40e-3, χe=0.0, χr=8.0)
-  modelmagneto = MagnetoMechModel(Mechano=modelMR, Magneto=modelID)
+  modelmagneto = MagnetoMechModel(modelID, modelMR)
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelmagneto()
   F, _, _ = get_Kinematics(modelMR.Kinematic)
   H0 = get_Kinematics(modelID.Kinematic)
@@ -626,7 +623,7 @@ end
   ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
 
   model = ARAP2D_regularized(μ=μParams[1])
-  modelreg = HessianRegularization(Mechano=model)
+  modelreg = HessianRegularization(model)
 
   Ψ, ∂Ψu, ∂Ψuu = modelreg()
   F, _, J_ = get_Kinematics(modelreg.Kinematic)
@@ -650,7 +647,7 @@ end
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
   ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
   model = ARAP2D(μ=μParams[1])
-  modelreg = Hessian∇JRegularization(Mechano=model)
+  modelreg = Hessian∇JRegularization(model)
 
   Ψ, ∂Ψu, ∂Ψuu = modelreg()
   F, _, J_ = get_Kinematics(modelreg.Kinematic)

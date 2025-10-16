@@ -128,12 +128,12 @@ end;
 end;
 
 @testset "ViscousIncompressible" begin
-  visco = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=μ1), τ1)
+  visco = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=μ1), τ=τ1)
   test_viscous_derivatives_numerical(visco, rtolP=1e-3, rtolH=1e-3)
 end
 
 @testset "ViscousIncompressible2" begin
-  visco = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=1.0), 10.0)
+  visco = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=1.0), τ=10.0)
   Ψ, ∂Ψu, ∂Ψuu = visco(Δt = 0.1)
   F    =  1e-2*TensorValue(1,2,3,4,5,6,7,8,9) + I3
   Fn   =  5e-3*TensorValue(1,2,3,4,5,6,7,8,9) + I3
@@ -159,7 +159,7 @@ end;
 
 @testset "GeneralizedMaxwell NeoHookean 1-branch" begin
   hyper_elastic_model = NeoHookean3D(λ=λ, μ=μ)
-  branch1 = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=μ1), τ1)
+  branch1 = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=μ1), τ=τ1)
   cons_model = GeneralizedMaxwell(hyper_elastic_model, branch1)
   test_viscous_derivatives_numerical(cons_model, rtolP=1e-3, rtolH=1e-2)
 end;

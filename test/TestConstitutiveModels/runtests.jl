@@ -4,7 +4,7 @@ using Test
 @testset "ConstitutiveModels" begin
 
     @time begin
-        include("PhysicalModels.jl")
+        include("PhysicalModelTests.jl")
     end
 
     @time begin

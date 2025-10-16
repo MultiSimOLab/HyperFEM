@@ -63,10 +63,10 @@ end
 @testset "ViscoElectricModel" begin
   hyper_elastic = NeoHookean3D(λ=1000., μ=10.)
   short_term = IncompressibleNeoHookean3D(μ=5., λ=0.)
-  viscous_branch1 = ViscousIncompressible(short_term, 6.)
+  viscous_branch1 = ViscousIncompressible(short_term, τ=6.)
   visco_elastic = GeneralizedMaxwell(hyper_elastic, viscous_branch1)
   dielectric = IdealDielectric(ε=1.0)
-  model = ElectroMechModel(visco_elastic, dielectric)
+  model = ElectroMechModel(dielectric, visco_elastic)
   F, _, _ = get_Kinematics(model.mechano.Kinematic)
   E       = get_Kinematics(model.electro.Kinematic)
   Uvn = TensorValue(1.,2.,3.,2.,4.,5.,3.,5.,6.) * 2e-4 + I3
@@ -79,14 +79,14 @@ end
 end
 
 
-@testset "ViscoElectricModel2Branch" begin
+@testset "ViscoElectricModel 2-branch" begin
   hyper_elastic = NeoHookean3D(λ=1000., μ=10.)
   short_term = IncompressibleNeoHookean3D(μ=5., λ=0.)
-  viscous_branch1 = ViscousIncompressible(short_term, 6.)
-  viscous_branch2 = ViscousIncompressible(short_term, 60.)
+  viscous_branch1 = ViscousIncompressible(short_term, τ=6.)
+  viscous_branch2 = ViscousIncompressible(short_term, τ=60.)
   visco_elastic = GeneralizedMaxwell(hyper_elastic, viscous_branch1, viscous_branch2)
   dielectric = IdealDielectric(ε=1.0)
-  model = ElectroMechModel(visco_elastic, dielectric)
+  model = ElectroMechModel(dielectric, visco_elastic)
   F, _, _ = get_Kinematics(model.mechano.Kinematic)
   E       = get_Kinematics(model.electro.Kinematic)
   Uvn = TensorValue(1.,2.,3.,2.,4.,5.,3.,5.,6.) * 2e-4 + I3

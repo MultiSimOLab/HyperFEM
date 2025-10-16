@@ -7,14 +7,14 @@ using ..TensorAlgebra
 # =====================
 
 struct ViscousIncompressible{T} <: Visco
-  ShortTerm::Elasto
+  elasto::Elasto
   τ::Float64
   Kinematic::T
-  function ViscousIncompressible(shortTerm, τ::Float64; kinematic::KinematicModel=Kinematics(Visco))  # TODO: Make τ keyword argument
-    new{typeof(kinematic)}(shortTerm, τ, kinematic)
+  function ViscousIncompressible(elasto; τ::Float64, kinematic::KinematicModel=Kinematics(Visco))
+    new{typeof(kinematic)}(elasto, τ, kinematic)
   end
   function (obj::ViscousIncompressible)(Λ::Float64=1.0; Δt::Float64)
-    Ψe, Se, ∂Se∂Ce       = obj.ShortTerm(KinematicDescription{:SecondPiola}())
+    Ψe, Se, ∂Se∂Ce       = obj.elasto(KinematicDescription{:SecondPiola}())
     Ψ(F, Fn, state)      = Energy(obj, Δt, Ψe, Se, ∂Se∂Ce, F, Fn, state)
     ∂Ψ∂F(F, Fn, state)   = Piola(obj, Δt, Se, ∂Se∂Ce, F, Fn, state)
     ∂Ψ∂F∂F(F, Fn, state) = Tangent(obj, Δt, Se, ∂Se∂Ce, F, Fn, state)
@@ -29,21 +29,21 @@ end
 
 function updateStateVariables!(stateVar, obj::ViscousIncompressible, Δt, u, un)
   F, _, _ = get_Kinematics(obj.Kinematic)
-  _, Se, ∂Se∂Ce = obj.ShortTerm(KinematicDescription{:SecondPiola}())
+  _, Se, ∂Se∂Ce = obj.elasto(KinematicDescription{:SecondPiola}())
   return_mapping(A, F, Fn) = ReturnMapping(obj, Δt, Se, ∂Se∂Ce, F, Fn, A)
   update_state!(return_mapping, stateVar, F∘∇(u)', F∘∇(un)')
 end
 
 struct GeneralizedMaxwell{T} <: ViscoElastic
-  LongTerm::Elasto
-  Branches::NTuple{N,Visco} where N
+  longterm::Elasto
+  branches::NTuple{N,Visco} where N
   Kinematic::T
   function GeneralizedMaxwell(longTerm::Elasto, branches::Visco...; kinematic::KinematicModel=Kinematics(Elasto))
     new{typeof(kinematic)}(longTerm,branches,kinematic)
   end
   function (obj::GeneralizedMaxwell)(Λ::Float64=1.0; Δt::Float64)
-    Ψe, ∂Ψeu, ∂Ψeuu = obj.LongTerm(Λ)
-    DΨv = map(b -> b(Λ, Δt=Δt), obj.Branches)
+    Ψe, ∂Ψeu, ∂Ψeuu = obj.longterm(Λ)
+    DΨv = map(b -> b(Λ, Δt=Δt), obj.branches)
     Ψα, ∂Ψαu, ∂Ψαuu = map(i -> getindex.(DΨv, i), 1:3)
     Ψ(∇u, ∇un, states...) = mapreduce((Ψi, state) -> Ψi(∇u, ∇un, state), +, Ψα, states; init=Ψe(∇u))
     ∂Ψu(∇u, ∇un, states...) = mapreduce((∂Ψiu, state) -> ∂Ψiu(∇u, ∇un, state), +, ∂Ψαu, states; init=∂Ψeu(∇u))
@@ -53,12 +53,12 @@ struct GeneralizedMaxwell{T} <: ViscoElastic
 end
 
 function initializeStateVariables(model::GeneralizedMaxwell, points::Measure)
-  map(b -> initializeStateVariables(b, points), model.Branches)
+  map(b -> initializeStateVariables(b, points), model.branches)
 end
 
 function updateStateVariables!(stateVars, model::GeneralizedMaxwell, Δt, u, un)
-  @assert length(model.Branches) == length(stateVars)
-  for (branch, state) in zip(model.Branches, stateVars)
+  @assert length(model.branches) == length(stateVars)
+  for (branch, state) in zip(model.branches, stateVars)
     updateStateVariables!(state, branch, Δt, u, un)
   end
 end
