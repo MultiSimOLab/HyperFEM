@@ -28,7 +28,7 @@ function visco_elastic_simulation(;t_end=15, write_vtk=true, verbose=true)
   μv₁ = 3.153e5  # Pa
   τv₁ = 10.72    # s
   hyper_elastic_model = NeoHookean3D(λ=λ, μ=μ)
-  viscous_branch = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=μv₁), τv₁)
+  viscous_branch = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=μv₁), τ=τv₁)
   cons_model = GeneralizedMaxwell(hyper_elastic_model, viscous_branch)
 
   # Dirichlet boundary conditions
