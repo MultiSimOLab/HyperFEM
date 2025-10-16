@@ -56,6 +56,7 @@ function visco_elastic_simulation()
   # FE spaces
   reffe = ReferenceFE(lagrangian, VectorValue{3,Float64}, order)
   Vu = TestFESpace(model, reffe, D_bc, dirichlet_masks=dirichlet_masks, conformity=:H1)
+  VL2 = FESpace(Ω, reffe, conformity=:L2)
   Uu = TrialFESpace(Vu, D_bc, 0.0)
   Uun = TrialFESpace(Vu, D_bc, 0.0)
 
@@ -73,9 +74,9 @@ function visco_elastic_simulation()
   λx = Float64[]
   σΓ = Float64[]
   function driverpost(post)#; cons_model=cons_model, Δt=Δt, uh=uh, unh=unh, state_vars=state_vars, Ω=Ω, dΩ=dΩ)
-    σh = Cauchy(cons_model, uh, unh, state_vars, Δt)
-    σhΓ1, _... = interpolate_L2_tensor(σh, Ω, dΩ, Γ1)
-    σΓ1 = sum(∫(σhΓ1)dΓ1) / sum(∫(1.0)dΓ1)
+    σL2 = Cauchy(cons_model, uh, unh, state_vars, Δt)
+    σh11, _... = interpolate_L2_tensor(σL2, Ω, dΩ)
+    σΓ1 = sum(∫(σh11)dΓ1) / sum(∫(1.0)dΓ1)
     push!(σΓ, σΓ1)
     push!(λx, 1.0 + component_LInf(uh, :x, Ω) / long)
     updateStateVariables!(state_vars, cons_model, Δt, uh, unh)
