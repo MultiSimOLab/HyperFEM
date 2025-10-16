@@ -8,10 +8,7 @@ using HyperFEM.ComputationalModels:constant
 using HyperFEM.ComputationalModels:triangular
 using HyperFEM.ComputationalModels.PostMetrics
 
-function visco_elastic_simulation()
-  # Time domain  
-  t_end = 15
-
+function visco_elastic_simulation(;t_end=15, write_vtk=true, verbose=true)
   # Domain and tessellation
   long   = 0.05   # m
   width  = 0.005  # m
@@ -68,12 +65,12 @@ function visco_elastic_simulation()
   jac(Λ) = (u,du,v)->jacobian(cons_model, u, du, v, dΩ, t_end * Λ, Δt, unh, state_vars)
 
   ls = LUSolver()
-  nls = NewtonSolver(ls; maxiter=20, atol=1.e-6, rtol=1.e-6, verbose=true)
+  nls = NewtonSolver(ls; maxiter=20, atol=1.e-6, rtol=1.e-6, verbose=verbose)
   comp_model = StaticNonlinearModel(res, jac, Uu, Vu, D_bc; nls=nls, xh=uh, xh⁻=unh)
 
   λx = Float64[]
   σΓ = Float64[]
-  function driverpost(post)#; cons_model=cons_model, Δt=Δt, uh=uh, unh=unh, state_vars=state_vars, Ω=Ω, dΩ=dΩ)
+  function driverpost(post)
     σh11, _... = Cauchy(cons_model, uh, unh, state_vars, Ω, dΩ, 0.0, Δt)
     σΓ1 = sum(∫(σh11)dΓ1) / sum(∫(1.0)dΓ1)
     push!(σΓ, σΓ1)
