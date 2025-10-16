@@ -6,9 +6,10 @@ using HyperFEM
 using HyperFEM.ComputationalModels.CartesianTags
 using HyperFEM.ComputationalModels:constant
 using HyperFEM.ComputationalModels:triangular
+using HyperFEM.ComputationalModels.PostMetrics
 
-function viscousbenchmark()
-  # Domain   and Tessellation
+function visco_elastic_simulation(;t_end=15, write_vtk=true, verbose=true)
+  # Domain and tessellation
   long   = 0.05   # m
   width  = 0.005  # m
   thick  = 0.001  # m
@@ -24,23 +25,14 @@ function viscousbenchmark()
   # Constitutive model
   μ = 1.367e4    # Pa
   λ = 1000μ      # Pa
-  hyper_elastic_model = NeoHookean3D(λ=λ, μ=μ)
   μv₁ = 3.153e5  # Pa
   τv₁ = 10.72    # s
+  hyper_elastic_model = NeoHookean3D(λ=λ, μ=μ)
   viscous_branch = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=μv₁), τv₁)
   cons_model = GeneralizedMaxwell(hyper_elastic_model, viscous_branch)
 
-  # Setup integration
-  order = 2
-  degree = 2 * order
-  Ω = Triangulation(model)
-  dΩ = Measure(Ω, degree)
-  dΓ = get_Neumann_dΓ(model, NothingBC(), degree)
-  Δt = 0.05
-  t_end = 5
-
-  # Dirichlet boundary conditions 
-  strain = 1.5
+  # Dirichlet boundary conditions
+  strain = 0.5
   D_bc = DirichletBC(
     ["corner1", "corner2", "fixed", "moving"],
     [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [long * strain, 0.0, 0.0]],
@@ -48,13 +40,23 @@ function viscousbenchmark()
   dirichlet_masks = [
     [true, true, true], [true, false, true], [true, false, false], [true, false, false]]
 
+  # Setup integration
+  order = 2
+  degree = 2 * order
+  Ω = Triangulation(model)
+  dΩ = Measure(Ω, degree)
+  dΓ = get_Neumann_dΓ(model, NothingBC(), degree)
+  Γ1  = BoundaryTriangulation(model, tags=D_bc.tags[4])
+  dΓ1 = Measure(Γ1, degree)
+  Δt = 0.05
+
   # FE spaces
   reffe = ReferenceFE(lagrangian, VectorValue{3,Float64}, order)
   Vu = TestFESpace(model, reffe, D_bc, dirichlet_masks=dirichlet_masks, conformity=:H1)
+  VL2 = FESpace(Ω, reffe, conformity=:L2)
   Uu = TrialFESpace(Vu, D_bc, 0.0)
   Uun = TrialFESpace(Vu, D_bc, 0.0)
 
-  # residual and jacobian
   uh = FEFunction(Uu, zero_free_values(Uu))
   unh = FEFunction(Uun, zero_free_values(Uun))
   state_vars = initializeStateVariables(cons_model, dΩ)
@@ -63,15 +65,27 @@ function viscousbenchmark()
   jac(Λ) = (u,du,v)->jacobian(cons_model, u, du, v, dΩ, t_end * Λ, Δt, unh, state_vars)
 
   ls = LUSolver()
-  nls_ = NewtonSolver(ls; maxiter=20, atol=1.e-6, rtol=1.e-6, verbose=true)
-  comp_model = StaticNonlinearModel(res, jac, Uu, Vu, D_bc; nls=nls_, xh=uh, xh⁻=unh)
+  nls = NewtonSolver(ls; maxiter=20, atol=1.e-6, rtol=1.e-6, verbose=verbose)
+  comp_model = StaticNonlinearModel(res, jac, Uu, Vu, D_bc; nls=nls, xh=uh, xh⁻=unh)
 
-  function driverpost(post; cons_model=cons_model, Δt=Δt, uh=uh, unh=unh, A=state_vars, Ω=Ω, dΩ=dΩ)
-    updateStateVariables!(A, cons_model, Δt, uh, unh)
+  λx = Float64[]
+  σΓ = Float64[]
+  function driverpost(post)
+    σh11, _... = Cauchy(cons_model, uh, unh, state_vars, Ω, dΩ, 0.0, Δt)
+    σΓ1 = sum(∫(σh11)dΓ1) / sum(∫(1.0)dΓ1)
+    push!(σΓ, σΓ1)
+    push!(λx, 1.0 + component_LInf(uh, :x, Ω) / long)
+    updateStateVariables!(state_vars, cons_model, Δt, uh, unh)
   end
-  post_model = PostProcessor(comp_model, driverpost; is_vtk=false, filepath="")
 
+  post_model = PostProcessor(comp_model, driverpost; is_vtk=false, filepath="")
   solve!(comp_model; stepping=(nsteps=Int(t_end/Δt), maxbisec=1), post=post_model, ProjectDirichlet=true)
+  (λx, σΓ)
 end
 
-SUITE["Simulations"]["ViscoElastic"] = @benchmarkable viscousbenchmark()
+
+if abspath(PROGRAM_FILE) == @__FILE__
+  using Plots
+  λx, σΓ = visco_elastic_simulation()
+  plot(λx, σΓ)
+end

@@ -8,4 +8,4 @@ include("TensorAlgebraBenchmarks/benchmarks.jl")
 
 include("ConstitutiveModelsBenchmark/benchmarks.jl")
 
-include("Simulations/benchmarks.jl")
+include("SimulationsBenchmarks/benchmarks.jl")

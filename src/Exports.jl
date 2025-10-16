@@ -111,12 +111,16 @@ end
 @publish ComputationalModels  GmshDiscreteModel
 @publish ComputationalModels  updateBC!
 @publish ComputationalModels  PostProcessor
+@publish ComputationalModels  PostMetrics
 @publish ComputationalModels  StaggeredModel
 @publish ComputationalModels  Cauchy
 @publish ComputationalModels  Jacobian
 @publish ComputationalModels  Entropy
 @publish ComputationalModels  D0
 @publish ComputationalModels  reset!
+@publish ComputationalModels  interpolate_L2_tensor
+@publish ComputationalModels  interpolate_L2_vector
+@publish ComputationalModels  interpolate_L2_scalar
 @publish ComputationalModels  DirichletCoupling
 @publish ComputationalModels  evaluate!
 @publish ComputationalModels  InterpolableBC
