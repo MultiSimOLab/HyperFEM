@@ -3,16 +3,21 @@
 # Regularization of Mechanical models
 # ============================================
 
-struct HessianRegularization{A,B} <: Mechano
-  Mechano::A
+struct HessianRegularization{M<:Mechano,B} <: Mechano
+  mechano::M
   δ::Float64
   Kinematic::B
-  function HessianRegularization(; Mechano::Mechano, δ::Float64=1.0e-6)
-    new{typeof(Mechano),typeof(Mechano.Kinematic)}(Mechano, δ, Mechano.Kinematic)
+  
+  function HessianRegularization(mechano::M; δ::Float64=1.0e-6) where {M <: Mechano}
+    new{M,typeof(mechano.Kinematic)}(mechano, δ, mechano.Kinematic)
+  end
+
+  function HessianRegularization(; mechano::M, δ::Float64=1.0e-6) where {M <: Mechano}
+    new{M,typeof(mechano.Kinematic)}(mechano, δ, mechano.Kinematic)
   end
 
   function (obj::HessianRegularization)(Λ::Float64=1.0)
-    Ψs, ∂Ψs, ∂2Ψs = obj.Mechano()
+    Ψs, ∂Ψs, ∂2Ψs = obj.mechano()
     δ = obj.δ
 
     ∂2Ψ(F) = begin
@@ -26,18 +31,18 @@ struct HessianRegularization{A,B} <: Mechano
 end
 
 
-struct Hessian∇JRegularization{A,B} <: Mechano
-  Mechano::A
+struct Hessian∇JRegularization{M<:Mechano,B} <: Mechano
+  mechano::M
   δ::Float64
   κ::Float64
   Kinematic::B
-  function Hessian∇JRegularization(; Mechano::Mechano, δ::Float64=1.0e-6, κ::Float64=1.0)
-    new{typeof(Mechano),typeof(Mechano.Kinematic)}(Mechano, δ, κ, Mechano.Kinematic)
+  function Hessian∇JRegularization(; mechano::M, δ::Float64=1.0e-6, κ::Float64=1.0) where {M <: Mechano}
+    new{M,typeof(mechano.Kinematic)}(mechano, δ, κ, mechano.Kinematic)
   end
 
   function (obj::Hessian∇JRegularization)(Λ::Float64=1.0)
-    Ψs, ∂Ψs, ∂2Ψs = obj.Mechano()
-    _, H, J = get_Kinematics(obj.Mechano.Kinematic; Λ=Λ)
+    Ψs, ∂Ψs, ∂2Ψs = obj.mechano()
+    _, H, J = get_Kinematics(obj.mechano.Kinematic; Λ=Λ)
     δ, κ = obj.δ, obj.κ
 
     Ψ(F, Jh) = Ψs(F) + 0.5 * κ * (J(F) - Jh)^2
@@ -57,15 +62,16 @@ end
 # ======================
 # Energy interpolations
 # ======================
-struct EnergyInterpolationScheme{A,B} <: PhysicalModel
+struct EnergyInterpolationScheme{M1<:Mechano,M2<:Mechano} <: PhysicalModel
   p::Float64
-  model1::A
-  model2::B
-  function EnergyInterpolationScheme(model1, model2; p::Float64=3.0)
-    new{typeof(model1),typeof(model2)}(p, model1, model2)
+  model1::M1
+  model2::M2
+
+  function EnergyInterpolationScheme(model1::M1, model2::M2; p::Float64=3.0) where {M1 <: Mechano, M2 <: Mechano}
+    new{M1,M2}(p, model1, model2)
   end
 
-  function (obj::EnergyInterpolationScheme{<:Mechano,<:Mechano})()
+  function (obj::EnergyInterpolationScheme)()
     Ψs, ∂Ψs, ∂2Ψs = obj.model1()
     Ψv, ∂Ψv, ∂2Ψv = obj.model2()
     p = obj.p
