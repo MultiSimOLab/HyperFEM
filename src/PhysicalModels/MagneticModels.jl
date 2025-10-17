@@ -3,6 +3,29 @@
 # Magnetic models
 # ===================
 
+
+struct Magnetic{A} <: Magneto
+  μ::Float64
+  αr::Float64
+  χe::Float64
+  Kinematic::A
+  function Magnetic(; μ::Float64, αr::Float64, χe::Float64=0.0, Kinematic::KinematicModel=Kinematics(Magneto))
+    new{typeof(Kinematic)}(μ, αr, χe, Kinematic)
+  end
+  function (obj::Magnetic)(Λ::Float64=1.0)
+    μ, αr, χe = obj.μ,  obj.αr, obj.χe
+    αr *= Λ
+    ℋᵣ(N) = αr * N
+    # Energy #
+    Ψmm(ℋ₀,N)      = (-μ  / 2.0 ) * ((ℋ₀+ℋᵣ(N))⋅(ℋ₀+ℋᵣ(N))) * (1 + χe)
+    ∂Ψmm_∂φ(ℋ₀,N)  = (-μ ) * (ℋ₀+ℋᵣ(N)) * (1 + χe)
+    ∂Ψmm_∂φφ(ℋ₀,N) = (-μ ) * I2 * (1 + χe)
+    return (Ψmm, ∂Ψmm_∂φ, ∂Ψmm_∂φφ)
+  end
+
+end
+
+
 struct IdealMagnetic{A} <: Magneto
   μ::Float64
   χe::Float64

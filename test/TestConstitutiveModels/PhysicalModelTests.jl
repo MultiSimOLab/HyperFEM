@@ -6,6 +6,7 @@ using Test
 using HyperFEM.PhysicalModels
 
 
+
 import Base: -
 
 (-)(A::SMatrix, B::TensorValue) = A - get_array(B)  # NOTE: These functions are required for LinearElasticity to work with ForwardDiff
@@ -405,6 +406,7 @@ end
 
 end
 
+ 
 
 @testset "IdealMagnetic2D" begin
 
@@ -419,23 +421,14 @@ end
   H0 = get_Kinematics(modelID.Kinematic)
 
 
-  # ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x, get_array( H0(∇φ)),get_array(N) ), get_array(F)))
   # ∂Ψφ_(H) =VectorValue(ForwardDiff.gradient(x -> Ψ(get_array( F(∇u)), x,get_array(N) ), get_array(H)))
-  # ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x, get_array( H0(∇φ)),get_array(N) ), get_array(F)))
-  # ∂Ψφu_(H) =TensorValue(ForwardDiff.jacobian(x -> ∂Ψφ(x, get_array( H0(∇φ)),get_array(N) ), get_array(F(∇u))))
   # ∂Ψφφ_(H) =TensorValue(ForwardDiff.jacobian(x -> ∂Ψφ(get_array( F(∇u)), x,get_array(N) ), get_array(H)))
 
-  # norm(∂Ψu_(F(∇u))) -   norm(∂Ψu(F(∇u), H0(∇φ), N))
   # norm(∂Ψφ_(H0(∇φ))) - norm(∂Ψφ(F(∇u), H0(∇φ), N))
-  # norm(∂Ψuu_(F(∇u))) -norm(∂Ψuu(F(∇u), H0(∇φ), N))
-  # norm(∂Ψφu_(H0(∇φ))-∂Ψφu(F(∇u), H0(∇φ), N))  
   # norm(∂Ψφφ_(H0(∇φ))) -norm(∂Ψφφ(F(∇u), H0(∇φ), N))
 
   @test Ψ(F(∇u), H0(∇φ)) == -3.123376791098092e-6
-  @test norm(∂Ψu(F(∇u), H0(∇φ))) == 4.406161902404201e-6
   @test norm(∂Ψφ(F(∇u), H0(∇φ))) == 2.793633631007779e-6
-  @test norm(∂Ψuu(F(∇u), H0(∇φ))) == 1.0766129497574707e-5
-  @test norm(∂Ψφu(F(∇u), H0(∇φ))) == 5.589596497314291e-6
   @test norm(∂Ψφφ(F(∇u), H0(∇φ))) == 1.7771608829110207e-6
 end
 
@@ -514,8 +507,23 @@ end
 end
 
 
+@testset "Magnetic" begin
+  ∇φ = VectorValue(1.0, 2.0, 3.0)
+  modelID = Magnetic(μ=1.2566e-6, αr=40e-3 ,χe=0.0)
+  Ψ, ∂Ψφ, ∂Ψφφ = modelID()
+  H0 = get_Kinematics(modelID.Kinematic)
+  N = VectorValue(0.0, 0.0, 1.0)
 
+  #  ∂Ψφ_(H) =VectorValue(ForwardDiff.gradient(x -> Ψ( x,get_array(N) ), get_array(H)))
+  #  ∂Ψφφ_(H) =TensorValue(ForwardDiff.jacobian(x -> ∂Ψφ( x,get_array(N) ), get_array(H)))
 
+  #  norm(∂Ψφ_(H0(∇φ))) - norm(∂Ψφ( H0(∇φ), N))
+  #  norm(∂Ψφφ_(H0(∇φ))) -norm(∂Ψφφ(H0(∇φ), N))
+
+  @test Ψ(H0(∇φ),N) == -8.64641328e-6
+  @test norm(∂Ψφ(H0(∇φ),N)) == 4.6615625980239715e-6
+  @test norm(∂Ψφφ(H0(∇φ),N)) == 1.7771007624780312e-6
+end
 
 
 

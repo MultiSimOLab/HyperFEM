@@ -35,6 +35,7 @@ export TransverseIsotropy3D
 export TransverseIsotropy2D
 export LinearElasticity3D
 export LinearElasticity2D
+export Magnetic
 export IdealDielectric
 export IdealMagnetic
 export IdealMagnetic2D
