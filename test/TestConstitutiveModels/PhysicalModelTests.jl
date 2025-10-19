@@ -509,7 +509,9 @@ end
 
 @testset "Magnetic" begin
   ∇φ = VectorValue(1.0, 2.0, 3.0)
-  modelID = Magnetic(μ=1.2566e-6, αr=40e-3 ,χe=0.0)
+  a=40e-3 
+  ra=Ref(a)
+  modelID = Magnetic(μ=1.2566e-6, αr=ra ,χe=0.0)
   Ψ, ∂Ψφ, ∂Ψφφ = modelID()
   H0 = get_Kinematics(modelID.Kinematic)
   N = VectorValue(0.0, 0.0, 1.0)
