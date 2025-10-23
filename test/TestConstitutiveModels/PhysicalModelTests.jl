@@ -507,7 +507,7 @@ end
 end
 
 
-@testset "Magnetic" begin
+@testset "Magnetic3D" begin
   ∇φ = VectorValue(1.0, 2.0, 3.0)
   a=40e-3 
   ra=Ref(a)
@@ -526,6 +526,29 @@ end
   @test norm(∂Ψφ(H0(∇φ),N)) == 4.6615625980239715e-6
   @test norm(∂Ψφφ(H0(∇φ),N)) == 2.1764950447910513e-6
 end
+
+
+
+@testset "Magnetic2D" begin
+  ∇φ = VectorValue(1.0, 2.0)
+  a=40e-3 
+  ra=Ref(a)
+  modelID = Magnetic(μ=1.2566e-6, αr=ra ,χe=0.0)
+  Ψ, ∂Ψφ, ∂Ψφφ = modelID()
+  H0 = get_Kinematics(modelID.Kinematic)
+  N = VectorValue(0.0, 0.0)
+
+  #  ∂Ψφ_(H) =VectorValue(ForwardDiff.gradient(x -> Ψ( x,get_array(N) ), get_array(H)))
+  #  ∂Ψφφ_(H) =TensorValue(ForwardDiff.jacobian(x -> ∂Ψφ( x,get_array(N) ), get_array(H)))
+
+  #  norm(∂Ψφ_(H0(∇φ))) - norm(∂Ψφ( H0(∇φ), N))
+  #  norm(∂Ψφφ_(H0(∇φ))) -norm(∂Ψφφ(H0(∇φ), N))
+
+  @test Ψ(H0(∇φ),N) == -3.1415e-6
+  @test norm(∂Ψφ(H0(∇φ),N)) == 2.8098430205262357e-6
+  @test norm(∂Ψφφ(H0(∇φ),N)) == 2.1764950447910513e-6
+end
+
 
 
 
