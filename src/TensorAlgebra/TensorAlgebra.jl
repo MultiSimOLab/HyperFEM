@@ -22,6 +22,8 @@ export I3
 export I9
 export I2
 export I4
+export Id
+
 export logreg
 export Tensorize
 export δᵢⱼδₖₗ2D

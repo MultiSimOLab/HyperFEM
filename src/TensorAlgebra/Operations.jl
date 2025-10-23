@@ -1,4 +1,4 @@
-
+ 
 
 function (*)(Ten1::TensorValue, Ten2::VectorValue)
   return (⋅)(Ten1, Ten2)
