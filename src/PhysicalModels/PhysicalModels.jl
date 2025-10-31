@@ -57,6 +57,7 @@ export ViscousIncompressible
 export PhysicalModel
 export Mechano
 export Elasto
+export AnisoElastic
 export Visco
 export ViscoElastic
 export Electro
@@ -95,6 +96,8 @@ abstract type Magneto <: PhysicalModel end
 abstract type Thermo <: PhysicalModel end
 
 abstract type Elasto <: Mechano end
+abstract type IsoElastic <: Elasto end
+abstract type AnisoElastic <: Elasto end
 abstract type Visco <: Mechano end
 abstract type ViscoElastic <: Mechano end
 

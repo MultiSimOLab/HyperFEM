@@ -39,6 +39,47 @@ function test_derivatives_3D_(model::PhysicalModel; rtol=1e-14, kwargs...)
 end
 
 
+
+@testset "Iso+Aniso" begin
+  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
+  N = VectorValue(1.0, 2.0, 3.0)
+  model1 = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
+  model2 = TransverseIsotropy3D(μ=μParams[5], α=μParams[6], β=μParams[7])
+  model=model1+model2
+
+  Ψ, ∂Ψu, ∂Ψuu = model()
+  F, _, _ = get_Kinematics(model.Kinematic)
+  @test Ψ(F(∇u), N) == 269927.3366790172
+  @test norm(∂Ψu(F(∇u), N)) == 947448.0327826345
+  @test norm(∂Ψuu(F(∇u), N)) == 3.8258826520142625e6
+end
+
+
+@testset "Iso+MultiAniso" begin
+  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
+  N1 = VectorValue(1.0, 2.0, 3.0)
+  N2 = VectorValue(1.0, 2.0, 3.0)
+
+  model1 = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
+  model2 = TransverseIsotropy3D(μ=μParams[5], α=μParams[6], β=μParams[7])
+  model3 = TransverseIsotropy3D(μ=μParams[5]*2, α=μParams[6], β=μParams[7])
+
+  model=model1+[model2 model3]
+
+  Ψ, ∂Ψu, ∂Ψuu = model()
+  Ψ1, ∂Ψu1, ∂Ψuu1 = model1()
+  Ψ2, ∂Ψu2, ∂Ψuu2 = model2()
+  Ψ3, ∂Ψu3, ∂Ψuu3 = model3()
+Ψ1(F(∇u)) + Ψ2(F(∇u), [N1]) + Ψ3(F(∇u), [N2])
+
+  F, _, _ = get_Kinematics(model.Kinematic)
+  @test Ψ(F(∇u), [N1,N2]) == Ψ1(F(∇u)) + Ψ2(F(∇u), [N1]) + Ψ3(F(∇u), [N2])
+  @test norm(∂Ψu(F(∇u), [N1,N2])) == norm(∂Ψu1(F(∇u))+∂Ψu2(F(∇u), N1)+∂Ψu3(F(∇u), N2))
+  @test norm(∂Ψuu(F(∇u), [N1,N2])) == norm(∂Ψuu1(F(∇u))+∂Ψuu2(F(∇u), N1)+∂Ψuu3(F(∇u), N2))
+end
+
+
+
 @testset "NonlinearMooneyRivlin_CV" begin
   model = NonlinearMooneyRivlin_CV(λ=3.0, μ1=1.0, μ2=1.0, α=2.0, β=1.0, γ=6.0)
   test_derivatives_3D_(model, rtol=1e-13)
@@ -184,6 +225,11 @@ end
   @test norm(∂Ψu(F(∇u), N)) == 947447.8711645481
   @test norm(∂Ψuu(F(∇u), N)) == 3.8258646319087776e6
 end
+
+
+
+  
+
 
 
 @testset "TermoElectroMech" begin
