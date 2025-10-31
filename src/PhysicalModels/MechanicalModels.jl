@@ -132,9 +132,6 @@ struct ComposedAnisoElastic <: AnisoElastic
   end
 end 
  
-# function (+)(Model1::IsoElastic, Model2::MultiAnisoElastic)
-#   MultiElastic(Model1,Model2)
-# end
 
 function (+)(Model1::IsoElastic, Model2::AnisoElastic)
   ComposedAnisoElastic(Model1,Model2)
@@ -159,9 +156,6 @@ function (obj::MultiAnisoElastic)(args...)
   (Ψ, ∂Ψ∂F, ∂Ψ∂FF)
 end
  
-
-# +(a::IsoElastic, b::AnisoElastic) = IsoMultiAniso(a,MultiAniso((b,)))
-# +(a::IsoElastic, b::MultiAnisoElastic)   = IsoMultiAniso(a,b)
 transpose(x::NTuple{N, <:Tuple{<:Function, <:Function, <:Function}}) where N = map(i -> getindex.(x, i), 1:3)
 
 
