@@ -48,17 +48,20 @@ end
   model=model1+model2
 
   Ψ, ∂Ψu, ∂Ψuu = model()
+  Ψ1, ∂Ψu1, ∂Ψuu1 = model1()
+  Ψ2, ∂Ψu2, ∂Ψuu2 = model2()
+
   F, _, _ = get_Kinematics(model.Kinematic)
-  @test Ψ(F(∇u), N) == 269927.3366790172
-  @test norm(∂Ψu(F(∇u), N)) == 947448.0327826345
-  @test norm(∂Ψuu(F(∇u), N)) == 3.8258826520142625e6
+  @test Ψ(F(∇u), N) == Ψ1(F(∇u)) + Ψ2(F(∇u), N)
+  @test norm(∂Ψu(F(∇u), N)) == norm(∂Ψu1(F(∇u))+∂Ψu2(F(∇u), N) )
+  @test norm(∂Ψuu(F(∇u), N)) == norm(∂Ψuu1(F(∇u))+∂Ψuu2(F(∇u), N))
 end
 
 
 @testset "Iso+MultiAniso" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
-  N1 = VectorValue(1.0, 2.0, 3.0)
-  N2 = VectorValue(1.0, 2.0, 3.0)
+  N1 = VectorValue(0.0, 0.0, 1.0)
+  N2 = VectorValue(0.0, 1.0, 0.0)
 
   model1 = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
   model2 = TransverseIsotropy3D(μ=μParams[5], α=μParams[6], β=μParams[7])
@@ -70,7 +73,6 @@ end
   Ψ1, ∂Ψu1, ∂Ψuu1 = model1()
   Ψ2, ∂Ψu2, ∂Ψuu2 = model2()
   Ψ3, ∂Ψu3, ∂Ψuu3 = model3()
-Ψ1(F(∇u)) + Ψ2(F(∇u), [N1]) + Ψ3(F(∇u), [N2])
 
   F, _, _ = get_Kinematics(model.Kinematic)
   @test Ψ(F(∇u), [N1,N2]) == Ψ1(F(∇u)) + Ψ2(F(∇u), [N1]) + Ψ3(F(∇u), [N2])
