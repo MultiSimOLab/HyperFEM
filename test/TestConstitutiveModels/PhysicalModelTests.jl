@@ -68,7 +68,7 @@ end
   model3 = TransverseIsotropy3D(μ=μParams[5]*2, α=μParams[6], β=μParams[7])
 
   model=model1+[model2 model3]
-
+ 
   Ψ, ∂Ψu, ∂Ψuu = model()
   Ψ1, ∂Ψu1, ∂Ψuu1 = model1()
   Ψ2, ∂Ψu2, ∂Ψuu2 = model2()
@@ -76,8 +76,8 @@ end
 
   F, _, _ = get_Kinematics(model.Kinematic)
   @test Ψ(F(∇u), [N1,N2]) == Ψ1(F(∇u)) + Ψ2(F(∇u), [N1]) + Ψ3(F(∇u), [N2])
-  @test norm(∂Ψu(F(∇u), [N1,N2])) == norm(∂Ψu1(F(∇u))+∂Ψu2(F(∇u), N1)+∂Ψu3(F(∇u), N2))
-  @test norm(∂Ψuu(F(∇u), [N1,N2])) == norm(∂Ψuu1(F(∇u))+∂Ψuu2(F(∇u), N1)+∂Ψuu3(F(∇u), N2))
+  @test isapprox(norm(∂Ψu(F(∇u), [N1,N2])), norm(∂Ψu1(F(∇u))+∂Ψu2(F(∇u), N1)+∂Ψu3(F(∇u), N2)), rtol=1e-14)
+  @test isapprox(norm(∂Ψuu(F(∇u), [N1,N2])), norm(∂Ψuu1(F(∇u))+∂Ψuu2(F(∇u), N1)+∂Ψuu3(F(∇u), N2)), rtol=1e-14)
 end
 
 

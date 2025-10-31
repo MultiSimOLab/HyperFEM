@@ -95,45 +95,53 @@ struct EnergyInterpolationScheme <: IsoElastic
 end
 
 
-struct MultiElastic{A,B} <: Elasto
-  Model1::A
-  Model2::B
+struct ComposedIsoElastic <: IsoElastic
+  Model1::IsoElastic
+  Model2::IsoElastic
   Kinematic
-  function MultiElastic(model1::A,model2::B) where{A,B}
-    @assert (model1 isa Elasto) == (model2 isa Elasto)
-    new{A,B}(model1,model2,model1.Kinematic)
+  function ComposedIsoElastic(model1::IsoElastic,model2::IsoElastic)
+    new(model1,model2,model1.Kinematic)
   end
-  function (obj::MultiElastic{<:AnisoElastic,<:AnisoElastic})(Λ::Float64=1.0)
-    DΨ1 = obj.Model1(Λ)
-    DΨ2 = obj.Model2(Λ)
-    Ψ, ∂Ψ, ∂∂Ψ = map((ψ1,ψ2) -> (x,N) -> ψ1(x,N) + ψ2(x,N), DΨ1, DΨ2)
+  function (obj::ComposedIsoElastic)(Λ::Float64=1.0)
+    Ψ1, ∂Ψu1, ∂Ψuu1  = obj.Model1(Λ)
+    Ψ2, ∂Ψu2, ∂Ψuu2  = obj.Model2(Λ)
+    Ψ(x)=Ψ1(x)+Ψ2(x)
+    ∂Ψ(x)=∂Ψu1(x)+∂Ψu2(x)
+    ∂∂Ψ(x)=∂Ψuu1(x)+∂Ψuu2(x)
     return (Ψ, ∂Ψ, ∂∂Ψ)
   end
-  function (obj::MultiElastic{<:IsoElastic,<:AnisoElastic})(Λ::Float64=1.0)
+end
+ 
+ 
+function (+)(Model1::IsoElastic, Model2::IsoElastic)
+  ComposedIsoElastic(Model1,Model2)
+end
+
+struct ComposedAnisoElastic <: AnisoElastic
+  Model1::IsoElastic
+  Model2::AnisoElastic
+  Kinematic
+  function ComposedAnisoElastic(model1::IsoElastic,model2::AnisoElastic)
+    new(model1,model2,model1.Kinematic)
+  end
+  function (obj::ComposedAnisoElastic)(Λ::Float64=1.0)
     DΨ1 = obj.Model1(Λ)
     DΨ2 = obj.Model2(Λ)
     Ψ, ∂Ψ, ∂∂Ψ = map((ψ1,ψ2) -> (x,N) -> ψ1(x) + ψ2(x,N), DΨ1, DΨ2)
     return (Ψ, ∂Ψ, ∂∂Ψ)
   end
-  function (obj::MultiElastic{<:AnisoElastic,<:IsoElastic})(Λ::Float64=1.0)
-    DΨ1 = obj.Model1(Λ)
-    DΨ2 = obj.Model2(Λ)
-    Ψ, ∂Ψ, ∂∂Ψ = map((ψ1,ψ2) -> (x,N) -> ψ1(x,N) + ψ2(x), DΨ1, DΨ2)
-    return (Ψ, ∂Ψ, ∂∂Ψ)
-  end
-  function (obj::MultiElastic{<:IsoElastic,<:IsoElastic})(Λ::Float64=1.0)
-    DΨ1 = obj.Model1(Λ)
-    DΨ2 = obj.Model2(Λ)
-    Ψ, ∂Ψ, ∂∂Ψ = map((ψ1,ψ2) -> (x) -> ψ1(x) + ψ2(x), DΨ1, DΨ2)
-    return (Ψ, ∂Ψ, ∂∂Ψ)
-  end
-end
+end 
  
-function (+)(Model1::Elasto, Model2::Elasto)
-  MultiElastic(Model1,Model2)
-end
- 
+# function (+)(Model1::IsoElastic, Model2::MultiAnisoElastic)
+#   MultiElastic(Model1,Model2)
+# end
 
+function (+)(Model1::IsoElastic, Model2::AnisoElastic)
+  ComposedAnisoElastic(Model1,Model2)
+end
+function (+)(Model1::AnisoElastic, Model2::IsoElastic)
+  ComposedAnisoElastic(Model2,Model1)
+end
 
 struct MultiAnisoElastic <: AnisoElastic
   Models::NTuple{N,AnisoElastic} where N
