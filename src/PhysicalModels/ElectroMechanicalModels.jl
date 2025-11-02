@@ -81,6 +81,13 @@ function _getCoupling(elec::Electro, mec::Mechano, Λ::Float64)
 end
 
 
+function (+)(Model1::Electro, Model2::Mechano)
+  ElectroMechModel(Model1, Model2)
+end
+function (+)(Model1::Mechano, Model2::Electro)
+  ElectroMechModel(Model2, Model1)
+end
+
 struct FlexoElectroModel{EM<:ElectroMechano} <: FlexoElectro
   electromechano::EM
   κ::Float64

@@ -64,6 +64,7 @@ end
 @publish PhysicalModels Hessian∇JRegularization
 @publish PhysicalModels ViscousIncompressible
 @publish PhysicalModels GeneralizedMaxwell
+@publish PhysicalModels HGO_4Fibers
 
 @publish PhysicalModels Mechano
 @publish PhysicalModels Thermo
@@ -81,7 +82,7 @@ end
 @publish PhysicalModels EvolutiveKinematics
 @publish PhysicalModels get_Kinematics
 @publish PhysicalModels getIsoInvariants
- 
+  
 @publish PhysicalModels initializeStateVariables
 @publish PhysicalModels updateStateVariables!
 

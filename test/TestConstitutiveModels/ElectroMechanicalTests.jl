@@ -10,7 +10,7 @@ const ∇un = TensorValue(1.0:9.0...) * 5e-4
 @testset "ElectroMechano" begin
   modelMR = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
   modelID = IdealDielectric(ε=4.0)
-  modelelectro = ElectroMechModel(mechano=modelMR, electro=modelID)
+  modelelectro =modelMR+modelID
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelelectro()
   F, _, _ = get_Kinematics(modelMR.Kinematic)
   E = get_Kinematics(modelID.Kinematic)
@@ -66,7 +66,7 @@ end
   viscous_branch1 = ViscousIncompressible(short_term, τ=6.)
   visco_elastic = GeneralizedMaxwell(hyper_elastic, viscous_branch1)
   dielectric = IdealDielectric(ε=1.0)
-  model = ElectroMechModel(dielectric, visco_elastic)
+  model =dielectric+visco_elastic
   F, _, _ = get_Kinematics(model.mechano.Kinematic)
   E       = get_Kinematics(model.electro.Kinematic)
   Uvn = TensorValue(1.,2.,3.,2.,4.,5.,3.,5.,6.) * 2e-4 + I3
@@ -86,7 +86,7 @@ end
   viscous_branch2 = ViscousIncompressible(short_term, τ=60.)
   visco_elastic = GeneralizedMaxwell(hyper_elastic, viscous_branch1, viscous_branch2)
   dielectric = IdealDielectric(ε=1.0)
-  model = ElectroMechModel(dielectric, visco_elastic)
+  model =dielectric+visco_elastic
   F, _, _ = get_Kinematics(model.mechano.Kinematic)
   E       = get_Kinematics(model.electro.Kinematic)
   Uvn = TensorValue(1.,2.,3.,2.,4.,5.,3.,5.,6.) * 2e-4 + I3
