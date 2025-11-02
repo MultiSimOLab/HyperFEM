@@ -1,4 +1,3 @@
-
 # ============================================
 # Regularization of Mechanical models
 # ============================================
@@ -99,45 +98,45 @@ struct ComposedIsoElastic <: IsoElastic
   Model1::IsoElastic
   Model2::IsoElastic
   Kinematic
-  function ComposedIsoElastic(model1::IsoElastic,model2::IsoElastic)
-    new(model1,model2,model1.Kinematic)
+  function ComposedIsoElastic(model1::IsoElastic, model2::IsoElastic)
+    new(model1, model2, model1.Kinematic)
   end
   function (obj::ComposedIsoElastic)(Λ::Float64=1.0)
-    Ψ1, ∂Ψu1, ∂Ψuu1  = obj.Model1(Λ)
-    Ψ2, ∂Ψu2, ∂Ψuu2  = obj.Model2(Λ)
-    Ψ(x)=Ψ1(x)+Ψ2(x)
-    ∂Ψ(x)=∂Ψu1(x)+∂Ψu2(x)
-    ∂∂Ψ(x)=∂Ψuu1(x)+∂Ψuu2(x)
+    Ψ1, ∂Ψu1, ∂Ψuu1 = obj.Model1(Λ)
+    Ψ2, ∂Ψu2, ∂Ψuu2 = obj.Model2(Λ)
+    Ψ(x) = Ψ1(x) + Ψ2(x)
+    ∂Ψ(x) = ∂Ψu1(x) + ∂Ψu2(x)
+    ∂∂Ψ(x) = ∂Ψuu1(x) + ∂Ψuu2(x)
     return (Ψ, ∂Ψ, ∂∂Ψ)
   end
 end
- 
- 
+
+
 function (+)(Model1::IsoElastic, Model2::IsoElastic)
-  ComposedIsoElastic(Model1,Model2)
+  ComposedIsoElastic(Model1, Model2)
 end
 
 struct ComposedAnisoElastic <: AnisoElastic
   Model1::IsoElastic
   Model2::AnisoElastic
   Kinematic
-  function ComposedAnisoElastic(model1::IsoElastic,model2::AnisoElastic)
-    new(model1,model2,model1.Kinematic)
+  function ComposedAnisoElastic(model1::IsoElastic, model2::AnisoElastic)
+    new(model1, model2, model1.Kinematic)
   end
   function (obj::ComposedAnisoElastic)(Λ::Float64=1.0)
     DΨ1 = obj.Model1(Λ)
     DΨ2 = obj.Model2(Λ)
-    Ψ, ∂Ψ, ∂∂Ψ = map((ψ1,ψ2) -> (x,N) -> ψ1(x) + ψ2(x,N), DΨ1, DΨ2)
+    Ψ, ∂Ψ, ∂∂Ψ = map((ψ1, ψ2) -> (x, N...) -> ψ1(x) + ψ2(x, N...), DΨ1, DΨ2)
     return (Ψ, ∂Ψ, ∂∂Ψ)
   end
-end 
- 
+end
+
 
 function (+)(Model1::IsoElastic, Model2::AnisoElastic)
-  ComposedAnisoElastic(Model1,Model2)
+  ComposedAnisoElastic(Model1, Model2)
 end
 function (+)(Model1::AnisoElastic, Model2::IsoElastic)
-  ComposedAnisoElastic(Model2,Model1)
+  ComposedAnisoElastic(Model2, Model1)
 end
 
 struct MultiAnisoElastic <: AnisoElastic
@@ -155,8 +154,8 @@ function (obj::MultiAnisoElastic)(args...)
   ∂Ψ∂FF(F, N) = mapreduce((∂Ψi∂FF, Ni) -> ∂Ψi∂FF(F, Ni), +, ∂Ψα∂FF, N)
   (Ψ, ∂Ψ∂F, ∂Ψ∂FF)
 end
- 
-transpose(x::NTuple{N, <:Tuple{<:Function, <:Function, <:Function}}) where N = map(i -> getindex.(x, i), 1:3)
+
+transpose(x::NTuple{N,<:Tuple{<:Function,<:Function,<:Function}}) where N = map(i -> getindex.(x, i), 1:3)
 
 
 
@@ -705,6 +704,43 @@ struct TransverseIsotropy2D{A} <: AnisoElastic
     return (Ψ, ∂Ψu, ∂Ψuu)
   end
 end
+
+
+struct HGO_4Fibers <: AnisoElastic
+  c1::Vector{Float64}
+  c2::Vector{Float64}
+  Kinematic::Kinematics{Mechano}
+  function HGO_4Fibers(; c1::Vector{Float64}, c2::Vector{Float64}, Kinematic::KinematicModel=Kinematics(Mechano))
+    @assert length(c1) == length(c2) == 4
+    new(c1, c2, Kinematic)
+  end
+
+  function (obj::HGO_4Fibers)(Λ::Float64=1.0; Threshold=0.01)
+    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    c1, c2 = obj.c1, obj.c2
+
+    Ψ(F, M1, M2, M3, M4) = c1[1] / (4 * c2[1]) * (exp(c2[1] * ((F * M1) ⋅ (F * M1) - 1.0)^2.0) - 1.0) +
+                           c1[2] / (4 * c2[2]) * (exp(c2[2] * ((F * M2) ⋅ (F * M2) - 1.0)^2.0) - 1.0) +
+                           c1[3] / (4 * c2[3]) * (exp(c2[3] * ((F * M3) ⋅ (F * M3) - 1.0)^2.0) - 1.0) +
+                           c1[4] / (4 * c2[4]) * (exp(c2[4] * ((F * M4) ⋅ (F * M4) - 1.0)^2.0) - 1.0)
+
+    ∂Ψ∂F(F, M1, M2, M3, M4) = c1[1] * exp(c2[1] * ((F * M1) ⋅ (F * M1) - 1.0)^2.0) * ((F * M1) ⋅ (F * M1) - 1.0) * ((F * M1) ⊗ M1) +
+                              c1[2] * exp(c2[2] * ((F * M2) ⋅ (F * M2) - 1.0)^2.0) * ((F * M2) ⋅ (F * M2) - 1.0) * ((F * M2) ⊗ M2) +
+                              c1[3] * exp(c2[3] * ((F * M3) ⋅ (F * M3) - 1.0)^2.0) * ((F * M3) ⋅ (F * M3) - 1.0) * ((F * M3) ⊗ M3) +
+                              c1[4] * exp(c2[4] * ((F * M4) ⋅ (F * M4) - 1.0)^2.0) * ((F * M4) ⋅ (F * M4) - 1.0) * ((F * M4) ⊗ M4)
+
+
+    ∂Ψ2∂F∂F(F, M1, M2, M3, M4) = c1[1] * exp(c2[1] * ((F * M1) ⋅ (F * M1) - 1.0)^2.0) * ((4 * c2[1] * (((F * M1) ⋅ (F * M1) - 1.0)^2.0) + 2.0) * (((F * M1) ⊗ M1) ⊗ ((F * M1) ⊗ M1)) + ((F * M1) ⋅ (F * M1) - 1.0) * (I3 ⊗₁₃²⁴ (M1 ⊗ M1))) +
+                                 c1[2] * exp(c2[2] * ((F * M2) ⋅ (F * M2) - 1.0)^2.0) * ((4 * c2[2] * (((F * M2) ⋅ (F * M2) - 1.0)^2.0) + 2.0) * (((F * M2) ⊗ M2) ⊗ ((F * M2) ⊗ M2)) + ((F * M2) ⋅ (F * M2) - 1.0) * (I3 ⊗₁₃²⁴ (M2 ⊗ M2))) +
+                                 c1[3] * exp(c2[3] * ((F * M3) ⋅ (F * M3) - 1.0)^2.0) * ((4 * c2[3] * (((F * M3) ⋅ (F * M3) - 1.0)^2.0) + 2.0) * (((F * M3) ⊗ M3) ⊗ ((F * M3) ⊗ M3)) + ((F * M3) ⋅ (F * M3) - 1.0) * (I3 ⊗₁₃²⁴ (M3 ⊗ M3))) +
+                                 c1[4] * exp(c2[4] * ((F * M4) ⋅ (F * M4) - 1.0)^2.0) * ((4 * c2[4] * (((F * M4) ⋅ (F * M4) - 1.0)^2.0) + 2.0) * (((F * M4) ⊗ M4) ⊗ ((F * M4) ⊗ M4)) + ((F * M4) ⋅ (F * M4) - 1.0) * (I3 ⊗₁₃²⁴ (M4 ⊗ M4)))
+
+
+    return (Ψ, ∂Ψ∂F, ∂Ψ2∂F∂F)
+  end
+end
+
+
 
 
 struct IncompressibleNeoHookean3D{A} <: IsoElastic

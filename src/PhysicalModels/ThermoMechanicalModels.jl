@@ -107,3 +107,4 @@ function _getCoupling(term::Thermo, mec::Mechano, Λ::Float64)
 
   return (Ψtm, ∂Ψtm_u, ∂Ψtm_θ, ∂Ψtm_uu, ∂Ψtm_uθ, ∂Ψtm_θθ)
 end
+ 

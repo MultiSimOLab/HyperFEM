@@ -39,6 +39,61 @@ function test_derivatives_3D_(model::PhysicalModel; rtol=1e-14, kwargs...)
 end
 
 
+@testset "HGO_4Fibers" begin
+  c1  =  [0.6639232500447778, 0.5532987701062146, 0.9912576142028674, 0.4951942011240962]
+  c2  =  [0.800583033264982, 0.3141082734275339, 0.8063905248474006, 0.5850486948450955]
+  M1  =  [ 0.36799630150742724, 0.8353476258002335, 0.57704047269419]
+  M1  =  VectorValue(M1/norm(M1))
+  M2  =  [ 0.3857610953527303, 0.024655018338846868, 0.6133770006613235]
+  M2  =  VectorValue(M2/norm(M2))
+  M3  =  [ 0.4516424464747618, 0.6609741557924332, 0.8441070681368911]
+  M3  =  VectorValue(M3/norm(M3))
+  M4  =  [0.7650638541897623, 0.8268625401770648, 0.3103412304991431]
+  M4  =  VectorValue(M4/norm(M4))
+  
+  model = HGO_4Fibers(c1=c1, c2=c2)
+  Ψ, ∂Ψ∂F, ∂Ψ∂F∂F = model()
+  ∂Ψ∂F_(F,M1,M2,M3,M4) = TensorValue(ForwardDiff.gradient(F -> Ψ(F,get_array(M1),get_array(M2),get_array(M3),get_array(M4)), get_array(F)))
+  ∂Ψ∂F∂F_(F,M1,M2,M3,M4) = TensorValue(ForwardDiff.hessian(F -> Ψ(F,get_array(M1),get_array(M2),get_array(M3),get_array(M4)), get_array(F)))
+
+
+  F, _, _ = get_Kinematics(model.Kinematic)
+  @test Ψ(F(∇u3), M1,M2,M3,M4) == 0.0005561006012767033 
+  @test isapprox(norm(∂Ψ∂F(F(∇u3), M1,M2,M3,M4)) ,  norm(∂Ψ∂F_(F(∇u3), M1,M2,M3,M4)),rtol=1e-14)
+  @test isapprox(norm(∂Ψ∂F∂F(F(∇u3), M1,M2,M3,M4)), norm(∂Ψ∂F∂F_(F(∇u3), M1,M2,M3,M4)),rtol=1e-14)
+end
+
+
+@testset "HGO_4Fibers+MooneyRivlin3D" begin
+  c1  =  [0.6639232500447778, 0.5532987701062146, 0.9912576142028674, 0.4951942011240962]
+  c2  =  [0.800583033264982, 0.3141082734275339, 0.8063905248474006, 0.5850486948450955]
+  M1  =  [ 0.36799630150742724, 0.8353476258002335, 0.57704047269419]
+  M1  =  VectorValue(M1/norm(M1))
+  M2  =  [ 0.3857610953527303, 0.024655018338846868, 0.6133770006613235]
+  M2  =  VectorValue(M2/norm(M2))
+  M3  =  [ 0.4516424464747618, 0.6609741557924332, 0.8441070681368911]
+  M3  =  VectorValue(M3/norm(M3))
+  M4  =  [0.7650638541897623, 0.8268625401770648, 0.3103412304991431]
+  M4  =  VectorValue(M4/norm(M4))
+  
+ 
+
+  model1 = MooneyRivlin3D(λ=(1e3 + 1e3) * 1e2, μ1=1e3, μ2=1e3)
+  model2 = HGO_4Fibers(c1=c1, c2=c2)
+  model=model1+model2
+
+  Ψ, ∂Ψ∂F, ∂Ψ∂F∂F = model()
+  ∂Ψ∂F_(F,M1,M2,M3,M4) = TensorValue(ForwardDiff.gradient(F -> Ψ(F,get_array(M1),get_array(M2),get_array(M3),get_array(M4)), get_array(F)))
+  ∂Ψ∂F∂F_(F,M1,M2,M3,M4) = TensorValue(ForwardDiff.hessian(F -> Ψ(F,get_array(M1),get_array(M2),get_array(M3),get_array(M4)), get_array(F)))
+
+
+  F, _, _ = get_Kinematics(model.Kinematic)
+  @test Ψ(F(∇u3), M1,M2,M3,M4) == 23.21318362353833 
+  @test isapprox(norm(∂Ψ∂F(F(∇u3), M1,M2,M3,M4)) ,  norm(∂Ψ∂F_(F(∇u3), M1,M2,M3,M4)),rtol=1e-10)
+  @test isapprox(norm(∂Ψ∂F∂F(F(∇u3), M1,M2,M3,M4)), norm(∂Ψ∂F∂F_(F(∇u3), M1,M2,M3,M4)),rtol=1e-10)
+end
+
+
 
 @testset "Iso+Aniso" begin
   N = VectorValue(1.0, 2.0, 3.0)
@@ -525,7 +580,7 @@ end
 
   modelMR = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
   modelID = HardMagnetic(μ=1.2566e-6, αr=40e-3, χe=0.0, χr=8.0)
-  modelmagneto = MagnetoMechModel(modelID, modelMR)
+  modelmagneto=modelMR+modelID
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelmagneto()
   F, _, _ = get_Kinematics(modelMR.Kinematic)
   H0 = get_Kinematics(modelID.Kinematic)
@@ -606,7 +661,7 @@ end
 
   modelMR = MooneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
   modelID = IdealMagnetic2D(μ=1.2566e-6, χe=0.0)
-  modelmagneto = MagnetoMechModel(modelID, modelMR)
+  modelmagneto=modelMR+modelID
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelmagneto()
   F, _, _ = get_Kinematics(modelMR.Kinematic)
   H0 = get_Kinematics(modelID.Kinematic)
@@ -648,7 +703,7 @@ end
 
   modelMR = MooneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
   modelID = HardMagnetic2D(μ=1.2566e-6, αr=40e-3, χe=0.0, χr=8.0)
-  modelmagneto = MagnetoMechModel(modelID, modelMR)
+  modelmagneto=modelMR+modelID
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelmagneto()
   F, _, _ = get_Kinematics(modelMR.Kinematic)
   H0 = get_Kinematics(modelID.Kinematic)

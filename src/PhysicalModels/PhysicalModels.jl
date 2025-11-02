@@ -1,6 +1,7 @@
 module PhysicalModels
 
 using Gridap
+using Gridap.CellData
 using Gridap.Helpers
 using DrWatson
 
@@ -53,6 +54,7 @@ export ThermoElectroMech_Bonet
 export MagnetoMechModel
 export GeneralizedMaxwell
 export ViscousIncompressible
+export HGO_4Fibers
 
 export PhysicalModel
 export Mechano
@@ -108,6 +110,7 @@ abstract type ThermoMechano <: MultiPhysicalModel end
 abstract type ThermoElectro <: MultiPhysicalModel end
 abstract type FlexoElectro <: MultiPhysicalModel end
 abstract type MagnetoMechano <: MultiPhysicalModel end
+abstract type InternalFibers end
 
 include("KinematicModels.jl")
 

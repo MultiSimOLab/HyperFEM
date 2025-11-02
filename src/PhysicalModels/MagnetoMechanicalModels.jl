@@ -202,3 +202,11 @@ function _getCoupling(mag::HardMagnetic2D, mec::Mechano, Λ::Float64)
 
   return (Ψ, ∂Ψ_u, ∂Ψ_φ, ∂Ψ_uu, ∂Ψ_φu, ∂Ψ_φφ)
 end
+
+
+function (+)(Model1::Magneto, Model2::Mechano)
+  MagnetoMechModel(Model1, Model2)
+end
+function (+)(Model1::Mechano, Model2::Magneto)
+  MagnetoMechModel(Model2, Model1)
+end
