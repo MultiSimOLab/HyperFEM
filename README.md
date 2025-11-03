@@ -121,6 +121,9 @@ post_model = PostProcessor(comp_model, driverpost; is_vtk=true, filepath=simdir)
 x = solve!(comp_model; stepping=(nsteps=5, maxbisec=5), post=post_model)
 ```
 
+## HyperFEM Gallery
+
+
  <p align="center"> 
 &nbsp; &nbsp; &nbsp; &nbsp;
 <img alt="Dark"
