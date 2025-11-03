@@ -121,6 +121,17 @@ post_model = PostProcessor(comp_model, driverpost; is_vtk=true, filepath=simdir)
 x = solve!(comp_model; stepping=(nsteps=5, maxbisec=5), post=post_model)
 ```
 
+## HyperFEM Gallery
+
+
+ <p align="center"> 
+&nbsp; &nbsp; &nbsp; &nbsp;
+<img alt="Dark"
+src="https://github.com/MultiSimOLab/HyperFEM/blob/HGO/docs/imgs/sims_.png?raw=true" width="110%">
+</p>
+
+ 
+
 ## How to cite HyperFEM
 
 In order to give credit to the HyperFEM contributors, we ask that you please reference the paper:
@@ -138,7 +149,7 @@ along with the required citations for [Gridap](https://github.com/gridap/Gridap.
  <p align="center"> 
 &nbsp; &nbsp; &nbsp; &nbsp;
 <img alt="Dark"
-src="https://github.com/jmartfrut/HyperFEM/blob/main/docs/imgs/aei.png?raw=true" width="70%">
+src="https://github.com/MultiSimOLab/HyperFEM/blob/main/docs/imgs/aei.png?raw=true" width="70%">
 </p>
  
 #  Contact
