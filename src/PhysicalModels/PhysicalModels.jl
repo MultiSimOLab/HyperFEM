@@ -55,6 +55,7 @@ export MagnetoMechModel
 export GeneralizedMaxwell
 export ViscousIncompressible
 export HGO_4Fibers
+export HGO_1Fiber
 
 export PhysicalModel
 export Mechano

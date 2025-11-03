@@ -7,6 +7,38 @@ const ∇u = TensorValue(1.0:9.0...) * 1e-3
 const ∇un = TensorValue(1.0:9.0...) * 5e-4
 
 
+@testset "Electro+4*HGO_1Fiber" begin
+  c1  =  [0.6639232500447778, 0.5532987701062146, 0.9912576142028674, 0.4951942011240962]
+  c2  =  [0.800583033264982, 0.3141082734275339, 0.8063905248474006, 0.5850486948450955]
+  M1  =  [ 0.36799630150742724, 0.8353476258002335, 0.57704047269419]
+  M1  =  VectorValue(M1/norm(M1))
+  M2  =  [ 0.3857610953527303, 0.024655018338846868, 0.6133770006613235]
+  M2  =  VectorValue(M2/norm(M2))
+  M3  =  [ 0.4516424464747618, 0.6609741557924332, 0.8441070681368911]
+  M3  =  VectorValue(M3/norm(M3))
+  M4  =  [0.7650638541897623, 0.8268625401770648, 0.3103412304991431]
+  M4  =  VectorValue(M4/norm(M4))
+  
+  model1 = HGO_1Fiber(c1=c1[1], c2=c2[1])
+  model2 = HGO_1Fiber(c1=c1[2], c2=c2[2])
+  model3 = HGO_1Fiber(c1=c1[3], c2=c2[3])
+  model4 = HGO_1Fiber(c1=c1[4], c2=c2[4])
+  modelMR = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
+  modelID = IdealDielectric(ε=4.0)
+  modelelectro=modelMR+[model1 model2 model3 model4]+modelID
+ 
+
+  Ψ, ∂Ψ∂F, ∂Ψ∂F∂F = modelelectro()
+ 
+  F, _, _ = get_Kinematics(model1.Kinematic)
+  E = get_Kinematics(modelID.Kinematic)
+  @test Ψ(F(∇u),E(∇φ) ,(M1,M2,M3,M4)) == -27.513663654827152
+  @test isapprox(norm(∂Ψ∂F(F(∇u),E(∇φ) ,(M1,M2,M3,M4))) ,  47.45420724735932,rtol=1e-14)
+  @test isapprox(norm(∂Ψ∂F∂F(F(∇u),E(∇φ) ,(M1,M2,M3,M4))), 14.707913034885005,rtol=1e-14)
+end
+
+
+
 @testset "ElectroMechano" begin
   modelMR = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
   modelID = IdealDielectric(ε=4.0)

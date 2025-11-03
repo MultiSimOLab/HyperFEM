@@ -65,6 +65,7 @@ end
 @publish PhysicalModels ViscousIncompressible
 @publish PhysicalModels GeneralizedMaxwell
 @publish PhysicalModels HGO_4Fibers
+@publish PhysicalModels HGO_1Fiber
 
 @publish PhysicalModels Mechano
 @publish PhysicalModels Thermo
