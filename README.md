@@ -127,7 +127,7 @@ x = solve!(comp_model; stepping=(nsteps=5, maxbisec=5), post=post_model)
  <p align="center"> 
 &nbsp; &nbsp; &nbsp; &nbsp;
 <img alt="Dark"
-src="https://github.com/MultiSimOLab/HyperFEM/blob/HGO/docs/imgs/sims_.png?raw=true" width="100%">
+src="https://github.com/MultiSimOLab/HyperFEM/blob/HGO/docs/imgs/sims_.png?raw=true" width="110%">
 </p>
 
  
