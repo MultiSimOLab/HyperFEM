@@ -716,7 +716,6 @@ struct HGO_4Fibers <: AnisoElastic
   end
 
   function (obj::HGO_4Fibers)(Λ::Float64=1.0; Threshold=0.01)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     c1, c2 = obj.c1, obj.c2
 
     Ψ(F, M1, M2, M3, M4) = c1[1] / (4 * c2[1]) * (exp(c2[1] * ((F * M1) ⋅ (F * M1) - 1.0)^2.0) - 1.0) +
