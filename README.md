@@ -14,15 +14,14 @@ src="https://github.com/jmartfrut/HyperFEM/blob/main/docs/imgs/logo.png?raw=true
 
 # Multiphysics Simulation of Multifunctional Soft Materials
 
-<p align="center">
-  <em>
-  <b>HyperFEM</b> is a library within the 
-  <a href="https://github.com/gridap/Gridap.jl">Gridap</a> ecosystem designed for the simulation of multiphysics problems involving multifunctional hyperelastic materials.  
-  The ultimate goal of HyperFEM is to provide a <b>high-level, expressive, and rapid prototyping tool</b> that accelerates the modeling stages of <b>Thermo–Electro–Magneto–Mechanical</b> multiphysics problems.  
-  To this end, it includes a comprehensive library of <b>analytically derived constitutive models</b> formulated through tensor algebra.  
-  In addition, HyperFEM provides abstractions for <b>monolithic and staggered solution schemes</b>, extending Gridap’s capabilities in the context of <b>nonlinear solid mechanics</b>.
-  </em>
-</p>
+<div align="justify" style="margin-left: 40px; margin-right: 40px;">
+
+**HyperFEM** is a library within the [Gridap](https://github.com/gridap/Gridap.jl) ecosystem designed for the simulation of multiphysics problems involving multifunctional hyperelastic materials.  
+The ultimate goal of HyperFEM is to provide a **high-level, expressive, and rapid prototyping tool** that accelerates the modeling stages of **Thermo–Electro–Magneto–Mechanical** multiphysics problems.  
+To this end, it includes a comprehensive library of **analytically derived constitutive models** formulated through tensor algebra.  
+In addition, HyperFEM provides abstractions for **monolithic and staggered solution schemes**, extending Gridap’s capabilities in the context of **nonlinear solid mechanics**.
+
+</div>
 
 
 
