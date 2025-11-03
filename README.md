@@ -53,7 +53,7 @@ geomodel = GmshDiscreteModel("./test/models/test_static_EM.msh")
 # Constitutive model
 physmodel_mec = NeoHookean3D(λ=10.0, μ=1.0)
 physmodel_elec = IdealDielectric(ε=1.0)
-physmodel = ElectroMechModel(mechano=physmodel_mec, electro=physmodel_elec)
+physmodel= physmodel_mec+physmodel_elec
 
 # Setup integration
 order = 1
