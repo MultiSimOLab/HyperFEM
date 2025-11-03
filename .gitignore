@@ -3,3 +3,4 @@ results/
 debug/
 data/sims/
 **/.DS_Store
+.vscode/
