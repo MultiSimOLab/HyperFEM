@@ -14,13 +14,22 @@ src="https://github.com/jmartfrut/HyperFEM/blob/main/docs/imgs/logo.png?raw=true
 
 # Multiphysics Simulation of Multifunctional Soft Materials
 
-**HyperFEM** is a library within the [Gridap](https://github.com/gridap/Gridap.jl) ecosystem designed for the simulation of multiphysics problems involving multifunctional hyperelastic materials. The ultimate goal of HyperFEM is to provide a **high-level, expressive, and rapid prototyping tool** that accelerates the modeling stages of **Thermo–Electro–Magneto–Mechanical** multiphysics problems. To this end, it includes a comprehensive library of **analytically derived constitutive models** formulated through tensor algebra. In addition, HyperFEM provides abstractions for **monolithic and staggered solution schemes**, extending Gridap’s capabilities in the context of **nonlinear solid mechanics**.
+<p align="center">
+  <em>
+  <b>HyperFEM</b> is a library within the 
+  <a href="https://github.com/gridap/Gridap.jl">Gridap</a> ecosystem designed for the simulation of multiphysics problems involving multifunctional hyperelastic materials.  
+  The ultimate goal of HyperFEM is to provide a <b>high-level, expressive, and rapid prototyping tool</b> that accelerates the modeling stages of <b>Thermo–Electro–Magneto–Mechanical</b> multiphysics problems.  
+  To this end, it includes a comprehensive library of <b>analytically derived constitutive models</b> formulated through tensor algebra.  
+  In addition, HyperFEM provides abstractions for <b>monolithic and staggered solution schemes</b>, extending Gridap’s capabilities in the context of <b>nonlinear solid mechanics</b>.
+  </em>
+</p>
+
 
 
 ## Installation
 Open the Julia REPL, type `]` to enter package mode, and install as follows
 ```julia
-pkg> add https://github.com/jmartfrut/HyperFEM
+pkg> add https://github.com/MultiSimOLab/HyperFEM
 ```
 
 ## Usage
@@ -127,7 +136,7 @@ x = solve!(comp_model; stepping=(nsteps=5, maxbisec=5), post=post_model)
  <p align="center"> 
 &nbsp; &nbsp; &nbsp; &nbsp;
 <img alt="Dark"
-src="https://github.com/MultiSimOLab/HyperFEM/blob/HGO/docs/imgs/sims_.png?raw=true" width="110%">
+src="https://github.com/MultiSimOLab/HyperFEM/blob/main/docs/imgs/sims_.png?raw=true" width="110%">
 </p>
 
  
