@@ -39,6 +39,38 @@ function test_derivatives_3D_(model::PhysicalModel; rtol=1e-14, kwargs...)
 end
 
 
+
+
+@testset "composition of HGO_1Fiber" begin
+  c1  =  [0.6639232500447778, 0.5532987701062146, 0.9912576142028674, 0.4951942011240962]
+  c2  =  [0.800583033264982, 0.3141082734275339, 0.8063905248474006, 0.5850486948450955]
+  M1  =  [ 0.36799630150742724, 0.8353476258002335, 0.57704047269419]
+  M1  =  VectorValue(M1/norm(M1))
+  M2  =  [ 0.3857610953527303, 0.024655018338846868, 0.6133770006613235]
+  M2  =  VectorValue(M2/norm(M2))
+  M3  =  [ 0.4516424464747618, 0.6609741557924332, 0.8441070681368911]
+  M3  =  VectorValue(M3/norm(M3))
+  M4  =  [0.7650638541897623, 0.8268625401770648, 0.3103412304991431]
+  M4  =  VectorValue(M4/norm(M4))
+  
+  model1 = HGO_1Fiber(c1=c1[1], c2=c2[1])
+  model2 = HGO_1Fiber(c1=c1[2], c2=c2[2])
+  model3 = HGO_1Fiber(c1=c1[3], c2=c2[3])
+  model4 = HGO_1Fiber(c1=c1[4], c2=c2[4])
+
+  model=[model1 model2 model3 model4]
+
+  Ψ, ∂Ψ∂F, ∂Ψ∂F∂F = model()
+  ∂Ψ∂F_(F,M1,M2,M3,M4) = TensorValue(ForwardDiff.gradient(F -> Ψ(F,(get_array(M1),get_array(M2),get_array(M3),get_array(M4))), get_array(F)))
+  ∂Ψ∂F∂F_(F,M1,M2,M3,M4) = TensorValue(ForwardDiff.hessian(F -> Ψ(F,(get_array(M1),get_array(M2),get_array(M3),get_array(M4))), get_array(F)))
+
+
+  F, _, _ = get_Kinematics(model1.Kinematic)
+  @test Ψ(F(∇u3), (M1,M2,M3,M4)) == 0.0005561006012767033 
+  @test isapprox(norm(∂Ψ∂F(F(∇u3), (M1,M2,M3,M4))) ,  norm(∂Ψ∂F_(F(∇u3), M1,M2,M3,M4)),rtol=1e-14)
+  @test isapprox(norm(∂Ψ∂F∂F(F(∇u3), (M1,M2,M3,M4))), norm(∂Ψ∂F∂F_(F(∇u3), M1,M2,M3,M4)),rtol=1e-14)
+end
+
 @testset "HGO_4Fibers" begin
   c1  =  [0.6639232500447778, 0.5532987701062146, 0.9912576142028674, 0.4951942011240962]
   c2  =  [0.800583033264982, 0.3141082734275339, 0.8063905248474006, 0.5850486948450955]
@@ -64,7 +96,7 @@ end
 end
 
 
-@testset "HGO_4Fibers+MooneyRivlin3D" begin
+@testset "composition of HGO_4Fibers+MooneyRivlin3D" begin
   c1  =  [0.6639232500447778, 0.5532987701062146, 0.9912576142028674, 0.4951942011240962]
   c2  =  [0.800583033264982, 0.3141082734275339, 0.8063905248474006, 0.5850486948450955]
   M1  =  [ 0.36799630150742724, 0.8353476258002335, 0.57704047269419]

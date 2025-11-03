@@ -39,7 +39,6 @@ Example of a Monolithic implementation for the simulation of Nonlinear ElectroMe
 
 ```julia
 using HyperFEM
-using HyperFEM: jacobian, solve!
 using Gridap, GridapGmsh, GridapSolvers, DrWatson
 using GridapSolvers.NonlinearSolvers
 using Gridap.FESpaces

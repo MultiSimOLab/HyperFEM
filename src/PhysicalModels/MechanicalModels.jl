@@ -757,6 +757,36 @@ end
 
 
 
+struct HGO_1Fiber <: AnisoElastic
+  c1::Float64
+  c2::Float64
+  Kinematic::Kinematics{Mechano}
+  function HGO_1Fiber(; c1::Float64, c2::Float64, Kinematic::KinematicModel=Kinematics(Mechano))
+    new(c1, c2, Kinematic)
+  end
+
+  function (obj::HGO_1Fiber)(Λ::Float64=1.0; Threshold=0.01)
+    c1, c2 = obj.c1, obj.c2
+
+    Ψ(F, N1) = begin
+      M1 = N1 / norm(N1)
+      c1 / (4 * c2) * (exp(c2 * ((F * M1) ⋅ (F * M1) - 1.0)^2.0) - 1.0)
+    end
+
+    ∂Ψ∂F(F, N1) = begin
+      M1 = N1 / norm(N1)
+      c1 * exp(c2 * ((F * M1) ⋅ (F * M1) - 1.0)^2.0) * ((F * M1) ⋅ (F * M1) - 1.0) * ((F * M1) ⊗ M1) 
+    end
+
+    ∂Ψ2∂F∂F(F, N1) = begin
+      M1 = N1 / norm(N1)
+      c1 * exp(c2 * ((F * M1) ⋅ (F * M1) - 1.0)^2.0) * ((4 * c2 * (((F * M1) ⋅ (F * M1) - 1.0)^2.0) + 2.0) * (((F * M1) ⊗ M1) ⊗ ((F * M1) ⊗ M1)) + ((F * M1) ⋅ (F * M1) - 1.0) * (I3 ⊗₁₃²⁴ (M1 ⊗ M1))) 
+    end
+
+    return (Ψ, ∂Ψ∂F, ∂Ψ2∂F∂F)
+  end
+end
+
 
 struct IncompressibleNeoHookean3D{A} <: IsoElastic
   λ::Float64
