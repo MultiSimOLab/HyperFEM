@@ -8,4 +8,6 @@ using Test
 
     include("StaticMechanicalDirichletTest.jl")
 
+    include("StaticMechanicalNeumannTest.jl")
+
 end
