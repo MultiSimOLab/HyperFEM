@@ -1,4 +1,17 @@
 
+"The evolution functions have been designed to apply variable boundary conditions."
+module EvolutionFunctions
+
+export ramp
+export triangular
+export step
+export sigmoid
+export constant
+
+"Return an unbounded ramp function. By default, it is the identity. Otherwise, the scaling factor is 1/T."
+function ramp(T::Float64=1.0)
+  t::Float64 -> t/T
+end
 
 "Return a triangular evolution function ranging from 0 to 1, centered at T, having edges at 0 and 2T."
 function triangular(T::Float64)
@@ -39,4 +52,6 @@ end
 "Return a constant function which is always evaluated to 1."
 function constant()
   t::Float64 -> 1.0
+end
+
 end
