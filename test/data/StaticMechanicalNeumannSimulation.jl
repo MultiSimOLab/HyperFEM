@@ -1,4 +1,4 @@
-using Gridap, GridapGmsh, GridapSolvers, DrWatson
+using Gridap, GridapSolvers
 using GridapSolvers.NonlinearSolvers
 using GridapSolvers.LinearSolvers
 using TimerOutputs
@@ -10,9 +10,9 @@ using HyperFEM.ComputationalModels.CartesianTags
 function static_mechanical_neumann_simulation(;writevtk=true, verbose=true)
 
   pname = "StaticMechanical"
-  simdir = datadir("sims", pname)
+  simdir = projdir("data", "sims", pname)
   setupfolder(simdir)
-  
+
   long   = 0.05   # m
   width  = 0.005  # m
   thick  = 0.002  # m
