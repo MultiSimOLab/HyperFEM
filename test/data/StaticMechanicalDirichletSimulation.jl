@@ -7,7 +7,7 @@ using HyperFEM
 using HyperFEM.ComputationalModels.CartesianTags
 
 
-function main(;writevtk=true, verbose=true)
+function static_mechanical_dirichlet_simulation(;writevtk=true, verbose=true)
 
   pname = "Stretch"
   
@@ -74,11 +74,12 @@ function main(;writevtk=true, verbose=true)
   @timeit pname begin
     x, flag = solve!(comp_model; stepping=(nsteps=10, maxbisec=10), post=post_model)
   end
+  return x
 end
 
 
 if abspath(PROGRAM_FILE) == @__FILE__
   reset_timer!()
-  main()
+  static_mechanical_dirichlet_simulation()
   print_timer()
 end
