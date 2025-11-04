@@ -135,8 +135,6 @@ end
 @publish Solvers Roman_LS
 @publish Solvers update_cellstate!
 
- 
-
-
-# @publish LinearSolvers solve
-# @publish LinearSolvers solve!
+export setupfolder
+export projdir
+export filedir
