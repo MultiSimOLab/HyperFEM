@@ -510,8 +510,7 @@ end
     return n_layers, Weights, Biases, ϵ, β
   end
 
-  BASE_FOLDER = dirname(dirname(pathof(HyperFEM)))
-  data_filename = joinpath(BASE_FOLDER, "test/models/test_NN_TEM.json")
+  data_filename = projdir("test/models/test_NN_TEM.json")
   n_layers, Weights, Biases, ϵ, β = ExtractingInfo(data_filename)
 
   model = ThermoElectroMech_PINNs(; W=Weights, b=Biases, ϵ=ϵ, β=β, nLayer=n_layers)
