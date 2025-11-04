@@ -8,7 +8,7 @@ using HyperFEM.ComputationalModels:constant
 using HyperFEM.ComputationalModels:triangular
 using HyperFEM.ComputationalModels.PostMetrics
 
-function visco_elastic_simulation(;t_end=15, write_vtk=true, verbose=true)
+function visco_elastic_simulation(;t_end=15, writevtk=true, verbose=true)
   # Domain and tessellation
   long   = 0.05   # m
   width  = 0.005  # m
@@ -78,7 +78,7 @@ function visco_elastic_simulation(;t_end=15, write_vtk=true, verbose=true)
     updateStateVariables!(state_vars, cons_model, Δt, uh, unh)
   end
 
-  post_model = PostProcessor(comp_model, driverpost; is_vtk=false, filepath="")
+  post_model = PostProcessor(comp_model, driverpost; is_vtk=writevtk, filepath="")
   solve!(comp_model; stepping=(nsteps=Int(t_end/Δt), maxbisec=1), post=post_model, ProjectDirichlet=true)
   (λx, σΓ)
 end
