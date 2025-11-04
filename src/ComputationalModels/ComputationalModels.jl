@@ -13,7 +13,7 @@ import Gridap: solve!
 
 using BlockArrays
 using GridapPETSc, GridapPETSc.PETSC
-using GridapPETSc: PetscScalar, PetscInt, PETSC,  @check_error_code
+using GridapPETSc: PetscScalar, PetscInt, PETSC
 
 using GridapDistributed
 using GridapDistributed: DistributedDiscreteModel, DistributedTriangulation,
@@ -22,12 +22,11 @@ using GridapDistributed: DistributedDiscreteModel, DistributedTriangulation,
   DistributedMultiFieldFEBasis, BlockPMatrix, BlockPVector, change_ghost
 
 using PartitionedArrays
-using PartitionedArrays: getany, tuple_of_arrays, matching_ghost_indices
+using PartitionedArrays: getany
 
 using GridapSolvers
 using GridapSolvers.LinearSolvers, GridapSolvers.NonlinearSolvers, GridapSolvers.BlockSolvers
 using GridapSolvers.SolverInterfaces: SolverVerboseLevel, SOLVER_VERBOSE_NONE, SOLVER_VERBOSE_LOW, SOLVER_VERBOSE_HIGH
-# using GridapSolvers.SolverInterfaces: init!, update!, finalize!
 using GridapSolvers.SolverInterfaces: finished, print_message, converged
 
 using LinearAlgebra
@@ -35,8 +34,6 @@ using WriteVTK
 
 using GridapGmsh 
 using GridapGmsh: GmshDiscreteModel
-using GridapGmsh:@check_if_loaded
-# using Gmsh: Gmsh, gmsh
 
 
 include("BoundaryConditions.jl")
@@ -71,7 +68,6 @@ export StaticNonlinearModel
 export DynamicNonlinearModel
 export StaticLinearModel
 export solve!
-# export evaluate!
 export dirichlet_preconditioning!
 export get_state
 export get_measure
