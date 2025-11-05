@@ -79,6 +79,7 @@ end
 @publish PhysicalModels EnergyInterpolationScheme
 @publish PhysicalModels update_state!
 @publish PhysicalModels Kinematics
+@publish PhysicalModels Solid
 @publish PhysicalModels KinematicModel
 @publish PhysicalModels EvolutiveKinematics
 @publish PhysicalModels get_Kinematics

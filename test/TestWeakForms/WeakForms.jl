@@ -1,5 +1,4 @@
 using Gridap
-using HyperFEM: jacobian
 
 
 @testset "Assembly Jacobian ThermoMechanics" begin
@@ -35,14 +34,17 @@ using HyperFEM: jacobian
     θ(x) = x[1] - 1.0
     θh = interpolate_everywhere(θ, Vθ)
 
+    kt=Kinematics(Thermo, Solid)
+    km=Kinematics(Mechano,Solid)
+    k=(km,kt)
     function jach(uh, θh)
-        jac((du, dθ), (v, vθ)) = jacobian(modelTM, (uh, θh), (du, dθ), (v, vθ), dΩ)
+        jac((du, dθ), (v, vθ)) = jacobian(modelTM, k,(uh, θh), (du, dθ), (v, vθ), dΩ)
     end
     function jac_mech(uh, θh)
-        jac(du, v) = jacobian(modelTM, Mechano, (uh, θh), du, v, dΩ)
+        jac(du, v) = jacobian(modelTM, Mechano, k,(uh, θh), du, v, dΩ)
     end
     function jac_termoh(uh, θh)
-        jac(dθ, vθ) = jacobian(modelTM, Thermo, dθ, vθ, dΩ)
+        jac(dθ, vθ) = jacobian(modelTM, Thermo,k, dθ, vθ, dΩ)
     end
 
     jac_ = assemble_matrix(jach(uh, θh), V, V)
@@ -95,14 +97,18 @@ end
     φ(x) = x[1]
     φh = interpolate_everywhere(φ, Vφ)
 
+
+    ke=Kinematics(Electro, Solid)
+    km=Kinematics(Mechano,Solid)
+    k=(km,ke)
     function jach(uh, φh)
-        jac((du, dφ), (v, vφ)) = jacobian(modelelectro, (uh, φh), (du, dφ), (v, vφ), dΩ)
+        jac((du, dφ), (v, vφ)) = jacobian(modelelectro,k, (uh, φh), (du, dφ), (v, vφ), dΩ)
     end
     function jac_mech(uh, φh)
-        jac(du, v) = jacobian(modelelectro, Mechano, (uh, φh), du, v, dΩ)
+        jac(du, v) = jacobian(modelelectro, Mechano, k,(uh, φh), du, v, dΩ)
     end
     function jac_elech(uh, φh)
-        jac(dφ, vφ) = jacobian(modelelectro, Electro, (uh, φh), dφ, vφ, dΩ)
+        jac(dφ, vφ) = jacobian(modelelectro, Electro, k,(uh, φh), dφ, vφ, dΩ)
     end
 
     jac_ = assemble_matrix(jach(uh, φh), V, V)

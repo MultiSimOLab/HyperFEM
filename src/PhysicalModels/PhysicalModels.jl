@@ -73,8 +73,8 @@ export ThermoMechano
 export ThermoElectro
 export FlexoElectro
 export EnergyInterpolationScheme
+export SecondPiola
 
-export KinematicDescription
 export DerivativeStrategy
 
 export initializeStateVariables
@@ -82,6 +82,8 @@ export updateStateVariables!
 export update_state!
 
 export Kinematics
+export KinematicDescription
+export Solid
 export KinematicModel
 export EvolutiveKinematics
 export get_Kinematics
