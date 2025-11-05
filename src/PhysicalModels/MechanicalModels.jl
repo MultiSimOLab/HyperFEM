@@ -2,17 +2,16 @@
 # Regularization of Mechanical models
 # ============================================
 
-struct HessianRegularization{M<:Mechano,B} <: Mechano
-  mechano::M
+struct HessianRegularization <: Mechano
+  mechano::Mechano
   δ::Float64
-  Kinematic::B
 
-  function HessianRegularization(mechano::M; δ::Float64=1.0e-6) where {M<:Mechano}
-    new{M,typeof(mechano.Kinematic)}(mechano, δ, mechano.Kinematic)
+  function HessianRegularization(mechano::Mechano; δ::Float64=1.0e-6)
+    new(mechano, δ)
   end
 
-  function HessianRegularization(; mechano::M, δ::Float64=1.0e-6) where {M<:Mechano}
-    new{M,typeof(mechano.Kinematic)}(mechano, δ, mechano.Kinematic)
+  function HessianRegularization(; mechano::Mechano, δ::Float64=1.0e-6)
+    new(mechano, δ)
   end
 
   function (obj::HessianRegularization)(Λ::Float64=1.0)
@@ -30,25 +29,25 @@ struct HessianRegularization{M<:Mechano,B} <: Mechano
 end
 
 
-struct Hessian∇JRegularization{M<:Mechano,B} <: Mechano
-  mechano::M
+struct Hessian∇JRegularization <: Mechano
+  mechano::Mechano
   δ::Float64
   κ::Float64
-  Kinematic::B
 
-  function Hessian∇JRegularization(mechano::M; δ::Float64=1.0e-6, κ::Float64=1.0) where {M<:Mechano}
-    new{M,typeof(mechano.Kinematic)}(mechano, δ, κ, mechano.Kinematic)
+  function Hessian∇JRegularization(mechano::Mechano; δ::Float64=1.0e-6, κ::Float64=1.0)
+    new(mechano, δ, κ)
   end
 
-  function Hessian∇JRegularization(; mechano::M, δ::Float64=1.0e-6, κ::Float64=1.0) where {M<:Mechano}
-    new{M,typeof(mechano.Kinematic)}(mechano, δ, κ, mechano.Kinematic)
+  function Hessian∇JRegularization(; mechano::Mechano, δ::Float64=1.0e-6, κ::Float64=1.0)
+    new(mechano, δ, κ)
   end
 
   function (obj::Hessian∇JRegularization)(Λ::Float64=1.0)
     Ψs, ∂Ψs, ∂2Ψs = obj.mechano()
-    _, H, J = get_Kinematics(obj.mechano.Kinematic; Λ=Λ)
     δ, κ = obj.δ, obj.κ
 
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
     Ψ(F, Jh) = Ψs(F) + 0.5 * κ * (J(F) - Jh)^2
     ∂Ψ(F, Jh) = ∂Ψs(F) + κ * (J(F) - Jh) * H(F)
     ∂2Ψ_(F, Jh) = ∂2Ψs(F) + κ * (H(F) ⊗ H(F)) + κ * (J(F) - Jh) * _∂H∂F_2D()
@@ -97,9 +96,8 @@ end
 struct ComposedIsoElastic <: IsoElastic
   Model1::IsoElastic
   Model2::IsoElastic
-  Kinematic
   function ComposedIsoElastic(model1::IsoElastic, model2::IsoElastic)
-    new(model1, model2, model1.Kinematic)
+    new(model1, model2)
   end
   function (obj::ComposedIsoElastic)(Λ::Float64=1.0)
     Ψ1, ∂Ψu1, ∂Ψuu1 = obj.Model1(Λ)
@@ -119,9 +117,8 @@ end
 struct ComposedAnisoElastic <: AnisoElastic
   Model1::IsoElastic
   Model2::AnisoElastic
-  Kinematic
   function ComposedAnisoElastic(model1::IsoElastic, model2::AnisoElastic)
-    new(model1, model2, model1.Kinematic)
+    new(model1, model2)
   end
   function (obj::ComposedAnisoElastic)(Λ::Float64=1.0)
     DΨ1 = obj.Model1(Λ)
@@ -164,19 +161,21 @@ transpose(x::NTuple{N,<:Tuple{<:Function,<:Function,<:Function}}) where N = map(
 # Mechanical models
 # ===================
 
-struct Yeoh3D{A} <: IsoElastic
+struct Yeoh3D <: IsoElastic
   λ::Float64
   C10::Float64
   C20::Float64
   C30::Float64
-  Kinematic::A
-  function Yeoh3D(; λ::Float64, C10::Float64, C20::Float64, C30::Float64, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, C10, C20, C30, Kinematic)
+  function Yeoh3D(; λ::Float64, C10::Float64, C20::Float64, C30::Float64)
+    new(λ, C10, C20, C30)
   end
 
   function (obj::Yeoh3D)(Λ::Float64=1.0; Threshold=0.01)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+
     λ, C10, C20, C30 = obj.λ, obj.C10, obj.C20, obj.C30
+
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
 
     # Free energy
     I1(F) = tr((F)' * F)
@@ -199,13 +198,12 @@ struct Yeoh3D{A} <: IsoElastic
   end
 end
 
-struct LinearElasticity2D{A} <: IsoElastic
+struct LinearElasticity2D <: IsoElastic
   λ::Float64
   μ::Float64
   ρ::Float64
-  Kinematic::A
-  function LinearElasticity2D(; λ::Float64, μ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ, ρ, Kinematic)
+  function LinearElasticity2D(; λ::Float64, μ::Float64, ρ::Float64=0.0)
+    new(λ, μ, ρ)
   end
 
   function (obj::LinearElasticity2D)(Λ::Float64=1.0)
@@ -219,13 +217,12 @@ struct LinearElasticity2D{A} <: IsoElastic
 end
 
 
-mutable struct LinearElasticity3D{A} <: IsoElastic
+mutable struct LinearElasticity3D <: IsoElastic
   λ::Float64
   μ::Float64
   ρ::Float64
-  Kinematic::A
-  function LinearElasticity3D(; λ::Float64, μ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ, ρ, Kinematic)
+  function LinearElasticity3D(; λ::Float64, μ::Float64, ρ::Float64=0.0)
+    new(λ, μ, ρ)
   end
 
   function (obj::LinearElasticity3D)(Λ::Float64=1.0)
@@ -239,16 +236,16 @@ mutable struct LinearElasticity3D{A} <: IsoElastic
 end
 
 
-struct VolumetricEnergy{A} <: IsoElastic
+struct VolumetricEnergy <: IsoElastic
   λ::Float64
-  Kinematic::A
-  function VolumetricEnergy(; λ::Float64, Kinematic::KinematicModel=Kinematics(Elasto))
-    new{typeof(Kinematic)}(λ, Kinematic)
+  function VolumetricEnergy(; λ::Float64)
+    new(λ)
   end
 
   function (obj::VolumetricEnergy)(Λ::Float64=1.0)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ = obj.λ
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
     Ψ(F) = (λ / 2.0) * (J(F) - 1)^2
     ∂Ψ_∂J(F) = λ * (J(F) - 1)
     ∂Ψ2_∂J2(F) = λ
@@ -259,18 +256,18 @@ struct VolumetricEnergy{A} <: IsoElastic
 end
 
 
-struct NeoHookean3D{A} <: IsoElastic
+struct NeoHookean3D <: IsoElastic
   λ::Float64
   μ::Float64
   ρ::Float64
-  Kinematic::A
-  function NeoHookean3D(; λ::Float64, μ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ, ρ, Kinematic)
+  function NeoHookean3D(; λ::Float64, μ::Float64, ρ::Float64=0.0)
+    new(λ, μ, ρ)
   end
 
   function (obj::NeoHookean3D)(Λ::Float64=1.0; Threshold=0.01)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ = obj.λ, obj.μ
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
     Ψ(F) = μ / 2 * tr((F)' * F) - μ * logreg(J(F)) + (λ / 2) * (J(F) - 1)^2 - 3.0 * (μ / 2.0)
 
     ∂log∂J(J) = J >= Threshold ? 1 / J : (2 / Threshold - J / (Threshold^2))
@@ -285,19 +282,20 @@ struct NeoHookean3D{A} <: IsoElastic
 end
 
 
-struct MooneyRivlin3D{A} <: IsoElastic
+struct MooneyRivlin3D <: IsoElastic
   λ::Float64
   μ1::Float64
   μ2::Float64
   ρ::Float64
-  Kinematic::A
-  function MooneyRivlin3D(; λ::Float64, μ1::Float64, μ2::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ1, μ2, ρ, Kinematic)
+  function MooneyRivlin3D(; λ::Float64, μ1::Float64, μ2::Float64, ρ::Float64=0.0)
+    new(λ, μ1, μ2, ρ)
   end
 
   function (obj::MooneyRivlin3D)(Λ::Float64=1.0; Threshold=0.01)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ1, μ2 = obj.λ, obj.μ1, obj.μ2
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
+
     Ψ(F) = μ1 / 2 * tr((F)' * F) + μ2 / 2.0 * tr((H(F))' * H(F)) - (μ1 + 2 * μ2) * logreg(J(F)) +
            (λ / 2.0) * (J(F) - 1)^2 - (3.0 / 2.0) * (μ1 + μ2)
     ∂Ψ_∂F(F) = μ1 * F
@@ -315,20 +313,20 @@ struct MooneyRivlin3D{A} <: IsoElastic
 end
 
 
-struct MooneyRivlin2D{A} <: IsoElastic
+struct MooneyRivlin2D <: IsoElastic
   λ::Float64
   μ1::Float64
   μ2::Float64
   ρ::Float64
-  Kinematic::A
 
-  function MooneyRivlin2D(; λ::Float64, μ1::Float64, μ2::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ1, μ2, ρ, Kinematic)
+  function MooneyRivlin2D(; λ::Float64, μ1::Float64, μ2::Float64, ρ::Float64=0.0)
+    new(λ, μ1, μ2, ρ)
   end
 
   function (obj::MooneyRivlin2D)(Λ::Float64=1.0; Threshold=0.01)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ1, μ2 = obj.λ, obj.μ1, obj.μ2
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
     Ψ(F) = (μ1 / 2 + μ2 / 2) * tr((F)' * F) + μ2 / 2.0 * J(F)^2 - (μ1 + 2 * μ2) * logreg(J(F)) +
            (λ / 2.0) * (J(F) - 1)^2
     ∂Ψ_(F) = ForwardDiff.gradient(F -> Ψ(F), get_array(F))
@@ -341,21 +339,22 @@ struct MooneyRivlin2D{A} <: IsoElastic
 end
 
 
-struct NonlinearMooneyRivlin3D{A} <: IsoElastic
+struct NonlinearMooneyRivlin3D <: IsoElastic
   λ::Float64
   μ1::Float64
   μ2::Float64
   α::Float64
   β::Float64
   ρ::Float64
-  Kinematic::A
-  function NonlinearMooneyRivlin3D(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ1, μ2, α, β, ρ, Kinematic)
+  function NonlinearMooneyRivlin3D(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, ρ::Float64=0.0)
+    new(λ, μ1, μ2, α, β, ρ)
   end
 
   function (obj::NonlinearMooneyRivlin3D)(Λ::Float64=1.0; Threshold=0.01)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ1, μ2, α, β = obj.λ, obj.μ1, obj.μ2, obj.α, obj.β
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
+
     Ψ(F) = μ1 / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F))^α + μ2 / (2.0 * β * 3.0^(β - 1)) * (tr((H(F))' * H(F)))^β - (μ1 + 2 * μ2) * logreg(J(F)) +
            (λ / 2.0) * (J(F) - 1)^2
 
@@ -375,22 +374,21 @@ struct NonlinearMooneyRivlin3D{A} <: IsoElastic
 end
 
 
-struct NonlinearMooneyRivlin2D{A} <: IsoElastic
+struct NonlinearMooneyRivlin2D <: IsoElastic
   λ::Float64
   μ1::Float64
   μ2::Float64
   α::Float64
   β::Float64
   ρ::Float64
-  Kinematic::A
-  function NonlinearMooneyRivlin2D(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ1, μ2, α, β, ρ, Kinematic)
+  function NonlinearMooneyRivlin2D(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, ρ::Float64=0.0)
+    new(λ, μ1, μ2, α, β, ρ)
   end
 
   function (obj::NonlinearMooneyRivlin2D)(Λ::Float64=1.0; Threshold=0.01)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ1, μ2, α, β = obj.λ, obj.μ1, obj.μ2, obj.α, obj.β
-
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
     Ψ(F) = μ1 / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F) + 1.0)^α + μ2 / (2.0 * β * 3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^β - (μ1 + 2.0 * μ2) * logreg(J(F)) +
            (λ / 2.0) * (J(F) - 1)^2
 
@@ -412,7 +410,7 @@ struct NonlinearMooneyRivlin2D{A} <: IsoElastic
 end
 
 
-struct NonlinearMooneyRivlin2D_CV{A} <: IsoElastic
+struct NonlinearMooneyRivlin2D_CV <: IsoElastic
   λ::Float64
   μ1::Float64
   μ2::Float64
@@ -420,15 +418,14 @@ struct NonlinearMooneyRivlin2D_CV{A} <: IsoElastic
   β::Float64
   γ::Float64
   ρ::Float64
-  Kinematic::A
-  function NonlinearMooneyRivlin2D_CV(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, γ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ1, μ2, α, β, γ, ρ, Kinematic)
+  function NonlinearMooneyRivlin2D_CV(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, γ::Float64, ρ::Float64=0.0)
+    new(λ, μ1, μ2, α, β, γ, ρ)
   end
 
   function (obj::NonlinearMooneyRivlin2D_CV)(Λ::Float64=1.0)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ1, μ2, α, β, γ = obj.λ, obj.μ1, obj.μ2, obj.α, obj.β, obj.γ
-
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
     Ψ(F) = μ1 / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F) + 1.0)^α + μ2 / (2.0 * β * 3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^β - (μ1 + 2.0 * μ2) * log(J(F)) +
            (λ) * (J(F)^(γ) + J(F)^(-γ))
 
@@ -448,7 +445,7 @@ struct NonlinearMooneyRivlin2D_CV{A} <: IsoElastic
 end
 
 
-struct NonlinearMooneyRivlin_CV{A} <: IsoElastic
+struct NonlinearMooneyRivlin_CV <: IsoElastic
   λ::Float64
   μ1::Float64
   μ2::Float64
@@ -456,15 +453,14 @@ struct NonlinearMooneyRivlin_CV{A} <: IsoElastic
   β::Float64
   γ::Float64
   ρ::Float64
-  Kinematic::A
-  function NonlinearMooneyRivlin_CV(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, γ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ1, μ2, α, β, γ, ρ, Kinematic)
+  function NonlinearMooneyRivlin_CV(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, γ::Float64, ρ::Float64=0.0)
+    new(λ, μ1, μ2, α, β, γ, ρ)
   end
 
   function (obj::NonlinearMooneyRivlin_CV)(Λ::Float64=1.0)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ1, μ2, α, β, γ = obj.λ, obj.μ1, obj.μ2, obj.α, obj.β, obj.γ
-
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
     Ψ(F) = μ1 / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F))^α +
            μ2 / (2.0 * β * 3.0^(β - 1)) * (tr((H(F))' * H(F)))^β -
            (μ1 + 2 * μ2) * log(J(F)) + λ * (J(F)^(γ) + J(F)^(-γ))
@@ -486,21 +482,20 @@ struct NonlinearMooneyRivlin_CV{A} <: IsoElastic
 end
 
 
-struct NonlinearNeoHookean_CV{A} <: IsoElastic
+struct NonlinearNeoHookean_CV <: IsoElastic
   λ::Float64
   μ::Float64
   α::Float64
   γ::Float64
   ρ::Float64
-  Kinematic::A
-  function NonlinearNeoHookean_CV(; λ::Float64, μ::Float64, α::Float64, γ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ, α, γ, ρ, Kinematic)
+  function NonlinearNeoHookean_CV(; λ::Float64, μ::Float64, α::Float64, γ::Float64, ρ::Float64=0.0)
+    new(λ, μ, α, γ, ρ)
   end
 
   function (obj::NonlinearNeoHookean_CV)(Λ::Float64=1.0)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ, α, γ = obj.λ, obj.μ, obj.α, obj.γ
-
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
     Ψ(F) = μ / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F))^α - μ * log(J(F)) + λ * (J(F)^(γ) + J(F)^(-γ))
 
     ∂Ψ_∂F(F) = ((μ / (3.0^(α - 1)) * (tr((F)' * F))^(α - 1))) * F
@@ -518,21 +513,20 @@ struct NonlinearNeoHookean_CV{A} <: IsoElastic
 end
 
 
-struct NonlinearIncompressibleMooneyRivlin2D_CV{A} <: IsoElastic
+struct NonlinearIncompressibleMooneyRivlin2D_CV <: IsoElastic
   λ::Float64
   μ::Float64
   α::Float64
   γ::Float64
   ρ::Float64
-  Kinematic::A
-  function NonlinearIncompressibleMooneyRivlin2D_CV(; λ::Float64, μ::Float64, α::Float64, γ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ, α, γ, ρ, Kinematic)
+  function NonlinearIncompressibleMooneyRivlin2D_CV(; λ::Float64, μ::Float64, α::Float64, γ::Float64, ρ::Float64=0.0)
+    new(λ, μ, α, γ, ρ)
   end
 
   function (obj::NonlinearIncompressibleMooneyRivlin2D_CV)(Λ::Float64=1.0)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ, α, γ = obj.λ, obj.μ, obj.α, obj.γ
-
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
     e(F) = (tr((F)' * F) + 1.0) * J(F)^(-2 / 3)
     ∂e_∂F(F) = 2 * J(F)^(-2 / 3) * F
     ∂e_∂J(F) = -(2 / 3) * (tr((F)' * F) + 1.0) * J(F)^(-5 / 3)
@@ -566,18 +560,17 @@ struct NonlinearIncompressibleMooneyRivlin2D_CV{A} <: IsoElastic
 end
 
 
-struct EightChain{A} <: IsoElastic
+struct EightChain <: IsoElastic
   μ::Float64
   N::Float64
-  Kinematic::A
-  function EightChain(; μ::Float64, N::Float64, Kinematic::KinematicModel=Kinematics(Elasto))
-    new{typeof(Kinematic)}(μ, N, Kinematic)
+  function EightChain(; μ::Float64, N::Float64)
+    new(μ, N)
   end
 
   function (obj::EightChain)(Λ::Float64=1.0)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     μ, N = obj.μ, obj.N
-
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
     Ψ(F) = begin
       C = F' * F
       C_iso = J(F)^(-2 / 3) * C
@@ -629,19 +622,19 @@ struct EightChain{A} <: IsoElastic
 end
 
 
-struct TransverseIsotropy3D{A} <: AnisoElastic
+struct TransverseIsotropy3D <: AnisoElastic
   μ::Float64
   α::Float64
   β::Float64
   ρ::Float64
-  Kinematic::A
-  function TransverseIsotropy3D(; μ::Float64, α::Float64, β::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(μ, α, β, ρ, Kinematic)
+  function TransverseIsotropy3D(; μ::Float64, α::Float64, β::Float64, ρ::Float64=0.0)
+    new(μ, α, β, ρ)
   end
 
 
   function (obj::TransverseIsotropy3D)(Λ::Float64=1.0; Threshold=0.01)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
     I4(F, N) = (F * N) ⋅ (F * N)
     I5(F, N) = (H(F) * N) ⋅ (H(F) * N)
     μ, α, β = obj.μ, obj.α, obj.β
@@ -664,18 +657,18 @@ struct TransverseIsotropy3D{A} <: AnisoElastic
 end
 
 
-struct TransverseIsotropy2D{A} <: AnisoElastic
+struct TransverseIsotropy2D <: AnisoElastic
   μ::Float64
   α::Float64
   β::Float64
   ρ::Float64
-  Kinematic::A
-  function TransverseIsotropy2D(; μ::Float64, α::Float64, β::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(μ, α, β, ρ, Kinematic)
+  function TransverseIsotropy2D(; μ::Float64, α::Float64, β::Float64, ρ::Float64=0.0)
+    new(μ, α, β, ρ)
   end
 
   function (obj::TransverseIsotropy2D)(Λ::Float64=1.0; Threshold=0.01)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
     I4(F, N) = (F * N) ⋅ (F * N)
     I5(F, N) = (H(F) * N) ⋅ (H(F) * N)
     μ, α, β = obj.μ, obj.α, obj.β
@@ -709,10 +702,9 @@ end
 struct HGO_4Fibers <: AnisoElastic
   c1::Vector{Float64}
   c2::Vector{Float64}
-  Kinematic::Kinematics{Mechano}
-  function HGO_4Fibers(; c1::Vector{Float64}, c2::Vector{Float64}, Kinematic::KinematicModel=Kinematics(Mechano))
+  function HGO_4Fibers(; c1::Vector{Float64}, c2::Vector{Float64})
     @assert length(c1) == length(c2) == 4
-    new(c1, c2, Kinematic)
+    new(c1, c2)
   end
 
   function (obj::HGO_4Fibers)(Λ::Float64=1.0; Threshold=0.01)
@@ -760,9 +752,8 @@ end
 struct HGO_1Fiber <: AnisoElastic
   c1::Float64
   c2::Float64
-  Kinematic::Kinematics{Mechano}
-  function HGO_1Fiber(; c1::Float64, c2::Float64, Kinematic::KinematicModel=Kinematics(Mechano))
-    new(c1, c2, Kinematic)
+  function HGO_1Fiber(; c1::Float64, c2::Float64)
+    new(c1, c2)
   end
 
   function (obj::HGO_1Fiber)(Λ::Float64=1.0; Threshold=0.01)
@@ -775,12 +766,12 @@ struct HGO_1Fiber <: AnisoElastic
 
     ∂Ψ∂F(F, N1) = begin
       M1 = N1 / norm(N1)
-      c1 * exp(c2 * ((F * M1) ⋅ (F * M1) - 1.0)^2.0) * ((F * M1) ⋅ (F * M1) - 1.0) * ((F * M1) ⊗ M1) 
+      c1 * exp(c2 * ((F * M1) ⋅ (F * M1) - 1.0)^2.0) * ((F * M1) ⋅ (F * M1) - 1.0) * ((F * M1) ⊗ M1)
     end
 
     ∂Ψ2∂F∂F(F, N1) = begin
       M1 = N1 / norm(N1)
-      c1 * exp(c2 * ((F * M1) ⋅ (F * M1) - 1.0)^2.0) * ((4 * c2 * (((F * M1) ⋅ (F * M1) - 1.0)^2.0) + 2.0) * (((F * M1) ⊗ M1) ⊗ ((F * M1) ⊗ M1)) + ((F * M1) ⋅ (F * M1) - 1.0) * (I3 ⊗₁₃²⁴ (M1 ⊗ M1))) 
+      c1 * exp(c2 * ((F * M1) ⋅ (F * M1) - 1.0)^2.0) * ((4 * c2 * (((F * M1) ⋅ (F * M1) - 1.0)^2.0) + 2.0) * (((F * M1) ⊗ M1) ⊗ ((F * M1) ⊗ M1)) + ((F * M1) ⋅ (F * M1) - 1.0) * (I3 ⊗₁₃²⁴ (M1 ⊗ M1)))
     end
 
     return (Ψ, ∂Ψ∂F, ∂Ψ2∂F∂F)
@@ -788,19 +779,19 @@ struct HGO_1Fiber <: AnisoElastic
 end
 
 
-struct IncompressibleNeoHookean3D{A} <: IsoElastic
+struct IncompressibleNeoHookean3D <: IsoElastic
   λ::Float64
   μ::Float64
   ρ::Float64
   δ::Float64
-  Kinematic::A
-  function IncompressibleNeoHookean3D(; λ::Float64, μ::Float64, ρ::Float64=0.0, δ::Float64=0.1, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ, ρ, δ, Kinematic)
+  function IncompressibleNeoHookean3D(; λ::Float64, μ::Float64, ρ::Float64=0.0, δ::Float64=0.1)
+    new(λ, μ, ρ, δ)
   end
 
   function (obj::IncompressibleNeoHookean3D)(Λ::Float64=1.0)
-    _, H, J_ = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ, δ = obj.λ, obj.μ, obj.δ
+    J_(F) = det(F)
+    H(F) = det(F) * inv(F)'
     J(F) = 0.5 * (J_(F) + sqrt(J_(F)^2 + δ^2))
     ∂J(F) = 0.5 * (1.0 + J_(F) / sqrt(J_(F)^2 + δ^2))
     ∂2J(F) = 0.5 * δ^2 / ((J_(F)^2 + δ^2)^(3 / 2))
@@ -829,7 +820,9 @@ struct IncompressibleNeoHookean3D{A} <: IsoElastic
     return (Ψ, ∂Ψu, ∂Ψuu)
   end
 
-  function (obj::IncompressibleNeoHookean3D)(::KinematicDescription{:SecondPiola}, Λ::Float64=1.0)
+end
+
+  function SecondPiola(obj::IncompressibleNeoHookean3D,Λ::Float64=1.0)
     Ψ(C) = obj.μ / 2 * tr(C) * det(C)^(-1 / 3)
     S(C) = begin
       detC = det(C)
@@ -845,23 +838,20 @@ struct IncompressibleNeoHookean3D{A} <: IsoElastic
     end
     return (Ψ, S, ∂S∂C)
   end
-end
 
-
-struct IncompressibleNeoHookean2D{A} <: IsoElastic
+struct IncompressibleNeoHookean2D <: IsoElastic
   λ::Float64
   μ::Float64
   ρ::Float64
   δ::Float64
-  Kinematic::A
-  function IncompressibleNeoHookean2D(; λ::Float64, μ::Float64, ρ::Float64=0.0, δ::Float64=0.1, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ, ρ, δ, Kinematic)
+  function IncompressibleNeoHookean2D(; λ::Float64, μ::Float64, ρ::Float64=0.0, δ::Float64=0.1)
+    new(λ, μ, ρ, δ)
   end
 
   function (obj::IncompressibleNeoHookean2D)(Λ::Float64=1.0)
-    _, H, J_ = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ, δ = obj.λ, obj.μ, obj.δ
-
+    J_(F) = det(F)
+    H(F) = det(F) * inv(F)'
     J(F) = 0.5 * (J_(F) + sqrt(J_(F)^2 + δ^2))
     ∂J(F) = 0.5 * (1.0 + J_(F) / sqrt(J_(F)^2 + δ^2))
     ∂2J(F) = 0.5 * δ^2 / ((J_(F)^2 + δ^2)^(3 / 2))
@@ -890,20 +880,19 @@ struct IncompressibleNeoHookean2D{A} <: IsoElastic
   end
 end
 
-struct IncompressibleNeoHookean2D_CV{A} <: IsoElastic
+struct IncompressibleNeoHookean2D_CV <: IsoElastic
   λ::Float64
   μ::Float64
   γ::Float64
   ρ::Float64
-  Kinematic::A
-  function IncompressibleNeoHookean2D_CV(; λ::Float64, μ::Float64, γ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(λ, μ, γ, ρ, Kinematic)
+  function IncompressibleNeoHookean2D_CV(; λ::Float64, μ::Float64, γ::Float64, ρ::Float64=0.0)
+    new(λ, μ, γ, ρ)
   end
 
   function (obj::IncompressibleNeoHookean2D_CV)(Λ::Float64=1.0)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     λ, μ, γ = obj.λ, obj.μ, obj.γ
-
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
     Ψ1(F) = μ / 2 * (tr((F)' * F) + 1.0) * J(F)^(-2 / 3)
     Ψ2(F) = λ * (J(F)^(γ) + J(F)^(-γ))
     Ψ(F) = Ψ1(F) + Ψ2(F)
@@ -923,19 +912,19 @@ struct IncompressibleNeoHookean2D_CV{A} <: IsoElastic
 end
 
 
-struct ARAP2D_regularized{A} <: IsoElastic
+struct ARAP2D_regularized <: IsoElastic
   μ::Float64
   ρ::Float64
   δ::Float64
-  Kinematic::A
-  function ARAP2D_regularized(; μ::Float64, ρ::Float64=0.0, δ::Float64=0.1, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(μ, ρ, δ, Kinematic)
+  function ARAP2D_regularized(; μ::Float64, ρ::Float64=0.0, δ::Float64=0.1)
+    new(μ, ρ, δ)
   end
 
   function (obj::ARAP2D_regularized)(Λ::Float64=1.0)
-    _, H, J_ = get_Kinematics(obj.Kinematic; Λ=Λ)
-    μ, δ = obj.μ, obj.δ
 
+    μ, δ = obj.μ, obj.δ
+    J_(F) = det(F)
+    H(F) = det(F) * inv(F)'
     J(F) = 0.5 * (J_(F) + sqrt(J_(F)^2 + δ^2))
     ∂J(F) = 0.5 * (1.0 + J_(F) / sqrt(J_(F)^2 + δ^2))
     ∂2J(F) = 0.5 * δ^2 / ((J_(F)^2 + δ^2)^(3 / 2))
@@ -964,18 +953,17 @@ struct ARAP2D_regularized{A} <: IsoElastic
 end
 
 
-struct ARAP2D{A} <: IsoElastic
+struct ARAP2D <: IsoElastic
   μ::Float64
   ρ::Float64
-  Kinematic::A
-  function ARAP2D(; μ::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(μ, ρ, Kinematic)
+  function ARAP2D(; μ::Float64, ρ::Float64=0.0)
+    new(μ, ρ)
   end
 
   function (obj::ARAP2D)(Λ::Float64=1.0)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     μ = obj.μ
-
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
     Ψ(F) = μ * 0.5 * J(F)^(-1) * (tr((F)' * F))
     ∂Ψ_∂F(F) = μ * F * J(F)^(-1)
     ∂Ψ_∂J(F) = -μ / 2 * (tr((F)' * F)) * J(F)^(-2)
@@ -992,21 +980,19 @@ struct ARAP2D{A} <: IsoElastic
 end
 
 
-struct IncompressibleNeoHookean3D_2dP{A} <: Mechano
+struct IncompressibleNeoHookean3D_2dP <: Mechano
   μ::Float64
   τ::Float64
   Δt::Float64
   ρ::Float64
-  Kinematic::A
 
-  function IncompressibleNeoHookean3D_2dP(; μ::Float64, τ::Float64, Δt::Float64, ρ::Float64=0.0, Kinematic::KinematicModel=Kinematics(Mechano))
-    new{typeof(Kinematic)}(μ, τ, Δt, ρ, Kinematic)
+  function IncompressibleNeoHookean3D_2dP(; μ::Float64, τ::Float64, Δt::Float64, ρ::Float64=0.0)
+    new(μ, τ, Δt, ρ)
   end
 
   function (obj::IncompressibleNeoHookean3D_2dP)(Λ::Float64=1.0; Threshold=0.01)
-    _, H, J = get_Kinematics(obj.Kinematic; Λ=Λ)
     μ = obj.μ
-
+    H(F) = det(F) * inv(F)'
     Ψ(Ce) = μ / 2 * tr(Ce) * (det(Ce))^(-1 / 3)
     ∂Ψ∂Ce(Ce) = μ / 2 * I3 * (det(Ce))^(-1 / 3)
     ∂Ψ∂dCe(Ce) = -μ / 6 * tr(Ce) * (det(Ce))^(-4 / 3)

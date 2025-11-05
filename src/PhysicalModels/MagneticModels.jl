@@ -8,10 +8,9 @@ struct Magnetic <: Magneto
   μ::Float64
   αr::Ref{Float64}
   χe::Float64
-  Kinematic::Kinematics{Magneto}
   
-function Magnetic(; μ::Float64, αr::Ref{Float64}, χe::Float64=0.0, Kinematic::Kinematics{Magneto}=Kinematics(Magneto))
-  new(μ, αr, χe, Kinematic)
+function Magnetic(; μ::Float64, αr::Ref{Float64}, χe::Float64=0.0)
+  new(μ, αr, χe)
 end
 function (obj::Magnetic)(Λ::Float64=1.0)
   μ, αr, χe = obj.μ, obj.αr, obj.χe
@@ -27,12 +26,11 @@ end
 end
 
 
-struct IdealMagnetic{A} <: Magneto
+struct IdealMagnetic <: Magneto
   μ::Float64
   χe::Float64
-  Kinematic::A
-  function IdealMagnetic(; μ::Float64, χe::Float64=0.0, Kinematic::KinematicModel=Kinematics(Magneto))
-    new{typeof(Kinematic)}(μ, χe, Kinematic)
+  function IdealMagnetic(; μ::Float64, χe::Float64=0.0)
+    new(μ, χe)
   end
   function (obj::IdealMagnetic)(Λ::Float64=1.0)
 
@@ -73,12 +71,11 @@ struct IdealMagnetic{A} <: Magneto
 end
 
 
-struct IdealMagnetic2D{A} <: Magneto
+struct IdealMagnetic2D <: Magneto
   μ::Float64
   χe::Float64
-  Kinematic::A
-  function IdealMagnetic2D(; μ::Float64, χe::Float64=0.0, Kinematic::KinematicModel=Kinematics(Magneto))
-    new{typeof(Kinematic)}(μ, χe, Kinematic)
+  function IdealMagnetic2D(; μ::Float64, χe::Float64=0.0)
+    new(μ, χe)
   end
 
   function (obj::IdealMagnetic2D)(Λ::Float64=1.0)
@@ -115,16 +112,15 @@ struct IdealMagnetic2D{A} <: Magneto
 end
 
 
-struct HardMagnetic{A} <: Magneto
+struct HardMagnetic <: Magneto
   μ::Float64
   αr::Float64
   χe::Float64
   χr::Float64
   βmok::Float64
   βcoup::Float64
-  Kinematic::A
-  function HardMagnetic(; μ::Float64, αr::Float64, χe::Float64=0.0, χr::Float64=8.0, βmok::Float64=1.0, βcoup::Float64=1.0, Kinematic::KinematicModel=Kinematics(Magneto))
-    new{typeof(Kinematic)}(μ, αr, χe, χr, βmok, βcoup, Kinematic)
+  function HardMagnetic(; μ::Float64, αr::Float64, χe::Float64=0.0, χr::Float64=8.0, βmok::Float64=1.0, βcoup::Float64=1.0)
+    new(μ, αr, χe, χr, βmok, βcoup)
   end
 
   function (obj::HardMagnetic)(Λ::Float64=1.0)
@@ -164,16 +160,15 @@ struct HardMagnetic{A} <: Magneto
 end
 
 
-struct HardMagnetic2D{A} <: Magneto
+struct HardMagnetic2D <: Magneto
   μ::Float64
   αr::Float64
   χe::Float64
   χr::Float64
   βmok::Float64
   βcoup::Float64
-  Kinematic::A
-  function HardMagnetic2D(; μ::Float64, αr::Float64, χe::Float64=0.0, χr::Float64=8.0, βmok::Float64=1.0, βcoup::Float64=1.0, Kinematic::KinematicModel=Kinematics(Magneto))
-    new{typeof(Kinematic)}(μ, αr, χe, χr, βmok, βcoup, Kinematic)
+  function HardMagnetic2D(; μ::Float64, αr::Float64, χe::Float64=0.0, χr::Float64=8.0, βmok::Float64=1.0, βcoup::Float64=1.0)
+    new(μ, αr, χe, χr, βmok, βcoup)
   end
 
   function (obj::HardMagnetic2D)(Λ::Float64=1.0)

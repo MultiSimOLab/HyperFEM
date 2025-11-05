@@ -65,7 +65,8 @@ struct ThermoElectroMech_Govindjee{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoEle
     g(δθ) = obj.gθ(δθ)
     dg(δθ) = obj.dgdθ(δθ)
 
-    _, _, J = get_Kinematics(obj.mechano.Kinematic; Λ=Λ)
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
     Ψer(F) = obj.thermo.α * (J(F) - 1.0) * obj.thermo.θr
     ΨL1(δθ) = obj.thermo.Cv * obj.thermo.θr * (1 - obj.β) * ((δθ + obj.thermo.θr) / obj.thermo.θr * (1.0 - log((δθ + obj.thermo.θr) / obj.thermo.θr)) - 1.0)
     ΨL3(δθ) = g(δθ) - g(0.0) - dg(0.0) * δθ
@@ -125,7 +126,8 @@ struct ThermoElectroMech_Bonet{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectro
     ∂gv(δθ) = (δθ+θr)^γv / θr^(γv+1)
     ∂∂gv(δθ) = γv*(δθ+θr)^(γv-1) / θr^(γv+1)
 
-    _, H, J = get_Kinematics(obj.mechano.Kinematic; Λ=Λ)
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
 
     η(F)=α*(J(F) - 1.0)+Cv/γv
     ∂η∂J(F)=α
