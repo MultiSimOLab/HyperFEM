@@ -436,48 +436,4 @@ function jacobian(physicalmodel::ThermoElectroMech_PINNs, (u, φ, θ), (du, dφ,
 end
 
 
-
-
-
-
-
-# ===================
-# Time Integrators+
-# ===================
-
-# abstract type TimeIntegrator end
-
-# struct MidPoint <: TimeIntegrator
-# res::A
-# jac::B
-# params::A    
-# function MidPoint(res_,jac_, dΩ; αray = 0.4, ρ = 1.0, Δt = 5.0)
-
-#     res(u, v) =  mass_term(u, v, 2.0 * ρ / Δt^2, dΩ)-
-#                  0.5 * res_(u, v)+
-#                  0.5 * res_(u⁻, v)+
-
-
-#     res(t, u⁻, vh) = (u, v) -> mass_term(u, v, 2.0 * ρ / Δt^2, dΩ) -
-#     mass_term(u⁻, v, 2.0 * ρ / Δt^2, dΩ) -
-#     mass_term(vh, v, 2.0 * ρ / Δt, dΩ) +
-#     0.5 * res_(physmodel, u, v, dΩ) +
-#     0.5 * res_(physmodel, u⁻, v, dΩ) +
-#     mass_term(u, v, αray * ρ / Δt, dΩ) -
-#     mass_term(u⁻, v, αray * ρ / Δt, dΩ)
-
-
-#     params=(; αray = αray, ρ = ρ, Δt = Δt)
-#     A,B,C= typeof(res), typeof(jac), typeof(params)
-#     new{A,B,C}(res,jac,params)
-# end
-# end
-
-# Midpoint Integrator 
-# -------------------
-# function residual(, (u, φ), (v, vφ), dΩ)
-
-# end
-
-
 end
