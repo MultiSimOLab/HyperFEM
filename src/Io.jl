@@ -43,14 +43,3 @@ function projdir(folders::String...)
   base_folder = dirname(dirname(pathof(HyperFEM)))
   joinpath(base_folder, folders...)
 end
-
-"""
-Return the path to the specified folders relative to the file from which this function is being called.
-
-# Examples
-    outpath = filedir("results")
-"""
-function filedir(folders::String...)
-  base_folder = dirname(@__FILE__)
-  joinpath(base_folder, folders...)
-end
