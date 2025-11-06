@@ -48,8 +48,9 @@ function static_mechanical_neumann_simulation(;writevtk=true, verbose=true)
   U = TrialFESpace(V, D_bc, 0.0)
 
   #  residual and jacobian function of load factor
-  res(Λ) = (u, v) -> residual(physmodel, u, v, dΩ) + residual_Neumann(N_bc, v, dΓ, Λ)
-  jac(Λ) = (u, du, v) -> jacobian(physmodel, u, du, v, dΩ)
+  k = Kinematics(Mechano, Solid)
+  res(Λ) = (u, v) -> residual(physmodel, k, u, v, dΩ) + residual_Neumann(N_bc, v, dΓ, Λ)
+  jac(Λ) = (u, du, v) -> jacobian(physmodel, k, u, du, v, dΩ)
 
   ls = LUSolver()
   nls = NewtonSolver(ls; maxiter=20, atol=1.e-10, rtol=1.e-8, verbose=verbose)

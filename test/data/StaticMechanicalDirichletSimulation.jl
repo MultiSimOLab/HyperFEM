@@ -42,8 +42,9 @@ function static_mechanical_dirichlet_simulation(;writevtk=true, verbose=true)
   U = TrialFESpace(V, D_bc, 0.0)
 
   #  residual and jacobian function of load factor
-  res(Λ) = (u, v) -> residual(physmodel, u, v, dΩ)
-  jac(Λ) = (u, du, v) -> jacobian(physmodel, u, du, v, dΩ)
+  k = Kinematics(Mechano, Solid)
+  res(Λ) = (u, v) -> residual(physmodel, k, u, v, dΩ)
+  jac(Λ) = (u, du, v) -> jacobian(physmodel, k, u, du, v, dΩ)
 
   #computational model
   ls = LUSolver()
