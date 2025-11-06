@@ -40,7 +40,7 @@ function visco_elastic_simulation(;t_end=15, writevtk=true, verbose=true)
     [true, true, true], [true, false, true], [true, false, false], [true, false, false]]
 
   # Setup integration
-  order = 2
+  order = 1
   degree = 2 * order
   Ω = Triangulation(model)
   dΩ = Measure(Ω, degree)
