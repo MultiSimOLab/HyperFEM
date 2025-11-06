@@ -6,15 +6,14 @@ using ..TensorAlgebra
 # Visco elastic models
 # =====================
 
-struct ViscousIncompressible{T} <: Visco
+struct ViscousIncompressible <: Visco
   elasto::Elasto
   τ::Float64
-  Kinematic::T
-  function ViscousIncompressible(elasto; τ::Float64, kinematic::KinematicModel=Kinematics(Visco))
-    new{typeof(kinematic)}(elasto, τ, kinematic)
+  function ViscousIncompressible(elasto; τ::Float64)
+    new(elasto, τ)
   end
   function (obj::ViscousIncompressible)(Λ::Float64=1.0; Δt::Float64)
-    Ψe, Se, ∂Se∂Ce       = obj.elasto(KinematicDescription{:SecondPiola}())
+    Ψe, Se, ∂Se∂Ce       = SecondPiola(obj.elasto)
     Ψ(F, Fn, state)      = Energy(obj, Δt, Ψe, Se, ∂Se∂Ce, F, Fn, state)
     ∂Ψ∂F(F, Fn, state)   = Piola(obj, Δt, Se, ∂Se∂Ce, F, Fn, state)
     ∂Ψ∂F∂F(F, Fn, state) = Tangent(obj, Δt, Se, ∂Se∂Ce, F, Fn, state)
@@ -27,19 +26,17 @@ function initializeStateVariables(::ViscousIncompressible, points::Measure)
   CellState(v, points)
 end
 
-function updateStateVariables!(stateVar, obj::ViscousIncompressible, Δt, u, un)
-  F, _, _ = get_Kinematics(obj.Kinematic)
-  _, Se, ∂Se∂Ce = obj.elasto(KinematicDescription{:SecondPiola}())
+function updateStateVariables!(stateVar, obj::ViscousIncompressible, Δt, F, Fn)
+  _, Se, ∂Se∂Ce = SecondPiola(obj.elasto)
   return_mapping(A, F, Fn) = ReturnMapping(obj, Δt, Se, ∂Se∂Ce, F, Fn, A)
-  update_state!(return_mapping, stateVar, F∘∇(u)', F∘∇(un)')
+  update_state!(return_mapping, stateVar, F, Fn)
 end
 
-struct GeneralizedMaxwell{T} <: ViscoElastic
+struct GeneralizedMaxwell <: ViscoElastic
   longterm::Elasto
   branches::NTuple{N,Visco} where N
-  Kinematic::T
-  function GeneralizedMaxwell(longTerm::Elasto, branches::Visco...; kinematic::KinematicModel=Kinematics(Elasto))
-    new{typeof(kinematic)}(longTerm,branches,kinematic)
+  function GeneralizedMaxwell(longTerm::Elasto, branches::Visco...)
+    new(longTerm,branches)
   end
   function (obj::GeneralizedMaxwell)(Λ::Float64=1.0; Δt::Float64)
     Ψe, ∂Ψeu, ∂Ψeuu = obj.longterm(Λ)
@@ -56,10 +53,10 @@ function initializeStateVariables(model::GeneralizedMaxwell, points::Measure)
   map(b -> initializeStateVariables(b, points), model.branches)
 end
 
-function updateStateVariables!(stateVars, model::GeneralizedMaxwell, Δt, u, un)
+function updateStateVariables!(stateVars, model::GeneralizedMaxwell, Δt, F, Fn)
   @assert length(model.branches) == length(stateVars)
   for (branch, state) in zip(model.branches, stateVars)
-    updateStateVariables!(state, branch, Δt, u, un)
+    updateStateVariables!(state, branch, Δt, F, Fn)
   end
 end
 

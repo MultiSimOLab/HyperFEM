@@ -71,17 +71,16 @@ function (obj::PostProcessor{<:DynamicNonlinearModel,<:Any,<:Any})(Λ)
     obj.cache[1](obj, obj.cache[2]...)
 end
 
-function Jacobian(uh)
-  F, _, J = Kinematics(Mechano).metrics
+function Jacobian(uh,km)
+  F, _, J = get_Kinematics(km)
   J ∘ F ∘ ∇(uh)
 end
 
-function Cauchy(physmodel::ThermoElectroMechano, uh, φh, θh, Ω, dΩ, Λ=1.0)
+function Cauchy(physmodel::ThermoElectroMechano,kine::NTuple{3,KinematicModel}, uh, φh, θh, Ω, dΩ, Λ=1.0)
     DΨ = physmodel(Λ)
-    Kinematic_mec = Kinematics(Mechano)
-    Kinematic_elec = Kinematics(Electro)
-    F, _, _ = get_Kinematics(Kinematic_mec)
-    E = get_Kinematics(Kinematic_elec)
+
+    F, _, _ = get_Kinematics(kine[1])
+    E = get_Kinematics(kine[2])
     ∂Ψu = DΨ[2]
     refL2 = ReferenceFE(lagrangian, Float64, 0)
     ref = ReferenceFE(lagrangian, Float64, 1)
@@ -101,38 +100,36 @@ function Cauchy(physmodel::ThermoElectroMechano, uh, φh, θh, Ω, dΩ, Λ=1.0)
 end
 
 
-function Cauchy(model::Elasto, uh, unh, state_vars, Ω, dΩ, t, Δt)
-    σh = Cauchy(model, uh)
+function Cauchy(model::Elasto,km::KinematicModel,uh, unh, state_vars, Ω, dΩ, t, Δt)
+    σh = Cauchy(model,km,uh)
     interpolate_L2_tensor(σh, Ω, dΩ)
 end
 
 
-function Cauchy(model::ViscoElastic, uh, unh, state_vars, Ω, dΩ, t, Δt)
-    σh = Cauchy(model, uh, unh, state_vars, Δt)
+function Cauchy(model::ViscoElastic, km::KinematicModel, uh, unh, state_vars, Ω, dΩ, t, Δt)
+    σh = Cauchy(model, km, uh, unh, state_vars, Δt)
     interpolate_L2_tensor(σh, Ω, dΩ)
 end
 
 
-function Cauchy(model::Elasto, uh, vars...)
+function Cauchy(model::Elasto, km::KinematicModel,uh, vars...)
     _, ∂Ψu, _ = model()
-    F, _, _ = get_Kinematics(model.Kinematic)
+    F, _, _ = get_Kinematics(km)
     ∂Ψu ∘ (F∘∇(uh))
 end
 
 
-function Cauchy(model::ViscoElastic, uh, unh, states, Δt)
+function Cauchy(model::ViscoElastic,  km::KinematicModel, uh, unh, states, Δt)
     _, ∂Ψu, _ = model(Δt=Δt)
-    F, _, _ = get_Kinematics(model.Kinematic)
+    F, _, _ = get_Kinematics(km)
     ∂Ψu ∘ (F∘∇(uh), F∘∇(unh), states...)
 end
 
 
-function Entropy(physmodel::ThermoElectroMechano, uh, φh, θh, Ω, dΩ, Λ=1.0)
+function Entropy(physmodel::ThermoElectroMechano,  kine::NTuple{3,KinematicModel}, uh, φh, θh, Ω, dΩ, Λ=1.0)
     DΨ = physmodel(Λ)
-    Kinematic_mec = Kinematics(Mechano)
-    Kinematic_elec = Kinematics(Electro)
-    F, _, _ = get_Kinematics(Kinematic_mec)
-    E = get_Kinematics(Kinematic_elec)
+    F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
+    E     = get_Kinematics(kine[2]; Λ=Λ)
     η = DΨ[11]
     refL2 = ReferenceFE(lagrangian, Float64, 0)
     ref = ReferenceFE(lagrangian, Float64, 1)
@@ -142,12 +139,10 @@ function Entropy(physmodel::ThermoElectroMechano, uh, φh, θh, Ω, dΩ, Λ=1.0)
     return ηh
 end
 
-function D0(physmodel::ThermoElectroMechano, uh, φh, θh, Ω, dΩ, Λ=1.0)
+function D0(physmodel::ThermoElectroMechano,  kine::NTuple{3,KinematicModel}, uh, φh, θh, Ω, dΩ, Λ=1.0)
     DΨ = physmodel(Λ)
-    Kinematic_mec = Kinematics(Mechano)
-    Kinematic_elec = Kinematics(Electro)
-    F, _, _ = get_Kinematics(Kinematic_mec)
-    E = get_Kinematics(Kinematic_elec)
+    F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
+    E     = get_Kinematics(kine[2]; Λ=Λ)
     ∂ΨE = DΨ[3]
     refL2 = ReferenceFE(lagrangian, Float64, 0)
     ref = ReferenceFE(lagrangian, Float64, 1)

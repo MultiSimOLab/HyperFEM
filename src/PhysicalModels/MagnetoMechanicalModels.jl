@@ -51,9 +51,10 @@ function _getCoupling(mag::HardMagnetic, mec::Mechano, Λ::Float64)
   # Hard magnetics in ultra-soft magnetorheological elastomers enhance fracture toughness and 
   # delay crack propagation, Journal of the Mechanics and Physics of Solids,
 
-  _, H, J = get_Kinematics(mec.Kinematic; Λ=Λ)
-  μ, αr, χe, χr, βcoup, βmok = mag.μ, mag.αr, mag.χe, mag.χr, mag.βcoup, mag.βmok
 
+  μ, αr, χe, χr, βcoup, βmok = mag.μ, mag.αr, mag.χe, mag.χr, mag.βcoup, mag.βmok
+  J(F) = det(F)
+  H(F) = det(F) * inv(F)'
   αr *= Λ
   #-------------------------------------------------------------------------------------
   # FIRST TERM
@@ -131,8 +132,9 @@ function _getCoupling(mag::HardMagnetic2D, mec::Mechano, Λ::Float64)
   # Hard magnetics in ultra-soft magnetorheological elastomers enhance fracture toughness and 
   # delay crack propagation, Journal of the Mechanics and Physics of Solids,
 
-  _, H, J = get_Kinematics(mec.Kinematic; Λ=Λ)
   μ, αr, χe, χr, βcoup, βmok = mag.μ, mag.αr, mag.χe, mag.χr, mag.βcoup, mag.βmok
+  J(F) = det(F)
+  H(F) = det(F) * inv(F)'
   αr *= Λ
 
   # #-------------------------------------------------------------------------------------

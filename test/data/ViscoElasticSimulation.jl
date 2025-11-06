@@ -61,8 +61,9 @@ function visco_elastic_simulation(;t_end=15, writevtk=true, verbose=true)
   unh = FEFunction(Uun, zero_free_values(Uun))
   state_vars = initializeStateVariables(cons_model, dΩ)
 
-  res(Λ) = (u,v)->residual(cons_model, u, v, dΩ, t_end * Λ, Δt, unh, state_vars)
-  jac(Λ) = (u,du,v)->jacobian(cons_model, u, du, v, dΩ, t_end * Λ, Δt, unh, state_vars)
+  k=Kinematics(Mechano,Solid)
+  res(Λ) = (u,v)->residual(cons_model, k, u, v, dΩ, t_end * Λ, Δt, unh, state_vars)
+  jac(Λ) = (u,du,v)->jacobian(cons_model, k, u, du, v, dΩ, t_end * Λ, Δt, unh, state_vars)
 
   ls = LUSolver()
   nls = NewtonSolver(ls; maxiter=20, atol=1.e-6, rtol=1.e-6, verbose=verbose)
@@ -70,12 +71,14 @@ function visco_elastic_simulation(;t_end=15, writevtk=true, verbose=true)
 
   λx = Float64[]
   σΓ = Float64[]
+  F,_,_ = get_Kinematics(k)
+
   function driverpost(post)
-    σh11, _... = Cauchy(cons_model, uh, unh, state_vars, Ω, dΩ, 0.0, Δt)
+    σh11, _... = Cauchy(cons_model, Kinematics(Mechano,Solid),uh, unh, state_vars, Ω, dΩ, 0.0, Δt)
     σΓ1 = sum(∫(σh11)dΓ1) / sum(∫(1.0)dΓ1)
     push!(σΓ, σΓ1)
     push!(λx, 1.0 + component_LInf(uh, :x, Ω) / long)
-    updateStateVariables!(state_vars, cons_model, Δt, uh, unh)
+    updateStateVariables!(state_vars, cons_model, Δt, F∘(∇(uh)'), F∘(∇(unh)'))
   end
 
   post_model = PostProcessor(comp_model, driverpost; is_vtk=writevtk, filepath="")
