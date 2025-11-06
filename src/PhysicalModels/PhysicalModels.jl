@@ -4,6 +4,7 @@ using Gridap
 using Gridap.CellData
 using Gridap.Helpers
 
+using DrWatson
 using ForwardDiff
 using LinearAlgebra
 using ..TensorAlgebra
