@@ -6,4 +6,8 @@ using Test
    
     include("ViscoElasticSimulationTest.jl")
 
+    include("StaticMechanicalDirichletTest.jl")
+
+    include("StaticMechanicalNeumannTest.jl")
+
 end
