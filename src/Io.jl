@@ -31,3 +31,15 @@ end
 
 function cleandir(::String, ::Nothing)
 end
+
+"""
+Return the path to the specified folders relative to the HyperFEM path.
+
+# Examples
+    folder = projdir("data", "sims")
+    folder = projdir("test/data/mesh.msh")
+"""
+function projdir(folders::String...)
+  base_folder = dirname(dirname(pathof(HyperFEM)))
+  joinpath(base_folder, folders...)
+end

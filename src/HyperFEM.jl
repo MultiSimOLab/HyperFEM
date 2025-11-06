@@ -7,7 +7,6 @@ include("Solvers/Solvers.jl")
 include("ComputationalModels/ComputationalModels.jl")
 
 include("Io.jl")
-export setupfolder
-
 include("Exports.jl")
+
 end
