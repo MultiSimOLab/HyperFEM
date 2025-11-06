@@ -1,5 +1,4 @@
 module ComputationalModels
-using DrWatson
 using HyperFEM.PhysicalModels
 using HyperFEM.Solvers
 
