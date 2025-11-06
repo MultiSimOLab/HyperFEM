@@ -13,10 +13,10 @@ struct ViscousIncompressible <: Visco
     new(elasto, τ)
   end
   function (obj::ViscousIncompressible)(Λ::Float64=1.0; Δt::Float64)
-    Ψe, Se, ∂Se∂Ce       = SecondPiola(obj.elasto)
-    Ψ(F, Fn, state)      = Energy(obj, Δt, Ψe, Se, ∂Se∂Ce, F, Fn, state)
-    ∂Ψ∂F(F, Fn, state)   = Piola(obj, Δt, Se, ∂Se∂Ce, F, Fn, state)
-    ∂Ψ∂F∂F(F, Fn, state) = Tangent(obj, Δt, Se, ∂Se∂Ce, F, Fn, state)
+    Ψe, Se, ∂Se∂Ce   = SecondPiola(obj.elasto)
+    Ψ(F, Fn, A)      = Energy(obj, Δt, Ψe, Se, ∂Se∂Ce, F, Fn, A)
+    ∂Ψ∂F(F, Fn, A)   = Piola(obj, Δt, Se, ∂Se∂Ce, F, Fn, A)
+    ∂Ψ∂F∂F(F, Fn, A) = Tangent(obj, Δt, Se, ∂Se∂Ce, F, Fn, A)
     return Ψ, ∂Ψ∂F, ∂Ψ∂F∂F
   end
 end
@@ -26,10 +26,15 @@ function initializeStateVariables(::ViscousIncompressible, points::Measure)
   CellState(v, points)
 end
 
-function updateStateVariables!(stateVar, obj::ViscousIncompressible, Δt, F, Fn)
+function updateStateVariables!(state, obj::ViscousIncompressible, Δt, F, Fn)
   _, Se, ∂Se∂Ce = SecondPiola(obj.elasto)
   return_mapping(A, F, Fn) = ReturnMapping(obj, Δt, Se, ∂Se∂Ce, F, Fn, A)
-  update_state!(return_mapping, stateVar, F, Fn)
+  update_state!(return_mapping, state, F, Fn)
+end
+
+function Dissipation(obj::ViscousIncompressible, Δt)
+  _, Se, ∂Se∂Ce = SecondPiola(obj.elasto)
+  D(F, Fn, A) = ViscousDissipation(obj, Δt, Se, ∂Se∂Ce, F, Fn, A)
 end
 
 struct GeneralizedMaxwell <: ViscoElastic
@@ -39,25 +44,31 @@ struct GeneralizedMaxwell <: ViscoElastic
     new(longTerm,branches)
   end
   function (obj::GeneralizedMaxwell)(Λ::Float64=1.0; Δt::Float64)
-    Ψe, ∂Ψeu, ∂Ψeuu = obj.longterm(Λ)
-    DΨv = map(b -> b(Λ, Δt=Δt), obj.branches)
+    Ψe, ∂Ψeu, ∂Ψeuu = obj.longterm()
+    DΨv = map(b -> b(Δt=Δt), obj.branches)
     Ψα, ∂Ψαu, ∂Ψαuu = map(i -> getindex.(DΨv, i), 1:3)
-    Ψ(∇u, ∇un, states...) = mapreduce((Ψi, state) -> Ψi(∇u, ∇un, state), +, Ψα, states; init=Ψe(∇u))
-    ∂Ψu(∇u, ∇un, states...) = mapreduce((∂Ψiu, state) -> ∂Ψiu(∇u, ∇un, state), +, ∂Ψαu, states; init=∂Ψeu(∇u))
-    ∂Ψuu(∇u, ∇un, states...) = mapreduce((∂Ψiuu, state) -> ∂Ψiuu(∇u, ∇un, state), +, ∂Ψαuu, states; init=∂Ψeuu(∇u))
+    Ψα, ∂Ψαu, ∂Ψαuu = transpose(DΨv)
+    Ψ(F, Fn, A...) = mapreduce((Ψi, Ai) -> Ψi(F, Fn, Ai), +, Ψα, A; init=Ψe(F))
+    ∂Ψu(F, Fn, A...) = mapreduce((∂Ψiu, Ai) -> ∂Ψiu(F, Fn, Ai), +, ∂Ψαu, A; init=∂Ψeu(F))
+    ∂Ψuu(F, Fn, A...) = mapreduce((∂Ψiuu, Ai) -> ∂Ψiuu(F, Fn, Ai), +, ∂Ψαuu, A; init=∂Ψeuu(F))
     return (Ψ, ∂Ψu, ∂Ψuu)
   end
 end
 
-function initializeStateVariables(model::GeneralizedMaxwell, points::Measure)
-  map(b -> initializeStateVariables(b, points), model.branches)
+function initializeStateVariables(obj::GeneralizedMaxwell, points::Measure)
+  map(b -> initializeStateVariables(b, points), obj.branches)
 end
 
-function updateStateVariables!(stateVars, model::GeneralizedMaxwell, Δt, F, Fn)
-  @assert length(model.branches) == length(stateVars)
-  for (branch, state) in zip(model.branches, stateVars)
+function updateStateVariables!(states, obj::GeneralizedMaxwell, Δt, F, Fn)
+  @assert length(obj.branches) == length(states)
+  for (branch, state) in zip(obj.branches, states)
     updateStateVariables!(state, branch, Δt, F, Fn)
   end
+end
+
+function Dissipation(obj::GeneralizedMaxwell, Δt)
+  Dα = map(b -> Dissipation(b, Δt), obj.branches)
+  D(F, Fn, A...) = mapreduce((Di, Ai) -> Di(F, Fn, Ai), +, Dα, A)
 end
 
 
@@ -476,6 +487,9 @@ function ViscousDissipation(obj::ViscousIncompressible, Δt::Float64,
   # Return mapping algorithm
   #------------------------------------------
   Ce, λα = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, C, Ceᵗʳ, Cen, λαn)
+  #------------------------------------------
+  # Dissipation
+  #------------------------------------------
   τ = obj.τ
   Se = Se_(Ce)
   invCCe = inv(2*∂Se∂Ce_(Ce))
@@ -484,3 +498,27 @@ function ViscousDissipation(obj::ViscousIncompressible, Δt::Float64,
   Dvis
 end
 
+
+function DissipationDerivative(obj::ViscousIncompressible, Δt::Float64,
+                              Se_::Function, ∂Se∂Ce_::Function,
+                              F::TensorValue, Fn::TensorValue, A::VectorValue)
+  Uvn = TensorValue{3,3}(A[1:9]...)
+  λαn = A[10]
+  #------------------------------------------
+  # Get kinematics
+  #------------------------------------------
+  invUvn  = inv(Uvn)
+  C = Cauchy(F)
+  Cn = Cauchy(Fn)
+  Ceᵗʳ = ElasticCauchy(C, invUvn)
+  Cen  = ElasticCauchy(Cn, invUvn)
+  #------------------------------------------
+  # Return mapping algorithm
+  #------------------------------------------
+  Ce, λα = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, C, Ceᵗʳ, Cen, λαn)
+  #------------------------------------------
+  # Dissipation derivative
+  #------------------------------------------
+  """Derivative with respect to the temperature."""
+  return 0.0
+end

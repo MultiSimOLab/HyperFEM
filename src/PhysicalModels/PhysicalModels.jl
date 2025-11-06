@@ -139,7 +139,7 @@ include("PINNs.jl")
 
 
 # ============================================
-# State variables management
+# Physical models interface
 # ============================================
 
 function initializeStateVariables(::PhysicalModel, points::Measure)
@@ -147,6 +147,14 @@ function initializeStateVariables(::PhysicalModel, points::Measure)
 end
 
 function updateStateVariables!(::Any, ::PhysicalModel, vars...)
+end
+
+function Dissipation(::PhysicalModel, args...)
+  D(::Any...) = 0.0
+end
+
+function SecondPiola(::T, args...) where {T<:PhysicalModel}
+  throw("The function 'SecondPiola' has not been implemented for $T.")
 end
 
 end
