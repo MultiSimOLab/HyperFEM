@@ -1,8 +1,5 @@
 module HyperFEM
 
-using TimerOutputs
-
-
 include("TensorAlgebra/TensorAlgebra.jl")
 include("PhysicalModels/PhysicalModels.jl")
 include("WeakForms/WeakForms.jl")
