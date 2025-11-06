@@ -94,10 +94,6 @@ end
 
 
 struct EmptyElastic <: Elasto
-  Kinematic::KinematicModel
-  function EmptyElastic()
-    new(Kinematics(Elasto))
-  end
   function (::EmptyElastic)(Λ=0.0)
     Ψ(F) = 0.0
     ∂Ψu(F) = TensorValue(zeros(9)...)

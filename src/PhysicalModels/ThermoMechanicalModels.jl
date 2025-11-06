@@ -62,8 +62,8 @@ struct ThermoMech_EntropicPolyconvex{T<:Thermo,M<:Mechano} <: ThermoMechano
     ϕ = obj.ϕ
     s = obj.s
 
-    _, H, J = get_Kinematics(obj.mechano.Kinematic; Λ=Λ)
-
+    J(F) = det(F)
+    H(F) = det(F) * inv(F)'
     I1(F) = tr(F' * F)
     I2(F) = tr(H(F)' * H(F))
     I3(F) = J(F)
@@ -94,8 +94,8 @@ end
 
 
 function _getCoupling(term::Thermo, mec::Mechano, Λ::Float64)
-  _, H, J = get_Kinematics(mec.Kinematic; Λ=Λ)
-
+  J(F) = det(F)
+  H(F) = det(F) * inv(F)'
   ∂Ψtm_∂J(F, δθ) = -6.0 * term.α * J(F) * δθ
   ∂Ψtm_u(F, δθ) = ∂Ψtm_∂J(F, δθ) * H(F)
   ∂Ψtm_θ(F, δθ) = -3.0 * term.α * (J(F)^2.0 - 1.0)
