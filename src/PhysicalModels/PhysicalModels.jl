@@ -154,11 +154,7 @@ function Dissipation(::PhysicalModel, args...)
 end
 
 function SecondPiola(::T, args...) where {T<:PhysicalModel}
-  throw("The function 'SecondPiola' has not been implemented for $(T.name.wrapper).")
-end
-
-function name(::T) where {T<:PhysicalModel}
-  T.name.wrapper
+  throw("The function 'SecondPiola' has not been implemented for $T.")
 end
 
 end
