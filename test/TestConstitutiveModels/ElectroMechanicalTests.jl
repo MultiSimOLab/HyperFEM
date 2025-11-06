@@ -1,5 +1,6 @@
 using Gridap.TensorValues
 using HyperFEM.PhysicalModels
+using HyperFEM.TensorAlgebra
 
 
 const ∇φ = VectorValue(1.0:3.0...)
@@ -30,8 +31,12 @@ const ∇un = TensorValue(1.0:9.0...) * 5e-4
 
   Ψ, ∂Ψ∂F, ∂Ψ∂F∂F = modelelectro()
  
-  F, _, _ = get_Kinematics(model1.Kinematic)
-  E = get_Kinematics(modelID.Kinematic)
+
+  Ke=Kinematics(Electro,Solid)
+  E = get_Kinematics(Ke)
+  K=Kinematics(Mechano,Solid)
+  F, _, _  = get_Kinematics(K)
+
   @test Ψ(F(∇u),E(∇φ) ,(M1,M2,M3,M4)) == -27.513663654827152
   @test isapprox(norm(∂Ψ∂F(F(∇u),E(∇φ) ,(M1,M2,M3,M4))) ,  47.45420724735932,rtol=1e-14)
   @test isapprox(norm(∂Ψ∂F∂F(F(∇u),E(∇φ) ,(M1,M2,M3,M4))), 14.707913034885005,rtol=1e-14)
@@ -44,8 +49,10 @@ end
   modelID = IdealDielectric(ε=4.0)
   modelelectro =modelMR+modelID
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelelectro()
-  F, _, _ = get_Kinematics(modelMR.Kinematic)
-  E = get_Kinematics(modelID.Kinematic)
+  Ke=Kinematics(Electro,Solid)
+  E = get_Kinematics(Ke)
+  K=Kinematics(Mechano,Solid)
+  F, _, _  = get_Kinematics(K)
 
   @test Ψ(F(∇u), E(∇φ)) == -27.514219755428428
   @test norm(∂Ψu(F(∇u), E(∇φ))) == 47.42294370458073
@@ -73,14 +80,14 @@ end
   Kin_mec = EvolutiveKinematics(Mechano; F=(t) -> ((∇u1, x) -> ∇u1 + one(∇u1) + t * ∇umacro + t * (A ⊙ x)))
   Kin_elec = EvolutiveKinematics(Electro; E=(t) -> ((∇φ) -> -∇φ + t * Emacro))
 
-  physmec = MooneyRivlin3D(λ=10.0, μ1=1.0, μ2=1.0, Kinematic=Kin_mec)
-  physelec = IdealDielectric(ε=1.0, Kinematic=Kin_elec)
+  physmec = MooneyRivlin3D(λ=10.0, μ1=1.0, μ2=1.0)
+  physelec = IdealDielectric(ε=1.0)
   physmodel = FlexoElectroModel(mechano=physmec, electro=physelec, κ=1000.0)
 
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ, Φ = physmodel(1.0)
 
-  F, _, _ = get_Kinematics(physmec.Kinematic; Λ=1.0)
-  E = get_Kinematics(physelec.Kinematic; Λ=1.0)
+  F, _, _ = get_Kinematics(Kin_mec; Λ=1.0)
+  E = get_Kinematics(Kin_elec; Λ=1.0)
   X = VectorValue(2.4, 1.9, 3.3)
 
   @test (Ψ(F(∇u1, X), E(∇φ))) == 13.408299698687056
@@ -99,8 +106,10 @@ end
   visco_elastic = GeneralizedMaxwell(hyper_elastic, viscous_branch1)
   dielectric = IdealDielectric(ε=1.0)
   model =dielectric+visco_elastic
-  F, _, _ = get_Kinematics(model.mechano.Kinematic)
-  E       = get_Kinematics(model.electro.Kinematic)
+  Ke=Kinematics(Electro,Solid)
+  E  = get_Kinematics(Ke)
+  K=Kinematics(Mechano,Solid)
+  F, _, _  = get_Kinematics(K)
   Uvn = TensorValue(1.,2.,3.,2.,4.,5.,3.,5.,6.) * 2e-4 + I3
   Uvn *= det(Uvn)^(-1/3)
   λvn = 1e-3
@@ -119,8 +128,10 @@ end
   visco_elastic = GeneralizedMaxwell(hyper_elastic, viscous_branch1, viscous_branch2)
   dielectric = IdealDielectric(ε=1.0)
   model =dielectric+visco_elastic
-  F, _, _ = get_Kinematics(model.mechano.Kinematic)
-  E       = get_Kinematics(model.electro.Kinematic)
+  Ke=Kinematics(Electro,Solid)
+  E = get_Kinematics(Ke)
+  K=Kinematics(Mechano,Solid)
+  F, _, _  = get_Kinematics(K)
   Uvn = TensorValue(1.,2.,3.,2.,4.,5.,3.,5.,6.) * 2e-4 + I3
   Uvn *= det(Uvn)^(-1/3)
   λvn = 1e-3

@@ -48,8 +48,8 @@ struct ThermoElectroMech_PINNs{A,B,C,D} <: ThermoElectroMechano
   function (obj::ThermoElectroMech_PINNs)(Λ::Float64=1.0)
 
     function Ψ(F, E, δθ)
-      Kinematic_mec = Kinematics(Mechano)
-      Kinematic_elec = Kinematics(Electro)
+      Kinematic_mec = Kinematics(Mechano,Solid)
+      Kinematic_elec = Kinematics(Electro,Solid)
       I1, I2, I3, I4, I5 = getIsoInvariants(Kinematic_mec, Kinematic_elec)
       I_ = InvariantScaling([I1(F), I2(F), I3(F), I4(F, E), I5(E), δθ], obj.ϵ, obj.β)
       h = LayerComputation(obj.W[1], obj.b[1], [I_[1], I_[2], I_[3], I_[4], I_[5], I_[6]], SoftPlus)

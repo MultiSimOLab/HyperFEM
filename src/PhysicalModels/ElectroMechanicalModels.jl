@@ -59,8 +59,8 @@ end
 
 
 function _getCoupling(elec::Electro, mec::Mechano, Λ::Float64)
-  _, H, J = get_Kinematics(mec.Kinematic; Λ=Λ)
-
+  J(F) = det(F)
+  H(F) = det(F) * inv(F)'
   # Energy #
   HE(F, E) = H(F) * E
   HEHE(F, E) = HE(F, E) ⋅ HE(F, E)

@@ -92,9 +92,13 @@ Uφ = TrialFESpace(Vφ, D_bc.BoundaryCondition[2], 1.0)
 V = MultiFieldFESpace([Vu, Vφ])
 U = MultiFieldFESpace([Uu, Uφ])
 
+# Kinematic Description
+km=Kinematics(Mechano,Solid)
+ke=Kinematics(Electro,Solid)
+
 # residual and jacobian function of load factor
-res(Λ) = ((u, φ), (v, vφ)) -> residual(physmodel, (u, φ), (v, vφ), dΩ)
-jac(Λ) = ((u, φ), (du, dφ), (v, vφ)) -> jacobian(physmodel, (u, φ), (du, dφ), (v, vφ), dΩ)
+res(Λ) = ((u, φ), (v, vφ)) -> residual(physmodel, (km,ke),(u, φ), (v, vφ), dΩ)
+jac(Λ) = ((u, φ), (du, dφ), (v, vφ)) -> jacobian(physmodel, (km,ke), (u, φ), (du, dφ), (v,vφ),dΩ)
 
 # nonlinear solver
 ls = LUSolver()
