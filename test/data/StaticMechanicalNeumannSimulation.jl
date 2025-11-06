@@ -5,6 +5,7 @@ using TimerOutputs
 using Gridap.FESpaces
 using HyperFEM
 using HyperFEM.ComputationalModels.CartesianTags
+using HyperFEM.ComputationalModels.EvolutionFunctions
 
 
 function static_mechanical_neumann_simulation(;writevtk=true, verbose=true)
@@ -32,13 +33,13 @@ function static_mechanical_neumann_simulation(;writevtk=true, verbose=true)
   # Dirichlet conditions 
   dir_u_tags = ["fixed"]
   dir_u_values = [[0.0, 0.0, 0.0]]
-  dir_u_timesteps = [Λ -> 1.0]
+  dir_u_timesteps = [constant()]
   D_bc = DirichletBC(dir_u_tags, dir_u_values, dir_u_timesteps)
 
   # Neumann conditions 
   neu_F_tags = ["force"]
   neu_F_values = [[0.0, 0.0, -1e-3]]
-  neu_F_timesteps = [Λ -> Λ]
+  neu_F_timesteps = [ramp()]
   N_bc = NeumannBC(neu_F_tags, neu_F_values, neu_F_timesteps)
   dΓ = get_Neumann_dΓ(geometry, N_bc, degree)
 

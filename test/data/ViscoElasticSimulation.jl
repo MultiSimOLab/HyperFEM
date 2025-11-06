@@ -4,8 +4,7 @@ using GridapSolvers
 using GridapSolvers.NonlinearSolvers
 using HyperFEM
 using HyperFEM.ComputationalModels.CartesianTags
-using HyperFEM.ComputationalModels:constant
-using HyperFEM.ComputationalModels:triangular
+using HyperFEM.ComputationalModels.EvolutionFunctions
 using HyperFEM.ComputationalModels.PostMetrics
 
 function visco_elastic_simulation(;t_end=15, writevtk=true, verbose=true)
