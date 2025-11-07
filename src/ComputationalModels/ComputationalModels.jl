@@ -78,6 +78,7 @@ export get_test_space
 include("PostProcessors.jl")
 export PostProcessor
 export Cauchy
+export Piola
 export Jacobian
 export Entropy
 export D0

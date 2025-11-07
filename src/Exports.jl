@@ -118,6 +118,7 @@ end
 @publish ComputationalModels  PostMetrics
 @publish ComputationalModels  StaggeredModel
 @publish ComputationalModels  Cauchy
+@publish ComputationalModels  Piola
 @publish ComputationalModels  Jacobian
 @publish ComputationalModels  Entropy
 @publish ComputationalModels  D0

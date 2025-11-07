@@ -76,7 +76,7 @@ function Jacobian(uh,km)
   J ∘ F ∘ ∇(uh)
 end
 
-function Cauchy(physmodel::ThermoElectroMechano,kine::NTuple{3,KinematicModel}, uh, φh, θh, Ω, dΩ, Λ=1.0)
+function Piola(physmodel::ThermoElectroMechano,kine::NTuple{3,KinematicModel}, uh, φh, θh, Ω, dΩ, Λ=1.0)
     DΨ = physmodel(Λ)
 
     F, _, _ = get_Kinematics(kine[1])
@@ -100,26 +100,32 @@ function Cauchy(physmodel::ThermoElectroMechano,kine::NTuple{3,KinematicModel}, 
 end
 
 
-function Cauchy(model::Elasto,km::KinematicModel,uh, unh, state_vars, Ω, dΩ, t, Δt)
-    σh = Cauchy(model,km,uh)
+function Cauchy(args...)
+  @warn "The function Cauchy is deprecated and will be removed at the end of November 25. Please, replace it by Piola."
+  Piola(args...)
+end
+
+
+function Piola(model::Elasto,km::KinematicModel,uh, unh, state_vars, Ω, dΩ, t, Δt)
+    σh = Piola(model,km,uh)
     interpolate_L2_tensor(σh, Ω, dΩ)
 end
 
 
-function Cauchy(model::ViscoElastic, km::KinematicModel, uh, unh, state_vars, Ω, dΩ, t, Δt)
-    σh = Cauchy(model, km, uh, unh, state_vars, Δt)
+function Piola(model::ViscoElastic, km::KinematicModel, uh, unh, state_vars, Ω, dΩ, t, Δt)
+    σh = Piola(model, km, uh, unh, state_vars, Δt)
     interpolate_L2_tensor(σh, Ω, dΩ)
 end
 
 
-function Cauchy(model::Elasto, km::KinematicModel,uh, vars...)
+function Piola(model::Elasto, km::KinematicModel,uh, vars...)
     _, ∂Ψu, _ = model()
     F, _, _ = get_Kinematics(km)
     ∂Ψu ∘ (F∘∇(uh))
 end
 
 
-function Cauchy(model::ViscoElastic,  km::KinematicModel, uh, unh, states, Δt)
+function Piola(model::ViscoElastic,  km::KinematicModel, uh, unh, states, Δt)
     _, ∂Ψu, _ = model(Δt=Δt)
     F, _, _ = get_Kinematics(km)
     ∂Ψu ∘ (F∘∇(uh), F∘∇(unh), states...)
