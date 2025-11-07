@@ -27,7 +27,7 @@ end
 # Stagered jacobian
 # -----------------
 
-function jacobian(physicalmodel::ElectroMechano, ::Type{Mechano}, kine::NTuple{2,KinematicModel}, (u, φ), du, v, dΩ, Λ, vars...; kwargs...)
+function jacobian(physicalmodel::ElectroMechano, ::Type{Mechano}, kine::NTuple{2,KinematicModel}, (u, φ), du, v, dΩ, Λ=1.0, vars...; kwargs...)
     DΨ    = physicalmodel(; kwargs...)
     F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
     E     = get_Kinematics(kine[2]; Λ=Λ)
@@ -35,7 +35,7 @@ function jacobian(physicalmodel::ElectroMechano, ::Type{Mechano}, kine::NTuple{2
     ∫(∇(v)' ⊙ ((∂Ψuu ∘ (F∘∇(u)', E∘∇(φ), vars...)) ⊙ ∇(du)'))dΩ
 end
 
-function jacobian(physicalmodel::ElectroMechano, ::Type{Electro}, kine::NTuple{2,KinematicModel}, (u, φ), dφ, vφ, dΩ, Λ, vars...; kwargs...)
+function jacobian(physicalmodel::ElectroMechano, ::Type{Electro}, kine::NTuple{2,KinematicModel}, (u, φ), dφ, vφ, dΩ, Λ=1.0, vars...; kwargs...)
     DΨ    = physicalmodel(; kwargs...)
     F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
     E     = get_Kinematics(kine[2]; Λ=Λ)
