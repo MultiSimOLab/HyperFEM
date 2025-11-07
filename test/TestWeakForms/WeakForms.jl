@@ -99,22 +99,22 @@ end
 
 
     ke=Kinematics(Electro, Solid)
-    km=Kinematics(Mechano,Solid)
+    km=Kinematics(Mechano, Solid)
     k=(km,ke)
     function jach(uh, φh)
-        jac((du, dφ), (v, vφ)) = jacobian(modelelectro,k, (uh, φh), (du, dφ), (v, vφ), dΩ)
+        jac((du, dφ), (v, vφ)) = jacobian(modelelectro, k, (uh, φh), (du, dφ), (v, vφ), dΩ)
     end
     function jac_mech(uh, φh)
-        jac(du, v) = jacobian(modelelectro, Mechano, k,(uh, φh), du, v, dΩ)
+        jac(du, v) = jacobian(modelelectro, Mechano, k, (uh, φh), du, v, dΩ)
     end
     function jac_elech(uh, φh)
-        jac(dφ, vφ) = jacobian(modelelectro, Electro, k,(uh, φh), dφ, vφ, dΩ)
+        jac(dφ, vφ) = jacobian(modelelectro, Electro, k, (uh, φh), dφ, vφ, dΩ)
     end
 
     jac_ = assemble_matrix(jach(uh, φh), V, V)
     jac_m = assemble_matrix(jac_mech(uh, φh), Vu, Vu)
     jac_e = assemble_matrix(jac_elech(uh, φh), Vφ, Vφ)
-    ≈
+    
     @test norm(jac_) ≈ 18.934585248125135
     @test jac_[1] ≈ 0.7777777777777775
     @test jac_[end] ≈ -1.3333333333333326
