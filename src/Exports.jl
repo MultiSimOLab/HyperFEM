@@ -70,6 +70,7 @@ end
 @publish PhysicalModels Mechano
 @publish PhysicalModels Thermo
 @publish PhysicalModels Electro
+@publish PhysicalModels Magneto
 @publish PhysicalModels ThermoMechano
 @publish PhysicalModels ElectroMechano
 @publish PhysicalModels MagnetoMechano
