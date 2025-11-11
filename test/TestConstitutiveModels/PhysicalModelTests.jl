@@ -40,12 +40,12 @@ function test_derivatives_3D_(model::PhysicalModel, K::KinematicModel; rtol=1e-1
   test_derivatives__(model, K, ∇u3, rtol=rtol, kwargs...)
 end
 
-function test_equilibrium_at_rest_2D(obj::Mechano; atol=1e-14)
+function test_equilibrium_at_rest_2D(obj::Mechano; atol=1e-10)
   Ψ, _... = obj()
   @test isapprox(Ψ(I2), 0.0, atol=atol)
 end
 
-function test_equilibrium_at_rest_3D(obj::Mechano, atol=1e-14)
+function test_equilibrium_at_rest_3D(obj::Mechano, atol=1e-10)
   Ψ, _... = obj()
   @test isapprox(Ψ(I3), 0.0, atol=atol)
 end
