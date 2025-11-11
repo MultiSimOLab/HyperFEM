@@ -17,7 +17,7 @@ end
 Calculate the cofactor of a matrix.
 """
 function cof(A::TensorValue)
-  return det(A)*inv(A')
+  0.5A×A
 end
 
 
