@@ -78,30 +78,16 @@ end
 
 function Piola(physmodel::ThermoElectroMechano,kine::NTuple{3,KinematicModel}, uh, φh, θh, Ω, dΩ, Λ=1.0)
     DΨ = physmodel(Λ)
-
     F, _, _ = get_Kinematics(kine[1])
     E = get_Kinematics(kine[2])
     ∂Ψu = DΨ[2]
-    refL2 = ReferenceFE(lagrangian, Float64, 0)
-    ref = ReferenceFE(lagrangian, Float64, 1)
-    VL2 = FESpace(Ω, refL2, conformity=:L2)
-    V = FESpace(Ω, ref, conformity=:H1)
-    n1 = VectorValue(1.0, 0.0, 0.0)
-    n2 = VectorValue(0.0, 1.0, 0.0)
-    n3 = VectorValue(0.0, 0.0, 1.0)
-    σ11h = interpolate_everywhere(L2_Projection(n1 ⋅ ((∂Ψu ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)) * n1), dΩ, VL2), V)
-    σ12h = interpolate_everywhere(L2_Projection(n1 ⋅ ((∂Ψu ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)) * n2), dΩ, VL2), V)
-    σ13h = interpolate_everywhere(L2_Projection(n1 ⋅ ((∂Ψu ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)) * n3), dΩ, VL2), V)
-    σ22h = interpolate_everywhere(L2_Projection(n2 ⋅ ((∂Ψu ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)) * n2), dΩ, VL2), V)
-    σ23h = interpolate_everywhere(L2_Projection(n2 ⋅ ((∂Ψu ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)) * n3), dΩ, VL2), V)
-    σ33h = interpolate_everywhere(L2_Projection(n3 ⋅ ((∂Ψu ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)) * n3), dΩ, VL2), V)
-    ph = interpolate_everywhere(L2_Projection(tr ∘ (∂Ψu ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)), dΩ, VL2), V)
-    return (σ11h, σ12h, σ13h, σ22h, σ23h, σ33h, ph)
+    σh = ∂Ψu ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)
+    interpolate_L2_tensor(σh, Ω, dΩ)
 end
 
 
 function Cauchy(args...)
-  @warn "The function Cauchy is deprecated and will be removed at the end of November 25. Please, replace it by Piola."
+  @warn "The function Cauchy is deprecated. Shortly it'll be J^-1*P*F^-T."
   Piola(args...)
 end
 
