@@ -42,5 +42,10 @@ function _δδ_λ_2D(λ::Float64)
     λ)
 end
 
+A = TensorValue(1.:9...)
+A = A + A' + I3
+
 SUITE["Tensor algebra"]["δδ_μ_2d"] = @benchmarkable δᵢₖδⱼₗ2D + δᵢₗδⱼₖ2D
 SUITE["Tensor algebra"]["δδ_λ_2d"] = @benchmarkable 1.0 * δᵢⱼδₖₗ2D
+SUITE["Tensor algebra"]["Cofactor"] = cof(A)
+SUITE["Tensor algebra"]["Det(A)Inv(A')"] = det(A)*inv(A')
