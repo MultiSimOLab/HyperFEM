@@ -497,28 +497,3 @@ function ViscousDissipation(obj::ViscousIncompressible, Δt::Float64,
   Dvis = -Se ⊙ (invCCe ⊙ ∂Se)
   Dvis
 end
-
-
-function DissipationDerivative(obj::ViscousIncompressible, Δt::Float64,
-                              Se_::Function, ∂Se∂Ce_::Function,
-                              F::TensorValue, Fn::TensorValue, A::VectorValue)
-  Uvn = TensorValue{3,3}(A[1:9]...)
-  λαn = A[10]
-  #------------------------------------------
-  # Get kinematics
-  #------------------------------------------
-  invUvn  = inv(Uvn)
-  C = Cauchy(F)
-  Cn = Cauchy(Fn)
-  Ceᵗʳ = ElasticCauchy(C, invUvn)
-  Cen  = ElasticCauchy(Cn, invUvn)
-  #------------------------------------------
-  # Return mapping algorithm
-  #------------------------------------------
-  Ce, λα = return_mapping_algorithm!(obj, Δt, Se_, ∂Se∂Ce_, C, Ceᵗʳ, Cen, λαn)
-  #------------------------------------------
-  # Dissipation derivative
-  #------------------------------------------
-  """Derivative with respect to the temperature."""
-  return 0.0
-end
