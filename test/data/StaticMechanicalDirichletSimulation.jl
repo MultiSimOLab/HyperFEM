@@ -73,7 +73,7 @@ function static_mechanical_dirichlet_simulation(;writevtk=true, verbose=true)
   post_model = PostProcessor(comp_model, driverpost_mech; is_vtk=writevtk, filepath=simdir)
 
   @timeit pname begin
-    x, flag = solve!(comp_model; stepping=(nsteps=10, maxbisec=10), post=post_model)
+    x, flag = solve!(comp_model; stepping=(nsteps=10, maxbisec=10), post=post_model,ProjectDirichlet=true)
   end
   return x
 end
