@@ -42,6 +42,7 @@ end
 
 function solve!(m::StaggeredModel;
     stepping=(nsteps=20, nsubsteps=1 , maxbisec=15),
+    presolver=(τ,∆τ)->nothing,
     kargsolve)
 
     nsubsteps=stepping[:nsubsteps]
@@ -52,14 +53,15 @@ function solve!(m::StaggeredModel;
     map((x, y) -> TrialFESpace!(x.fe_space, y.dirichlet, 0.0), m.state⁻, m.compmodels)
 
     flagconv = 1 # convergence flag 0 (max bisections) 1 (max steps)
-    ∆Λ = 1.0 / nsteps
-    for time in 0:nsteps-1
+    ∆τ = 1.0 / nsteps
+    for τ in 0:nsteps-1
         println("*******************************************")
-        println("           Staggered Step: $time           ")
+        println("           Staggered Step: $τ              ")
         println("*******************************************")
-        stevol(Λ) = ∆Λ * (Λ + time)
+        presolver(τ,∆τ)
+        stevol(Λ) = ∆τ * (Λ + τ)
         map(x -> updateBC!(x.dirichlet, x.dirichlet.caches, [stevol for _ in 1:length(x.dirichlet.caches)]), m.compmodels)
-        for Λ_inner in 1:nsubsteps
+        for τ_inner in 1:nsubsteps
             map((x) -> TrialFESpace!(x.spaces[1], x.dirichlet, 1.0), m.compmodels)
             _, flagconv = map((x, y) -> solve!(x; y...), m.compmodels, kargsolve)
             map((x, y) -> TrialFESpace!(x.fe_space, y.dirichlet, 1.0), m.state⁻, m.compmodels)
@@ -120,7 +122,7 @@ get_assemblers(m::StaticNonlinearModel) = (m.caches[4])
 #   vtk::WriteVTK.CollectionFile=paraview_collection(datadir("sims", "Temp") * "/Results", append=false)
 
 function solve!(m::StaticNonlinearModel;
-    stepping=(nsteps=20, maxbisec=15), RestartState::Bool=false, ProjectDirichlet::Bool=true,
+    stepping=(nsteps=20, maxbisec=15), RestartState::Bool=false, ProjectDirichlet::Bool=false,
     post=PostProcessor())
 
     reset!(post)
