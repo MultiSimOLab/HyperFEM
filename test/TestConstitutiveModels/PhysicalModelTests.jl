@@ -40,6 +40,16 @@ function test_derivatives_3D_(model::PhysicalModel, K::KinematicModel; rtol=1e-1
   test_derivatives__(model, K, ∇u3, rtol=rtol, kwargs...)
 end
 
+function test_equilibrium_at_rest_2D(obj::Mechano; atol=1e-14)
+  Ψ, _... = obj()
+  @test isapprox(Ψ(I2), 0.0, atol=atol)
+end
+
+function test_equilibrium_at_rest_3D(obj::Mechano, atol=1e-14)
+  Ψ, _... = obj()
+  @test isapprox(Ψ(I3), 0.0, atol=atol)
+end
+
 
 
 
@@ -178,12 +188,14 @@ end
 @testset "NonlinearMooneyRivlin_CV" begin
   model = NonlinearMooneyRivlin_CV(λ=3.0, μ1=1.0, μ2=1.0, α=2.0, β=1.0, γ=6.0)
   test_derivatives_3D_(model, Kinematics(Mechano,Solid),rtol=1e-13)
+  test_equilibrium_at_rest_3D(model)
 end
 
 
 @testset "NonlinearNeoHookean_CV" begin
   model = NonlinearNeoHookean_CV(λ=3.0, μ=1.0, α=2.0, γ=6.0)
   test_derivatives_3D_(model, Kinematics(Mechano,Solid),rtol=1e-13)
+  test_equilibrium_at_rest_3D(model)
 end
 
 
@@ -208,76 +220,89 @@ end
 @testset "LinearElasticity2D" begin
   model = LinearElasticity2D(λ=3.0, μ=1.0)
   test_derivatives_2D_(model, Kinematics(Mechano,Solid))
+  test_equilibrium_at_rest_2D(model)
 end
 
 
 @testset "LinearElasticity3D" begin
   model = LinearElasticity3D(λ=3.0, μ=1.0)
   test_derivatives_3D_(model, Kinematics(Mechano,Solid))
+  test_equilibrium_at_rest_3D(model)
 end
 
 
 @testset "NeoHookean3D" begin
   model = NeoHookean3D(λ=3.0, μ=1.0)
   test_derivatives_3D_(model, Kinematics(Mechano,Solid), rtol=1e-13)
+  test_equilibrium_at_rest_3D(model)
 end
 
 
 @testset "MooneyRivlin2D" begin
   model = MooneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
   test_derivatives_2D_(model, Kinematics(Mechano,Solid))
+  test_equilibrium_at_rest_2D(model)
 end
 
 @testset "MooneyRivlin3D" begin
   model = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
   test_derivatives_3D_(model,Kinematics(Mechano,Solid), rtol=1e-13)
+  test_equilibrium_at_rest_3D(model)
 end
 
 
 @testset "NonlinearMooneyRivlin2D" begin
   model = NonlinearMooneyRivlin2D(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α=μParams[3], β=μParams[4])
   test_derivatives_2D_(model, Kinematics(Mechano,Solid))
+  test_equilibrium_at_rest_2D(model)
 end
 
 
 @testset "Yeoh3D" begin
   model = Yeoh3D(λ=3.0, C10=1.0, C20=1.0, C30=1.0)
   test_derivatives_3D_(model, Kinematics(Mechano,Solid))
+  test_equilibrium_at_rest_3D(model)
 end
 
 
 @testset "NonlinearMooneyRivlin2D_CV" begin
   model = NonlinearMooneyRivlin2D_CV(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α=μParams[3], β=μParams[4], γ=μParams[4])
   test_derivatives_2D_(model, Kinematics(Mechano,Solid))
+  test_equilibrium_at_rest_2D(model)
 end
 
 
 @testset "NonlinearMooneyRivlin3D" begin
   model = NonlinearMooneyRivlin3D(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α=μParams[3], β=μParams[4])
   test_derivatives_3D_(model,Kinematics(Mechano,Solid), rtol=1e-13)
+  test_equilibrium_at_rest_3D(model)
 end
 
 
 @testset "IncompressibleNeoHookean2D" begin
   model = IncompressibleNeoHookean2D(λ=(μParams[1] + μParams[2]) * 1e2, μ=μParams[1])
   test_derivatives_2D_(model, Kinematics(Mechano,Solid))
+  test_equilibrium_at_rest_2D(model)
 end
 
 @testset "IncompressibleNeoHookean2D_CV" begin
   model = IncompressibleNeoHookean2D_CV(λ=(μParams[1] + μParams[2]) * 1e2, μ=μParams[1], γ=3.0)
   test_derivatives_2D_(model, Kinematics(Mechano,Solid))
+  test_equilibrium_at_rest_2D(model)
 end
 
 
 @testset "NonlinearIncompressibleMooneyRivlin2D_CV" begin
   model = NonlinearIncompressibleMooneyRivlin2D_CV(λ=(μParams[1] + μParams[2]) * 1e2, μ=μParams[1], α=μParams[3], γ=3.0)
   test_derivatives_2D_(model, Kinematics(Mechano,Solid))
+  test_equilibrium_at_rest_2D(model)
 end
 
 
 @testset "EightChain" begin
   model = EightChain(μ=μParams[1], N=μParams[2])
   test_derivatives_3D_(model, Kinematics(Mechano,Solid),rtol=1e-13)
+  test_equilibrium_at_rest_3D(model)
 end
 
 
@@ -302,6 +327,7 @@ end
   @test Ψ(F(∇u), N) == 0.27292220826242186
   @test norm(∂Ψu(F(∇u), N)) == 100.64088114687468
   @test norm(∂Ψuu(F(∇u), N)) == 46792.35008576098
+  @test isapprox(Ψ(I2, N), 0.0, atol=1e-10)
 end
 
 
@@ -319,6 +345,7 @@ end
   @test Ψ(F(∇u), N) == 269927.3350807581
   @test norm(∂Ψu(F(∇u), N)) == 947447.8711645481
   @test norm(∂Ψuu(F(∇u), N)) == 3.8258646319087776e6
+  @test isapprox(Ψ(I3, N), 0.0, atol=1e-10)
 end
 
 
@@ -450,17 +477,8 @@ end
 @testset "VolumetricEnergy" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   model = VolumetricEnergy(λ=0.0 )
- 
-   Ψ, ∂Ψu, ∂Ψuu= model()
-  K=Kinematics(Mechano,Solid)
-  F, _, _ = get_Kinematics(K)
-  
-  ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x), get_array(F)))
-  ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x), get_array(F)))
-
-  @test isapprox(∂Ψu(F(∇u)), ∂Ψu_(F(∇u)); rtol=1e-14)
-  @test isapprox(∂Ψuu(F(∇u)), ∂Ψuu_(F(∇u)); rtol=1e-14)
- 
+  test_derivatives_3D_(model, Kinematics(Mechano,Solid))
+  test_equilibrium_at_rest_3D(model) 
 end
 
 
@@ -803,6 +821,7 @@ end
 @testset "ARAP2D" begin
   model = ARAP2D(μ=μParams[1])
   test_derivatives_2D_(model, Kinematics(Mechano,Solid), rtol=1e-13)
+  test_equilibrium_at_rest_2D(model)
 end
 
 
@@ -811,6 +830,7 @@ end
 @testset "ARAP2D_regularized" begin
   model = ARAP2D_regularized(μ=μParams[1])
   test_derivatives_2D_(model, Kinematics(Mechano,Solid),rtol=1e-13)
+  test_equilibrium_at_rest_2D(model)
 end
 
 
@@ -835,6 +855,7 @@ end
   @test Ψ(F(∇u)) == 6440.959849358168
   @test norm(∂Ψu(F(∇u))) == 52.8548808805944
   @test isapprox(norm(∂Ψuu(F(∇u))), 18128.524371074407, rtol=1e-14)
+  test_equilibrium_at_rest_2D(model)
 end
 
 
@@ -862,6 +883,7 @@ end
   @test Ψ(F(∇u), J_(F(∇u))) == 6457.022976353012
   @test norm(∂Ψu(F(∇u), J_(F(∇u)))) == 52.980951554554586
   @test norm(∂Ψuu(F(∇u), J_(F(∇u)))) == 18172.854611409108
+  test_equilibrium_at_rest_2D(model)
 end
 
 
