@@ -73,7 +73,7 @@ function visco_elastic_simulation(;t_end=15, writevtk=true, verbose=true)
   F,_,_ = get_Kinematics(k)
 
   function driverpost(post)
-    σh11, _... = Cauchy(cons_model, Kinematics(Mechano,Solid),uh, unh, state_vars, Ω, dΩ, 0.0, Δt)
+    σh11, _... = Piola(cons_model, Kinematics(Mechano,Solid),uh, unh, state_vars, Ω, dΩ, 0.0, Δt)
     σΓ1 = sum(∫(σh11)dΓ1) / sum(∫(1.0)dΓ1)
     push!(σΓ, σΓ1)
     push!(λx, 1.0 + component_LInf(uh, :x, Ω) / long)
