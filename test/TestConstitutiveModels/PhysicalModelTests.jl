@@ -4,6 +4,7 @@ using JSON
 using StaticArrays
 using Test
 using HyperFEM.PhysicalModels
+using HyperFEM.TensorAlgebra
 
 
 
