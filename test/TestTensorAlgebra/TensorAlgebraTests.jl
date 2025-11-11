@@ -104,5 +104,13 @@ end
 @testset "sqrt" begin
   A = TensorValue(1.:9...)
   A = A'*A + I3
-  @test isapprox(sqrt(A), TensorValue(sqrt(get_array(A))), rtol=1e-14)
+  sqrtA = TensorValue(sqrt(get_array(A)))
+  @test isapprox(sqrt(A), sqrtA, rtol=1e-14)
+end
+
+
+@testset "cofactor" begin
+  A = TensorValue(1.:9...) + I3
+  cofA = det(A) * inv(A')
+  @test isapprox(cof(A), cofA)
 end

@@ -1,7 +1,11 @@
+using HyperFEM
+using Gridap
+using Test
+
 @testset "TensorAlgebra" begin
 
-    @time begin
-        include("TensorAlgebra.jl")
-    end
+  @time begin
+    include("TensorAlgebraTests.jl")
+  end
 
 end
