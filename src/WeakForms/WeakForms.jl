@@ -36,10 +36,10 @@ end
 
 Calculate the residual using the given constitutive model and finite element functions.
 """
-function residual(physicalmodel::Mechano, km::KinematicModel ,u, v, dΩ, Λ=1.0, Δt=0.0, vars...)
-  _, ∂Ψu, _ = physicalmodel(Λ)
+function residual(physicalmodel::Mechano, km::KinematicModel, u, v, dΩ, Λ=1.0, vars...; kwargs...)
+  _, ∂Ψu, _ = physicalmodel(; kwargs...)
   F, _, _   = get_Kinematics(km; Λ=Λ)
-  ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘∇(u)')))dΩ
+  ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘∇(u)', vars...)))dΩ
 end
 
 """
@@ -47,22 +47,10 @@ end
 
 Calculate the jacobian using the given constitutive model and finite element functions.
 """
-function jacobian(physicalmodel::Mechano, km::KinematicModel, u, du, v, dΩ, Λ=1.0, Δt=0.0, vars...)
-  _, _, ∂Ψuu = physicalmodel(Λ)
+function jacobian(physicalmodel::Mechano, km::KinematicModel, u, du, v, dΩ, Λ=1.0, vars...; kwargs...)
+  _, _, ∂Ψuu = physicalmodel(; kwargs...)
   F, _, _    = get_Kinematics(km; Λ=Λ)
-  ∫(∇(v)' ⊙ ((∂Ψuu ∘ (F∘∇(u)')) ⊙ ∇(du)'))dΩ
-end
-
-function residual(physicalmodel::ViscoElastic, km::KinematicModel,u, v, dΩ, t, Δt, un, A)
-  _, ∂Ψu, _ = physicalmodel(t, Δt=Δt)
-  F, _, _   = get_Kinematics(km, Λ=t)
-  ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘∇(u)', F∘∇(un)', A...)))dΩ
-end
-
-function jacobian(physicalmodel::ViscoElastic, km::KinematicModel, u, du, v, dΩ, t, Δt, un, A)
-  _, _, ∂Ψuu = physicalmodel(t, Δt=Δt)
-  F, _, _   = get_Kinematics(km, Λ=t)
-  ∫(∇(v)' ⊙ (inner ∘ (∂Ψuu∘(F∘∇(u)', F∘∇(un)', A...), ∇(du)')))dΩ
+  ∫(∇(v)' ⊙ ((∂Ψuu ∘ (F∘∇(u)', vars...)) ⊙ ∇(du)'))dΩ
 end
 
 
