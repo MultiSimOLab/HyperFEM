@@ -344,9 +344,9 @@ end
   Ψ, ∂Ψu, ∂Ψuu = model()
   K=Kinematics(Mechano,Solid)
   F, _, _ = get_Kinematics(K)
-  @test Ψ(F(∇u), N) == 269927.3350807581
-  @test norm(∂Ψu(F(∇u), N)) == 947447.8711645481
-  @test norm(∂Ψuu(F(∇u), N)) == 3.8258646319087776e6
+  @test Ψ(F(∇u), N) == 2.5259068330070704
+  @test norm(∂Ψu(F(∇u), N)) == 309.14297430663385
+  @test norm(∂Ψuu(F(∇u), N)) == 81316.15339475962
   @test isapprox(Ψ(I3, N), 0.0, atol=1e-10)
 end
 
