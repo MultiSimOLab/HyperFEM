@@ -85,9 +85,16 @@ function residual(physicalmodel::ThermoElectroMechano, ::Type{Electro}, kine::NT
     return -1.0*∫(∇(vφ)' ⋅ (∂Ψφ ∘ (F∘(∇(u)'), E∘(∇(φ)), θ)))dΩ
 end
 
-function residual(physicalmodel::ThermoElectroMechano, ::Type{Thermo}, kine::NTuple{3,KinematicModel}, (u, φ, θ), vθ, dΩ, Λ=1.0)
-    κ=physicalmodel.thermo.κ
-    return ∫(κ * ∇(θ) ⋅ ∇(vθ))dΩ
+function residual(physicalmodel::ThermoElectroMechano, ::Type{Thermo}, kine::NTuple{3,KinematicModel}, (u, φ, θ), vθ, dΩ, Λ=1.0, Δt=0.0, vars...)
+    κ = physicalmodel.thermo.κ
+    D, ∂D = Dissipation(Δt)
+    return ∫(κ * ∇(θ) ⋅ ∇(vθ) -D(u, φ, θ, vars...))dΩ
+end
+
+function transient_residual(physicalmodel::ThermoElectroMechano, ::Type{Thermo}, kine::NTuple{3,KinematicModel}, (u, φ, θ), (un, φn, θn), vθ, dΩ, Λ=1.0, Δt=0.0, vars...)
+    DΨ = physicalmodel(Δt=Δt)
+    η = -DΨ[4]
+    return ∫((1/Δt)*(θ*η(F,E,θ,vars...) - θn*η(Fn,En,θn,vars...) + η(F,E,θ)*(θ - θn)))dΩ
 end
 
 
@@ -407,6 +414,15 @@ function jacobian(physicalmodel::ThermoElectroMech_PINNs, kine::NTuple{2,Kinemat
     jacobian(physicalmodel, ElectroMechano, kine,(u, φ, θ), (du, dφ), (v,vφ), dΩ, Λ)+
     jacobian(physicalmodel, ThermoMechano, kine,(u, φ, θ), dθ, v, dΩ, Λ)+
     jacobian(physicalmodel, ThermoElectro, kine,(u, φ, θ), dθ, vφ, dΩ, Λ)
+end
+
+
+
+
+function transient_residual(physicalmodel::ThermoElectroMech_Bonet, ::Type{Thermo}, kine::NTuple{3,KinematicModel}, (u, φ, θ), vθ, dΩ, Λ=1.0)
+    κ = physicalmodel.thermo.κ
+
+    return ∫(κ * ∇(θ) ⋅ ∇(vθ))dΩ
 end
 
 
