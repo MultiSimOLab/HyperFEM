@@ -644,6 +644,47 @@ end
 end
 
 
+@testset "HardMagnetic_SoftMaterial3D_aniso" begin
+
+  ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
+  ∇φ = VectorValue(1.0, 2.0, 3.0)
+  N = VectorValue(0.0, 0.0, 1.0)
+
+  modelMRiso = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
+  modelMRaniso = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
+  modelMR=modelMRiso+modelMRaniso
+  modelID = HardMagnetic(μ0=1.2566e-6, αr=40e-3, χe=0.0, χr=8.0;  βmok=1.0, βcoup=1.0)
+  modelmagneto=modelMR+modelID
+  Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelmagneto()
+  K=Kinematics(Mechano,Solid)
+  F, _, _ = get_Kinematics(K)
+  Km=Kinematics(Magneto,Solid)
+  H0 = get_Kinematics(Km)
+
+
+  # ∂Ψu_(F) =TensorValue(ForwardDiff.gradient(x -> Ψ(x, get_array( H0(∇φ)),get_array(N) ), get_array(F)))
+  # ∂Ψφ_(H) =VectorValue(ForwardDiff.gradient(x -> Ψ(get_array( F(∇u)), x,get_array(N) ), get_array(H)))
+  # ∂Ψuu_(F) =TensorValue(ForwardDiff.hessian(x -> Ψ(x, get_array( H0(∇φ)),get_array(N) ), get_array(F)))
+  # ∂Ψφu_(H) =TensorValue(ForwardDiff.jacobian(x -> ∂Ψφ(x, get_array( H0(∇φ)),get_array(N) ), get_array(F(∇u))))
+  # ∂Ψφφ_(H) =TensorValue(ForwardDiff.jacobian(x -> ∂Ψφ(get_array( F(∇u)), x,get_array(N) ), get_array(H)))
+
+  # norm(∂Ψu_(F(∇u))) 
+  # norm(∂Ψφ_(H0(∇φ))) 
+  # norm(∂Ψuu_(F(∇u))) 
+  # norm(∂Ψφu_(H0(∇φ))) 
+  # norm(∂Ψφφ_(H0(∇φ))) 
+
+
+  @test Ψ(F(∇u), H0(∇φ), N) == 0.003187725760804994 
+  @test norm(∂Ψu(F(∇u), H0(∇φ), N)) == 0.4966662732306754
+  @test norm(∂Ψφ(F(∇u), H0(∇φ), N)) == 4.660348298920368e-6 
+  @test norm(∂Ψuu(F(∇u), H0(∇φ), N)) ==60.735729041745294 
+  @test norm(∂Ψφu(F(∇u), H0(∇φ), N)) == 1.2369035467980284e-5 
+  @test norm(∂Ψφφ(F(∇u), H0(∇φ), N)) ==  2.1878750641250348e-6
+end
+
+
+
 
 @testset "HardMagnetic_SoftMaterial3D" begin
 
