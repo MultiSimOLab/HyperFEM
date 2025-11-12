@@ -9,8 +9,8 @@ struct Magnetic <: Magneto
   αr::Ref{Float64}
   χe::Float64
   
-function Magnetic(; μ::Float64, αr::Ref{Float64}, χe::Float64=0.0)
-  new(μ, αr, χe)
+function Magnetic(; μ0::Float64, αr::Float64, χe::Float64=0.0)
+  new(μ0, Ref(αr), χe)
 end
 function (obj::Magnetic)(Λ::Float64=1.0)
   μ, αr, χe = obj.μ, obj.αr, obj.χe
@@ -29,8 +29,8 @@ end
 struct IdealMagnetic <: Magneto
   μ::Float64
   χe::Float64
-  function IdealMagnetic(; μ::Float64, χe::Float64=0.0)
-    new(μ, χe)
+  function IdealMagnetic(; μ0::Float64, χe::Float64=0.0)
+    new(μ0, χe)
   end
   function (obj::IdealMagnetic)(Λ::Float64=1.0)
 
@@ -74,8 +74,8 @@ end
 struct IdealMagnetic2D <: Magneto
   μ::Float64
   χe::Float64
-  function IdealMagnetic2D(; μ::Float64, χe::Float64=0.0)
-    new(μ, χe)
+  function IdealMagnetic2D(; μ0::Float64, χe::Float64=0.0)
+    new(μ0, χe)
   end
 
   function (obj::IdealMagnetic2D)(Λ::Float64=1.0)
@@ -119,8 +119,8 @@ struct HardMagnetic <: Magneto
   χr::Float64
   βmok::Float64
   βcoup::Float64
-  function HardMagnetic(; μ::Float64, αr::Float64, χe::Float64=0.0, χr::Float64=8.0, βmok::Float64=1.0, βcoup::Float64=1.0)
-    new(μ, αr, χe, χr, βmok, βcoup)
+  function HardMagnetic(; μ0::Float64, αr::Float64, χe::Float64=0.0, χr::Float64=8.0, βmok::Float64=0.0, βcoup::Float64=0.0)
+    new(μ0, αr, χe, χr, βmok, βcoup)
   end
 
   function (obj::HardMagnetic)(Λ::Float64=1.0)
@@ -167,8 +167,8 @@ struct HardMagnetic2D <: Magneto
   χr::Float64
   βmok::Float64
   βcoup::Float64
-  function HardMagnetic2D(; μ::Float64, αr::Float64, χe::Float64=0.0, χr::Float64=8.0, βmok::Float64=1.0, βcoup::Float64=1.0)
-    new(μ, αr, χe, χr, βmok, βcoup)
+  function HardMagnetic2D(; μ0::Float64, αr::Float64, χe::Float64=0.0, χr::Float64=8.0, βmok::Float64=0.0, βcoup::Float64=0.0)
+    new(μ0, αr, χe, χr, βmok, βcoup)
   end
 
   function (obj::HardMagnetic2D)(Λ::Float64=1.0)

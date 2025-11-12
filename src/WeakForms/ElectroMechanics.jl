@@ -7,49 +7,49 @@
 # Stagered residual
 # -----------------
 
-function residual(physicalmodel::ElectroMechano, ::Type{Mechano},  kine::NTuple{2,KinematicModel}, (u, φ), v, dΩ, Λ=1.0)
-    DΨ    = physicalmodel(Λ)
+function residual(physicalmodel::ElectroMechano, ::Type{Mechano}, kine::NTuple{2,KinematicModel}, (u, φ), v, dΩ, Λ=1.0, vars...; kwargs...)
+    DΨ    = physicalmodel(; kwargs...)
     F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
     E     = get_Kinematics(kine[2]; Λ=Λ)
     ∂Ψu   = DΨ[2]
-    ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘∇(u)', E∘∇(φ))))dΩ
+    ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘∇(u)', E∘∇(φ), vars...)))dΩ
 end
 
-function residual(physicalmodel::ElectroMechano, ::Type{Electro},  kine::NTuple{2,KinematicModel}, (u, φ), vφ, dΩ, Λ=1.0)
-    DΨ    = physicalmodel(Λ)
+function residual(physicalmodel::ElectroMechano, ::Type{Electro}, kine::NTuple{2,KinematicModel}, (u, φ), vφ, dΩ, Λ=1.0, vars...; kwargs...)
+    DΨ    = physicalmodel(; kwargs...)
     F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
     E     = get_Kinematics(kine[2]; Λ=Λ)
     ∂Ψφ   = DΨ[3]
-    -1.0*∫(∇(vφ) ⋅ (∂Ψφ ∘ (F∘∇(u)', E∘∇(φ))))dΩ
+    -1.0*∫(∇(vφ) ⋅ (∂Ψφ ∘ (F∘∇(u)', E∘∇(φ), vars...)))dΩ
 end
 
 # -----------------
 # Stagered jacobian
 # -----------------
 
-function jacobian(physicalmodel::ElectroMechano, ::Type{Mechano},  kine::NTuple{2,KinematicModel}, (u, φ), du, v, dΩ, Λ=1.0)
-    DΨ    = physicalmodel(Λ)
+function jacobian(physicalmodel::ElectroMechano, ::Type{Mechano}, kine::NTuple{2,KinematicModel}, (u, φ), du, v, dΩ, Λ=1.0, vars...; kwargs...)
+    DΨ    = physicalmodel(; kwargs...)
     F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
     E     = get_Kinematics(kine[2]; Λ=Λ)
     ∂Ψuu  = DΨ[4]
-    ∫(∇(v)' ⊙ ((∂Ψuu ∘ (F∘∇(u)', E∘∇(φ))) ⊙ ∇(du)'))dΩ
+    ∫(∇(v)' ⊙ ((∂Ψuu ∘ (F∘∇(u)', E∘∇(φ), vars...)) ⊙ ∇(du)'))dΩ
 end
 
-function jacobian(physicalmodel::ElectroMechano, ::Type{Electro},  kine::NTuple{2,KinematicModel}, (u, φ), dφ, vφ, dΩ, Λ=1.0)
-    DΨ    = physicalmodel(Λ)
+function jacobian(physicalmodel::ElectroMechano, ::Type{Electro}, kine::NTuple{2,KinematicModel}, (u, φ), dφ, vφ, dΩ, Λ=1.0, vars...; kwargs...)
+    DΨ    = physicalmodel(; kwargs...)
     F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
     E     = get_Kinematics(kine[2]; Λ=Λ)
     ∂Ψφφ  = DΨ[6]
-    ∫(∇(vφ)' ⋅ ((∂Ψφφ ∘ (F∘∇(u)', E∘∇(φ))) ⋅ ∇(dφ)))dΩ
+    ∫(∇(vφ)' ⋅ ((∂Ψφφ ∘ (F∘∇(u)', E∘∇(φ), vars...)) ⋅ ∇(dφ)))dΩ
 end
 
-function jacobian(physicalmodel::ElectroMechano, ::Type{ElectroMechano},  kine::NTuple{2,KinematicModel},(u, φ), (du, dφ), (v, vφ), dΩ, Λ=1.0)
-    DΨ    = physicalmodel(Λ)
+function jacobian(physicalmodel::ElectroMechano, ::Type{ElectroMechano}, kine::NTuple{2,KinematicModel}, (u, φ), (du, dφ), (v, vφ), dΩ, Λ=1.0, vars...; kwargs...)
+    DΨ    = physicalmodel(; kwargs...)
     F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
     E     = get_Kinematics(kine[2]; Λ=Λ)
     ∂Ψφu  = DΨ[5]
-    -1.0*∫(∇(dφ) ⋅ ((∂Ψφu ∘ (F∘∇(u)', E∘∇(φ))) ⊙ ∇(v)'))dΩ -
-        ∫(∇(vφ) ⋅ ((∂Ψφu ∘ (F∘∇(u)', E∘∇(φ))) ⊙ ∇(du)'))dΩ 
+    -1.0*∫(∇(dφ) ⋅ ((∂Ψφu ∘ (F∘∇(u)', E∘∇(φ), vars...)) ⊙ ∇(v)'))dΩ -
+         ∫(∇(vφ) ⋅ ((∂Ψφu ∘ (F∘∇(u)', E∘∇(φ), vars...)) ⊙ ∇(du)'))dΩ 
 end
 
 # -------------------
@@ -66,60 +66,6 @@ function jacobian(physicalmodel::ElectroMechano,  kine::NTuple{2,KinematicModel}
     jacobian(physicalmodel, Mechano, kine, (u, φ), du, v, dΩ, Λ)+
     jacobian(physicalmodel, Electro, kine, (u, φ), dφ, vφ, dΩ, Λ)+
     jacobian(physicalmodel, ElectroMechano, kine, (u, φ), (du, dφ), (v, vφ), dΩ, Λ)
-end
-
-
-# =================
-# Visco-elasticity
-# =================
-
-# -----------------
-# Stagered residual
-# -----------------
-
-function residual(physicalmodel::ViscoElectricModel, ::Type{Mechano},  kine::NTuple{2,KinematicModel}, (u, φ), v, dΩ, Λ, Δt, un, A)
-    DΨ    = physicalmodel(Λ, Δt=Δt)
-    F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
-    E     = get_Kinematics(kine[2]; Λ=Λ)
-    ∂Ψu   = DΨ[2]
-    ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘∇(u)', F∘∇(un)', E∘∇(φ), A...)))dΩ
-end
-
-function residual(physicalmodel::ViscoElectricModel, ::Type{Electro}, kine::NTuple{2,KinematicModel},  (u, φ), vφ, dΩ, Λ, Δt, un, A)
-    DΨ    = physicalmodel(Λ, Δt=Δt)
-    F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
-    E     = get_Kinematics(kine[2]; Λ=Λ)
-    ∂Ψφ   = DΨ[3]
-    -1.0*∫(∇(vφ) ⋅ (∂Ψφ ∘ (F∘∇(u)', F∘∇(un)', E∘∇(φ), A...)))dΩ
-end
-
-# -----------------
-# Stagered jacobian
-# -----------------
-
-function jacobian(physicalmodel::ViscoElectricModel, ::Type{Mechano},  kine::NTuple{2,KinematicModel}, (u, φ), du, v, dΩ, Λ, Δt, un, A)
-    DΨ    = physicalmodel(Λ, Δt=Δt)
-    F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
-    E     = get_Kinematics(kine[2]; Λ=Λ)
-    ∂Ψuu  = DΨ[4]
-    ∫(∇(v)' ⊙ ((∂Ψuu ∘ (F∘∇(u)', F∘∇(un)', E∘∇(φ), A...)) ⊙ (∇(du)')))dΩ
-end
-
-function jacobian(physicalmodel::ViscoElectricModel, ::Type{Electro},  kine::NTuple{2,KinematicModel}, (u, φ), dφ, vφ, dΩ, Λ, Δt, un, A)
-    DΨ    = physicalmodel(Λ, Δt=Δt)
-    F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
-    E     = get_Kinematics(kine[2]; Λ=Λ)
-    ∂Ψφφ  = DΨ[6]
-    ∫(∇(vφ)' ⋅ ((∂Ψφφ ∘ (F∘∇(u)', F∘∇(un)', E∘∇(φ), A...)) ⋅ ∇(dφ)))dΩ
-end
-
-function jacobian(physicalmodel::ViscoElectricModel, ::Type{ElectroMechano},  kine::NTuple{2,KinematicModel}, (u, φ), (du, dφ), (v, vφ), dΩ, Λ, Δt, un, A)
-    DΨ    = physicalmodel(Λ, Δt=Δt)
-    F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
-    E     = get_Kinematics(kine[2]; Λ=Λ)
-    ∂Ψφu  = DΨ[5]
-    -1.0*∫(∇(dφ) ⋅ ((∂Ψφu ∘ (F∘∇(u)', F∘∇(un)', E∘∇(φ), A...)) ⊙ (∇(v)')))dΩ -
-        ∫(∇(vφ) ⋅ ((∂Ψφu ∘ (F∘∇(u)', F∘∇(un)', E∘∇(φ), A...)) ⊙ (∇(du)')))dΩ 
 end
 
 # -------------------

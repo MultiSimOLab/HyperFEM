@@ -29,6 +29,7 @@ function visco_elastic_simulation(;t_end=15, writevtk=true, verbose=true)
   hyper_elastic_model = NeoHookean3D(λ=λ, μ=μ)
   viscous_branch = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=μv₁), τ=τv₁)
   cons_model = GeneralizedMaxwell(hyper_elastic_model, viscous_branch)
+  k=Kinematics(Mechano,Solid)
 
   # Dirichlet boundary conditions
   strain = 0.5
@@ -59,10 +60,11 @@ function visco_elastic_simulation(;t_end=15, writevtk=true, verbose=true)
   uh = FEFunction(Uu, zero_free_values(Uu))
   unh = FEFunction(Uun, zero_free_values(Uun))
   state_vars = initializeStateVariables(cons_model, dΩ)
+  F,_,_ = get_Kinematics(k)
+  Fnh = F∘∇(unh)'
 
-  k=Kinematics(Mechano,Solid)
-  res(Λ) = (u,v)->residual(cons_model, k, u, v, dΩ, t_end * Λ, Δt, unh, state_vars)
-  jac(Λ) = (u,du,v)->jacobian(cons_model, k, u, du, v, dΩ, t_end * Λ, Δt, unh, state_vars)
+  res(Λ) = (u,v)->residual(cons_model, k, u, v, dΩ, t_end * Λ, Fnh, state_vars...; Δt=Δt)
+  jac(Λ) = (u,du,v)->jacobian(cons_model, k, u, du, v, dΩ, t_end * Λ, Fnh, state_vars...; Δt=Δt)
 
   ls = LUSolver()
   nls = NewtonSolver(ls; maxiter=20, atol=1.e-6, rtol=1.e-6, verbose=verbose)
@@ -70,10 +72,9 @@ function visco_elastic_simulation(;t_end=15, writevtk=true, verbose=true)
 
   λx = Float64[]
   σΓ = Float64[]
-  F,_,_ = get_Kinematics(k)
 
   function driverpost(post)
-    σh11, _... = Cauchy(cons_model, Kinematics(Mechano,Solid),uh, unh, state_vars, Ω, dΩ, 0.0, Δt)
+    σh11, _... = Piola(cons_model, Kinematics(Mechano,Solid),uh, unh, state_vars, Ω, dΩ, 0.0, Δt)
     σΓ1 = sum(∫(σh11)dΓ1) / sum(∫(1.0)dΓ1)
     push!(σΓ, σΓ1)
     push!(λx, 1.0 + component_LInf(uh, :x, Ω) / long)
