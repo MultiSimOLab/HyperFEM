@@ -10,6 +10,8 @@ struct MultiFieldBC <: BoundaryCondition
     BoundaryCondition::Vector{BoundaryCondition}
 end
 
+getindex(bc::MultiFieldBC, i) = bc.BoundaryCondition[i]
+
 include("EvolutionFunctions.jl")
 include("CartesianTags.jl")
 
