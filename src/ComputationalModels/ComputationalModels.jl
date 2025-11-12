@@ -34,7 +34,6 @@ using WriteVTK
 using GridapGmsh 
 using GridapGmsh: GmshDiscreteModel
 
-import Base.getindex
 
 include("BoundaryConditions.jl")
 export DirichletBC
