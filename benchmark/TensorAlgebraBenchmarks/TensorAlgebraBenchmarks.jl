@@ -45,10 +45,7 @@ end
 A = TensorValue(1.:9...)
 A = A + A' + I3
 
-cofactor() = cof(A)
-detinv() = det(A)*inv(A')
-
 SUITE["Tensor algebra"]["δδ_μ_2d"] = @benchmarkable δᵢₖδⱼₗ2D + δᵢₗδⱼₖ2D
 SUITE["Tensor algebra"]["δδ_λ_2d"] = @benchmarkable 1.0 * δᵢⱼδₖₗ2D
-SUITE["Tensor algebra"]["Cofactor"] = cofactor()
-SUITE["Tensor algebra"]["Det(A)Inv(A')"] = detinv()
+SUITE["Tensor algebra"]["Cofactor"] = @benchmarkable cof(A)
+SUITE["Tensor algebra"]["Det(A)Inv(A')"] = @benchmarkable det(A)*inv(A')
