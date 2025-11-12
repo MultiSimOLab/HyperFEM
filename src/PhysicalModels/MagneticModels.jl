@@ -9,8 +9,8 @@ struct Magnetic <: Magneto
   αr::Ref{Float64}
   χe::Float64
   
-function Magnetic(; μ0::Float64, αr::Ref{Float64}, χe::Float64=0.0)
-  new(μ0, αr, χe)
+function Magnetic(; μ0::Float64, αr::Float64, χe::Float64=0.0)
+  new(μ0, Ref(αr), χe)
 end
 function (obj::Magnetic)(Λ::Float64=1.0)
   μ, αr, χe = obj.μ, obj.αr, obj.χe

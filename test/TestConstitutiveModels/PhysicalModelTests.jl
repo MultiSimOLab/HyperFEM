@@ -666,8 +666,7 @@ end
 @testset "Magnetic3D" begin
   ∇φ = VectorValue(1.0, 2.0, 3.0)
   a=40e-3 
-  ra=Ref(a)
-  modelID = Magnetic(μ0=1.2566e-6, αr=ra ,χe=0.0)
+  modelID = Magnetic(μ0=1.2566e-6, αr=a ,χe=0.0)
   Ψ, ∂Ψφ, ∂Ψφφ = modelID()
 
   Km=Kinematics(Magneto,Solid)
@@ -690,8 +689,7 @@ end
 @testset "Magnetic2D" begin
   ∇φ = VectorValue(1.0, 2.0)
   a=40e-3 
-  ra=Ref(a)
-  modelID = Magnetic(μ0=1.2566e-6, αr=ra ,χe=0.0)
+  modelID = Magnetic(μ0=1.2566e-6, αr=a ,χe=0.0)
   Ψ, ∂Ψφ, ∂Ψφφ = modelID()
 
   Km=Kinematics(Magneto,Solid)
