@@ -44,13 +44,13 @@ end
 
 function Gridap.FESpaces.TrialFESpace!(space::MultiFieldFESpace, bc::MultiFieldBC, Λ::Float64)
   @inbounds for (i, space) in enumerate(space.spaces)
-    TrialFESpace!(space, bc.BoundaryCondition[i], Λ)
+    TrialFESpace!(space, bc[i], Λ)
   end
 end
 
 function Gridap.FESpaces.TrialFESpace!(space::MultiFieldFESpace, bc::MultiFieldBC, Λ::Float64, ΔΛ::Float64)
   @inbounds for (i, space) in enumerate(space.spaces)
-    TrialFESpace!(space, bc.BoundaryCondition[i], Λ, ΔΛ)
+    TrialFESpace!(space, bc[i], Λ, ΔΛ)
   end
 end
 
@@ -75,7 +75,7 @@ end
 function Gridap.FESpaces.TrialFESpace(space::MultiFieldFESpace, bc::MultiFieldBC, Λ::Float64=0.0)
   U_ = Vector{Union{TrialFESpace,UnconstrainedFESpace}}(undef, length(space))
   @inbounds for (i, space) in enumerate(space.spaces)
-    U_[i] = TrialFESpace(space, bc.BoundaryCondition[i], Λ)
+    U_[i] = TrialFESpace(space, bc[i], Λ)
   end
   return MultiFieldFESpace(U_)
 end
