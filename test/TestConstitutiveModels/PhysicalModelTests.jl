@@ -136,7 +136,7 @@ end
 @testset "Iso+Aniso" begin
   N = VectorValue(1.0, 2.0, 3.0)
   model1 = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
-  model2 = TransverseIsotropy3D(μ=μParams[5], α=μParams[6], β=μParams[7])
+  model2 = TransverseIsotropy3D(μ=μParams[5], α1=μParams[6], α2=μParams[7])
   model=model1+model2
 
   Ψ, ∂Ψu, ∂Ψuu = model()
@@ -156,8 +156,8 @@ end
   N2 = VectorValue(0.0, 1.0, 0.0)
 
   model1 = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
-  model2 = TransverseIsotropy3D(μ=μParams[5], α=μParams[6], β=μParams[7])
-  model3 = TransverseIsotropy3D(μ=μParams[5]*2, α=μParams[6], β=μParams[7])
+  model2 = TransverseIsotropy3D(μ=μParams[5], α1=μParams[6], α2=μParams[7])
+  model3 = TransverseIsotropy3D(μ=μParams[5]*2, α1=μParams[6], α2=μParams[7])
 
   model=model1+[model2 model3]
  
@@ -176,7 +176,7 @@ end
 
 
 @testset "NonlinearMooneyRivlin_CV" begin
-  model = NonlinearMooneyRivlin_CV(λ=3.0, μ1=1.0, μ2=1.0, α=2.0, β=1.0, γ=6.0)
+  model = NonlinearMooneyRivlin_CV(λ=3.0, μ1=1.0, μ2=1.0, α1=2.0, α2=1.0, γ=6.0)
   test_derivatives_3D_(model, Kinematics(Mechano,Solid),rtol=1e-13)
 end
 
@@ -235,7 +235,7 @@ end
 
 
 @testset "NonlinearMooneyRivlin2D" begin
-  model = NonlinearMooneyRivlin2D(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α=μParams[3], β=μParams[4])
+  model = NonlinearMooneyRivlin2D(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α1=μParams[3], α2=μParams[4])
   test_derivatives_2D_(model, Kinematics(Mechano,Solid))
 end
 
@@ -247,13 +247,13 @@ end
 
 
 @testset "NonlinearMooneyRivlin2D_CV" begin
-  model = NonlinearMooneyRivlin2D_CV(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α=μParams[3], β=μParams[4], γ=μParams[4])
+  model = NonlinearMooneyRivlin2D_CV(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α1=μParams[3], α2=μParams[4], γ=μParams[4])
   test_derivatives_2D_(model, Kinematics(Mechano,Solid))
 end
 
 
 @testset "NonlinearMooneyRivlin3D" begin
-  model = NonlinearMooneyRivlin3D(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α=μParams[3], β=μParams[4])
+  model = NonlinearMooneyRivlin3D(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α1=μParams[3], α2=μParams[4])
   test_derivatives_3D_(model,Kinematics(Mechano,Solid), rtol=1e-13)
 end
 
@@ -286,7 +286,7 @@ end
   ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
 
   N = VectorValue(1.0, 2.0) / sqrt(5.0)
-  model = TransverseIsotropy2D(μ=μParams[5], α=μParams[6], β=μParams[7])
+  model = TransverseIsotropy2D(μ=μParams[5], α1=μParams[6], α2=μParams[7])
   Ψ, ∂Ψu, ∂Ψuu = model()
 
   K=Kinematics(Mechano,Solid)
@@ -311,7 +311,7 @@ end
 @testset "TransverseIsotropy3D" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   N = VectorValue(1.0, 2.0, 3.0)
-  model = TransverseIsotropy3D(μ=μParams[5], α=μParams[6], β=μParams[7])
+  model = TransverseIsotropy3D(μ=μParams[5], α1=μParams[6], α2=μParams[7])
 
   Ψ, ∂Ψu, ∂Ψuu = model()
   K=Kinematics(Mechano,Solid)
@@ -632,7 +632,7 @@ end
   N = VectorValue(0.0, 0.0, 1.0)
 
   modelMR = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
-  modelID = HardMagnetic(μ0=1.2566e-6, αr=40e-3, χe=0.0, χr=8.0)
+  modelID = HardMagnetic(μ0=1.2566e-6, αr=40e-3, χe=0.0, χr=8.0;  βmok=1.0, βcoup=1.0)
   modelmagneto=modelMR+modelID
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelmagneto()
   K=Kinematics(Mechano,Solid)
@@ -762,7 +762,7 @@ end
   N = VectorValue(0.0, 1.0)
 
   modelMR = MooneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
-  modelID = HardMagnetic2D(μ0=1.2566e-6, αr=40e-3, χe=0.0, χr=8.0)
+  modelID = HardMagnetic2D(μ0=1.2566e-6, αr=40e-3, χe=0.0, χr=8.0;  βmok=1.0, βcoup=1.0)
   modelmagneto=modelMR+modelID
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelmagneto()
   K=Kinematics(Mechano,Solid)
