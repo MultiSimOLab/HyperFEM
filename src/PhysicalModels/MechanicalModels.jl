@@ -343,66 +343,65 @@ struct NonlinearMooneyRivlin3D <: IsoElastic
   λ::Float64
   μ1::Float64
   μ2::Float64
-  α::Float64
-  β::Float64
+  α1::Float64
+  α2::Float64
   ρ::Float64
-  function NonlinearMooneyRivlin3D(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, ρ::Float64=0.0)
-    new(λ, μ1, μ2, α, β, ρ)
+  function NonlinearMooneyRivlin3D(; λ::Float64, μ1::Float64, μ2::Float64, α1::Float64, α2::Float64, ρ::Float64=0.0)
+    new(λ, μ1, μ2, α1, α2, ρ)
   end
 
   function (obj::NonlinearMooneyRivlin3D)(Λ::Float64=1.0; Threshold=0.01)
-    λ, μ1, μ2, α, β = obj.λ, obj.μ1, obj.μ2, obj.α, obj.β
+    λ, μ1, μ2, α1, α2 = obj.λ, obj.μ1, obj.μ2, obj.α1, obj.α2
     J(F) = det(F)
     H(F) = det(F) * inv(F)'
 
-    Ψ(F) = μ1 / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F))^α + μ2 / (2.0 * β * 3.0^(β - 1)) * (tr((H(F))' * H(F)))^β - (μ1 + 2 * μ2) * logreg(J(F)) +
+    Ψ(F) = μ1 / (2.0 * α1 * 3.0^(α1 - 1)) * (tr((F)' * F))^α1 + μ2 / (2.0 * α2 * 3.0^(α2 - 1)) * (tr((H(F))' * H(F)))^α2 - (μ1 + 2 * μ2) * logreg(J(F)) +
            (λ / 2.0) * (J(F) - 1)^2
 
-    ∂Ψ_∂F(F) = (μ1 / (3.0^(α - 1)) * (tr((F)' * F))^(α - 1)) * F
-    ∂Ψ_∂H(F) = (μ2 / (3.0^(β - 1)) * (tr((H(F))' * H(F)))^(β - 1)) * H(F)
+    ∂Ψ_∂F(F) = (μ1 / (3.0^(α1 - 1)) * (tr((F)' * F))^(α1 - 1)) * F
+    ∂Ψ_∂H(F) = (μ2 / (3.0^(α2 - 1)) * (tr((H(F))' * H(F)))^(α2 - 1)) * H(F)
     ∂log∂J(J) = J >= Threshold ? 1 / J : (2 / Threshold - J / (Threshold^2))
     ∂log2∂J2(J) = J >= Threshold ? -1 / (J^2) : (-1 / (Threshold^2))
     ∂Ψ_∂J(F) = -(μ1 + 2.0 * μ2) * ∂log∂J(J(F)) + λ * (J(F) - 1)
     ∂Ψ2_∂J2(F) = -(μ1 + 2.0 * μ2) * ∂log2∂J2(J(F)) + λ
 
     ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂H(F) × F + ∂Ψ_∂J(F) * H(F)
-    ∂ΨFF(F) = (2 * μ1 * (α - 1) / (3.0^(α - 1)) * (tr((F)' * F))^(α - 2)) * (F ⊗ F) + (μ1 / (3.0^(α - 1)) * (tr((F)' * F))^(α - 1)) * I9
-    ∂ΨHH(F) = (2 * μ2 * (β - 1) / (3.0^(β - 1)) * (tr((H(F))' * H(F)))^(β - 2)) * (H(F) ⊗ H(F)) + (μ2 / (3.0^(β - 1)) * (tr((H(F))' * H(F)))^(β - 1)) * I9
+    ∂ΨFF(F) = (2 * μ1 * (α1 - 1) / (3.0^(α1 - 1)) * (tr((F)' * F))^(α1 - 2)) * (F ⊗ F) + (μ1 / (3.0^(α1 - 1)) * (tr((F)' * F))^(α1 - 1)) * I9
+    ∂ΨHH(F) = (2 * μ2 * (α2 - 1) / (3.0^(α2 - 1)) * (tr((H(F))' * H(F)))^(α2 - 2)) * (H(F) ⊗ H(F)) + (μ2 / (3.0^(α2 - 1)) * (tr((H(F))' * H(F)))^(α2 - 1)) * I9
     ∂Ψuu(F) = ∂ΨFF(F) + (F × (∂ΨHH(F) × F)) + ∂Ψ2_∂J2(F) * (H(F) ⊗ H(F)) + ×ᵢ⁴(∂Ψ_∂H(F) + ∂Ψ_∂J(F) * F)
     return (Ψ, ∂Ψu, ∂Ψuu)
   end
 end
 
-
 struct NonlinearMooneyRivlin2D <: IsoElastic
   λ::Float64
   μ1::Float64
   μ2::Float64
-  α::Float64
-  β::Float64
+  α1::Float64
+  α2::Float64
   ρ::Float64
-  function NonlinearMooneyRivlin2D(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, ρ::Float64=0.0)
-    new(λ, μ1, μ2, α, β, ρ)
+  function NonlinearMooneyRivlin2D(; λ::Float64, μ1::Float64, μ2::Float64, α1::Float64, α2::Float64, ρ::Float64=0.0)
+    new(λ, μ1, μ2, α1, α2, ρ)
   end
 
   function (obj::NonlinearMooneyRivlin2D)(Λ::Float64=1.0; Threshold=0.01)
-    λ, μ1, μ2, α, β = obj.λ, obj.μ1, obj.μ2, obj.α, obj.β
+    λ, μ1, μ2, α1, α2 = obj.λ, obj.μ1, obj.μ2, obj.α1, obj.α2
     J(F) = det(F)
     H(F) = det(F) * inv(F)'
-    Ψ(F) = μ1 / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F) + 1.0)^α + μ2 / (2.0 * β * 3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^β - (μ1 + 2.0 * μ2) * logreg(J(F)) +
+    Ψ(F) = μ1 / (2.0 * α1 * 3.0^(α1 - 1)) * (tr((F)' * F) + 1.0)^α1 + μ2 / (2.0 * α2 * 3.0^(α2 - 1)) * (tr((F)' * F) + J(F)^2)^α2 - (μ1 + 2.0 * μ2) * logreg(J(F)) +
            (λ / 2.0) * (J(F) - 1)^2
 
-    ∂Ψ_∂F(F) = ((μ1 / (3.0^(α - 1)) * (tr((F)' * F) + 1.0)^(α - 1)) + μ2 / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 1)) * F
+    ∂Ψ_∂F(F) = ((μ1 / (3.0^(α1 - 1)) * (tr((F)' * F) + 1.0)^(α1 - 1)) + μ2 / (3.0^(α2 - 1)) * (tr((F)' * F) + J(F)^2)^(α2 - 1)) * F
     ∂log∂J(J) = J >= Threshold ? 1 / J : (2 / Threshold - J / (Threshold^2))
     ∂log2∂J2(J) = J >= Threshold ? -1 / (J^2) : (-1 / (Threshold^2))
-    ∂Ψ_∂J(F) = μ2 / (3.0^(β - 1)) * J(F) * (tr((F)' * F) + J(F)^2)^(β - 1) - (μ1 + 2.0 * μ2) * ∂log∂J(J(F)) + λ * (J(F) - 1)
+    ∂Ψ_∂J(F) = μ2 / (3.0^(α2 - 1)) * J(F) * (tr((F)' * F) + J(F)^2)^(α2 - 1) - (μ1 + 2.0 * μ2) * ∂log∂J(J(F)) + λ * (J(F) - 1)
 
     ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂J(F) * H(F)
 
-    ∂Ψ2_∂FF(F) = ((μ1 / (3.0^(α - 1)) * (tr((F)' * F) + 1.0)^(α - 1)) + μ2 / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 1)) * I4 +
-                 2 * ((μ1 * (α - 1) / (3.0^(α - 1)) * (tr((F)' * F) + 1.0)^(α - 2)) + μ2 * (β - 1) / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 2)) * (F ⊗ F)
-    ∂Ψ2_∂FJ(F) = (2 * μ2 * (β - 1) / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 2)) * J(F) * F
-    ∂Ψ2_∂JJ(F) = μ2 / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 1) + (2 * μ2 * (β - 1) / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 2)) * J(F)^2 - (μ1 + 2.0 * μ2) * ∂log2∂J2(J(F)) + λ
+    ∂Ψ2_∂FF(F) = ((μ1 / (3.0^(α1 - 1)) * (tr((F)' * F) + 1.0)^(α1 - 1)) + μ2 / (3.0^(α2 - 1)) * (tr((F)' * F) + J(F)^2)^(α2 - 1)) * I4 +
+                 2 * ((μ1 * (α1 - 1) / (3.0^(α1 - 1)) * (tr((F)' * F) + 1.0)^(α1 - 2)) + μ2 * (α2 - 1) / (3.0^(α2 - 1)) * (tr((F)' * F) + J(F)^2)^(α2 - 2)) * (F ⊗ F)
+    ∂Ψ2_∂FJ(F) = (2 * μ2 * (α2 - 1) / (3.0^(α2 - 1)) * (tr((F)' * F) + J(F)^2)^(α2 - 2)) * J(F) * F
+    ∂Ψ2_∂JJ(F) = μ2 / (3.0^(α2 - 1)) * (tr((F)' * F) + J(F)^2)^(α2 - 1) + (2 * μ2 * (α2 - 1) / (3.0^(α2 - 1)) * (tr((F)' * F) + J(F)^2)^(α2 - 2)) * J(F)^2 - (μ1 + 2.0 * μ2) * ∂log2∂J2(J(F)) + λ
 
     ∂Ψuu(F) = ∂Ψ2_∂FF(F) + (∂Ψ2_∂FJ(F) ⊗ H(F) + H(F) ⊗ ∂Ψ2_∂FJ(F)) + ∂Ψ2_∂JJ(F) * (H(F) ⊗ H(F)) + ∂Ψ_∂J(F) * _∂H∂F_2D()
     return (Ψ, ∂Ψu, ∂Ψuu)
@@ -414,66 +413,65 @@ struct NonlinearMooneyRivlin2D_CV <: IsoElastic
   λ::Float64
   μ1::Float64
   μ2::Float64
-  α::Float64
-  β::Float64
+  α1::Float64
+  α2::Float64
   γ::Float64
   ρ::Float64
-  function NonlinearMooneyRivlin2D_CV(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, γ::Float64, ρ::Float64=0.0)
-    new(λ, μ1, μ2, α, β, γ, ρ)
+  function NonlinearMooneyRivlin2D_CV(; λ::Float64, μ1::Float64, μ2::Float64, α1::Float64, α2::Float64, γ::Float64, ρ::Float64=0.0)
+    new(λ, μ1, μ2, α1, α2, γ, ρ)
   end
 
   function (obj::NonlinearMooneyRivlin2D_CV)(Λ::Float64=1.0)
-    λ, μ1, μ2, α, β, γ = obj.λ, obj.μ1, obj.μ2, obj.α, obj.β, obj.γ
+    λ, μ1, μ2, α1, α2, γ = obj.λ, obj.μ1, obj.μ2, obj.α1, obj.α2, obj.γ
     J(F) = det(F)
     H(F) = det(F) * inv(F)'
-    Ψ(F) = μ1 / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F) + 1.0)^α + μ2 / (2.0 * β * 3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^β - (μ1 + 2.0 * μ2) * log(J(F)) +
+    Ψ(F) = μ1 / (2.0 * α1 * 3.0^(α1 - 1)) * (tr((F)' * F) + 1.0)^α1 + μ2 / (2.0 * α2 * 3.0^(α2 - 1)) * (tr((F)' * F) + J(F)^2)^α2 - (μ1 + 2.0 * μ2) * log(J(F)) +
            (λ) * (J(F)^(γ) + J(F)^(-γ))
 
-    ∂Ψ_∂F(F) = ((μ1 / (3.0^(α - 1)) * (tr((F)' * F) + 1.0)^(α - 1)) + μ2 / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 1)) * F
-    ∂Ψ_∂J(F) = μ2 / (3.0^(β - 1)) * J(F) * (tr((F)' * F) + J(F)^2)^(β - 1) - (μ1 + 2.0 * μ2) * (1.0 / J(F)) + λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1))
+    ∂Ψ_∂F(F) = ((μ1 / (3.0^(α1 - 1)) * (tr((F)' * F) + 1.0)^(α1 - 1)) + μ2 / (3.0^(α2 - 1)) * (tr((F)' * F) + J(F)^2)^(α2 - 1)) * F
+    ∂Ψ_∂J(F) = μ2 / (3.0^(α2 - 1)) * J(F) * (tr((F)' * F) + J(F)^2)^(α2 - 1) - (μ1 + 2.0 * μ2) * (1.0 / J(F)) + λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1))
 
     ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂J(F) * H(F)
 
-    ∂Ψ2_∂FF(F) = ((μ1 / (3.0^(α - 1)) * (tr((F)' * F) + 1.0)^(α - 1)) + μ2 / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 1)) * I4 +
-                 2 * ((μ1 * (α - 1) / (3.0^(α - 1)) * (tr((F)' * F) + 1.0)^(α - 2)) + μ2 * (β - 1) / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 2)) * (F ⊗ F)
-    ∂Ψ2_∂FJ(F) = (2 * μ2 * (β - 1) / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 2)) * J(F) * F
-    ∂Ψ2_∂JJ(F) = μ2 / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 1) + (2 * μ2 * (β - 1) / (3.0^(β - 1)) * (tr((F)' * F) + J(F)^2)^(β - 2)) * J(F)^2 + (μ1 + 2.0 * μ2) * (1.0 / (J(F))^2) + λ * γ * ((γ - 1) * J(F)^(γ - 2) + (γ + 1) * J(F)^(-γ - 2))
+    ∂Ψ2_∂FF(F) = ((μ1 / (3.0^(α1 - 1)) * (tr((F)' * F) + 1.0)^(α1 - 1)) + μ2 / (3.0^(α2 - 1)) * (tr((F)' * F) + J(F)^2)^(α2 - 1)) * I4 +
+                 2 * ((μ1 * (α1 - 1) / (3.0^(α1 - 1)) * (tr((F)' * F) + 1.0)^(α1 - 2)) + μ2 * (α2 - 1) / (3.0^(α2 - 1)) * (tr((F)' * F) + J(F)^2)^(α2 - 2)) * (F ⊗ F)
+    ∂Ψ2_∂FJ(F) = (2 * μ2 * (α2 - 1) / (3.0^(α2 - 1)) * (tr((F)' * F) + J(F)^2)^(α2 - 2)) * J(F) * F
+    ∂Ψ2_∂JJ(F) = μ2 / (3.0^(α2 - 1)) * (tr((F)' * F) + J(F)^2)^(α2 - 1) + (2 * μ2 * (α2 - 1) / (3.0^(α2 - 1)) * (tr((F)' * F) + J(F)^2)^(α2 - 2)) * J(F)^2 + (μ1 + 2.0 * μ2) * (1.0 / (J(F))^2) + λ * γ * ((γ - 1) * J(F)^(γ - 2) + (γ + 1) * J(F)^(-γ - 2))
 
     ∂Ψuu(F) = ∂Ψ2_∂FF(F) + (∂Ψ2_∂FJ(F) ⊗ H(F) + H(F) ⊗ ∂Ψ2_∂FJ(F)) + ∂Ψ2_∂JJ(F) * (H(F) ⊗ H(F)) + ∂Ψ_∂J(F) * _∂H∂F_2D()
     return (Ψ, ∂Ψu, ∂Ψuu)
   end
 end
 
-
 struct NonlinearMooneyRivlin_CV <: IsoElastic
   λ::Float64
   μ1::Float64
   μ2::Float64
-  α::Float64
-  β::Float64
+  α1::Float64
+  α2::Float64
   γ::Float64
   ρ::Float64
-  function NonlinearMooneyRivlin_CV(; λ::Float64, μ1::Float64, μ2::Float64, α::Float64, β::Float64, γ::Float64, ρ::Float64=0.0)
-    new(λ, μ1, μ2, α, β, γ, ρ)
+  function NonlinearMooneyRivlin_CV(; λ::Float64, μ1::Float64, μ2::Float64, α1::Float64, α2::Float64, γ::Float64, ρ::Float64=0.0)
+    new(λ, μ1, μ2, α1, α2, γ, ρ)
   end
 
   function (obj::NonlinearMooneyRivlin_CV)(Λ::Float64=1.0)
-    λ, μ1, μ2, α, β, γ = obj.λ, obj.μ1, obj.μ2, obj.α, obj.β, obj.γ
+    λ, μ1, μ2, α1, α2, γ = obj.λ, obj.μ1, obj.μ2, obj.α1, obj.α2, obj.γ
     J(F) = det(F)
     H(F) = det(F) * inv(F)'
-    Ψ(F) = μ1 / (2.0 * α * 3.0^(α - 1)) * (tr((F)' * F))^α +
-           μ2 / (2.0 * β * 3.0^(β - 1)) * (tr((H(F))' * H(F)))^β -
+    Ψ(F) = μ1 / (2.0 * α1 * 3.0^(α1 - 1)) * (tr((F)' * F))^α1 +
+           μ2 / (2.0 * α2 * 3.0^(α2 - 1)) * (tr((H(F))' * H(F)))^α2 -
            (μ1 + 2 * μ2) * log(J(F)) + λ * (J(F)^(γ) + J(F)^(-γ))
 
-    ∂Ψ_∂F(F) = ((μ1 / (3.0^(α - 1)) * (trAA(F))^(α - 1))) * F
-    ∂Ψ_∂H(F) = ((μ2 / (3.0^(β - 1)) * (tr((H(F))' * H(F)))^(β - 1))) * H(F)
+    ∂Ψ_∂F(F) = ((μ1 / (3.0^(α1 - 1)) * (trAA(F))^(α1 - 1))) * F
+    ∂Ψ_∂H(F) = ((μ2 / (3.0^(α2 - 1)) * (tr((H(F))' * H(F)))^(α2 - 1))) * H(F)
     ∂Ψ_∂J(F) = -(μ1 + 2 * μ2) * (1.0 / J(F)) + λ * γ * (J(F)^(γ - 1) - J(F)^(-γ - 1))
     ∂Ψu(F) = ∂Ψ_∂F(F) + ∂Ψ_∂H(F) × F + ∂Ψ_∂J(F) * H(F)
 
-    ∂Ψ2_∂FF(F) = ((μ1 / (3.0^(α - 1)) * (tr((F)' * F))^(α - 1))) * I9 +
-                 2 * ((μ1 * (α - 1) / (3.0^(α - 1)) * (tr((F)' * F))^(α - 2))) * (F ⊗ F)
-    ∂Ψ2_∂HH(F) = ((μ2 / (3.0^(β - 1)) * (tr((H(F))' * H(F)))^(β - 1))) * I9 +
-                 2 * ((μ2 * (β - 1) / (3.0^(β - 1)) * (tr((H(F))' * H(F)))^(β - 2))) * (H(F) ⊗ H(F))
+    ∂Ψ2_∂FF(F) = ((μ1 / (3.0^(α1 - 1)) * (tr((F)' * F))^(α1 - 1))) * I9 +
+                 2 * ((μ1 * (α1 - 1) / (3.0^(α1 - 1)) * (tr((F)' * F))^(α1 - 2))) * (F ⊗ F)
+    ∂Ψ2_∂HH(F) = ((μ2 / (3.0^(α2 - 1)) * (tr((H(F))' * H(F)))^(α2 - 1))) * I9 +
+                 2 * ((μ2 * (α2 - 1) / (3.0^(α2 - 1)) * (tr((H(F))' * H(F)))^(α2 - 2))) * (H(F) ⊗ H(F))
     ∂Ψ2_∂JJ(F) = (μ1 + 2 * μ2) * (1.0 / (J(F))^2) + λ * γ * ((γ - 1) * J(F)^(γ - 2) + (γ + 1) * J(F)^(-γ - 2))
 
     ∂Ψuu(F) = ∂Ψ2_∂FF(F) + (F × (∂Ψ2_∂HH(F) × F)) + ∂Ψ2_∂JJ(F) * (H(F) ⊗ H(F)) + ×ᵢ⁴(∂Ψ_∂H(F) + ∂Ψ_∂J(F) * F)
@@ -622,13 +620,14 @@ struct EightChain <: IsoElastic
 end
 
 
+
 struct TransverseIsotropy3D <: AnisoElastic
   μ::Float64
-  α::Float64
-  β::Float64
+  α1::Float64
+  α2::Float64
   ρ::Float64
-  function TransverseIsotropy3D(; μ::Float64, α::Float64, β::Float64, ρ::Float64=0.0)
-    new(μ, α, β, ρ)
+  function TransverseIsotropy3D(; μ::Float64, α1::Float64, α2::Float64, ρ::Float64=0.0)
+    new(μ, α1, α2, ρ)
   end
 
 
@@ -637,11 +636,11 @@ struct TransverseIsotropy3D <: AnisoElastic
     H(F) = det(F) * inv(F)'
     I4(F, N) = (F * N) ⋅ (F * N)
     I5(F, N) = (H(F) * N) ⋅ (H(F) * N)
-    μ, α, β = obj.μ, obj.α, obj.β
-    Ψ(F, N) = μ / (2.0 * α) * (I4(F, N)^α - 1) + μ / (2.0 * β) * (I5(F, N)^β - 1) - μ * logreg(J(F))
+    μ, α1, α2 = obj.μ, obj.α1, obj.α2
+    Ψ(F, N) = μ / (2.0 * α1) * (I4(F, N)^α1 - 1) + μ / (2.0 * α2) * (I5(F, N)^α2 - 1) - μ * logreg(J(F))
 
-    ∂Ψ_∂F(F, N) = (μ * (I4(F, N)^(α - 1))) * ((F * N) ⊗ N)
-    ∂Ψ_∂H(F, N) = (μ * (I5(F, N)^(β - 1))) * ((H(F) * N) ⊗ N)
+    ∂Ψ_∂F(F, N) = (μ * (I4(F, N)^(α1 - 1))) * ((F * N) ⊗ N)
+    ∂Ψ_∂H(F, N) = (μ * (I5(F, N)^(α2 - 1))) * ((H(F) * N) ⊗ N)
     ∂log∂J(J) = J >= Threshold ? 1 / J : (2 / Threshold - J / (Threshold^2))
     ∂log2∂J2(J) = J >= Threshold ? -1 / (J^2) : (-1 / (Threshold^2))
     ∂Ψ_∂J(F, N) = -μ * ∂log∂J(J(F))
@@ -649,8 +648,8 @@ struct TransverseIsotropy3D <: AnisoElastic
 
     ∂Ψu(F, N) = ∂Ψ_∂F(F, N) + ∂Ψ_∂H(F, N) × F + ∂Ψ_∂J(F, N) * H(F)
 
-    ∂ΨFF(F, N) = μ * (I4(F, N)^(α - 1)) * (I3 ⊗₁₃²⁴ (N ⊗ N)) + 2μ * (α - 1) * I4(F, N)^(α - 2) * (((F * N) ⊗ N) ⊗ ((F * N) ⊗ N))
-    ∂ΨHH(F, N) = μ * (I5(F, N)^(β - 1)) * (I3 ⊗₁₃²⁴ (N ⊗ N)) + 2μ * (β - 1) * I5(F, N)^(β - 2) * (((H(F) * N) ⊗ N) ⊗ ((H(F) * N) ⊗ N))
+    ∂ΨFF(F, N) = μ * (I4(F, N)^(α1 - 1)) * (I3 ⊗₁₃²⁴ (N ⊗ N)) + 2μ * (α1 - 1) * I4(F, N)^(α1 - 2) * (((F * N) ⊗ N) ⊗ ((F * N) ⊗ N))
+    ∂ΨHH(F, N) = μ * (I5(F, N)^(α2 - 1)) * (I3 ⊗₁₃²⁴ (N ⊗ N)) + 2μ * (α2 - 1) * I5(F, N)^(α2 - 2) * (((H(F) * N) ⊗ N) ⊗ ((H(F) * N) ⊗ N))
     ∂Ψuu(F, N) = ∂ΨFF(F, N) + (F × (∂ΨHH(F, N) × F)) + ∂Ψ2_∂J2(F, N) * (H(F) ⊗ H(F)) + ×ᵢ⁴(∂Ψ_∂H(F, N) + ∂Ψ_∂J(F, N) * F)
     return (Ψ, ∂Ψu, ∂Ψuu)
   end
@@ -659,11 +658,11 @@ end
 
 struct TransverseIsotropy2D <: AnisoElastic
   μ::Float64
-  α::Float64
-  β::Float64
+  α1::Float64
+  α2::Float64
   ρ::Float64
-  function TransverseIsotropy2D(; μ::Float64, α::Float64, β::Float64, ρ::Float64=0.0)
-    new(μ, α, β, ρ)
+  function TransverseIsotropy2D(; μ::Float64, α1::Float64, α2::Float64, ρ::Float64=0.0)
+    new(μ, α1, α2, ρ)
   end
 
   function (obj::TransverseIsotropy2D)(Λ::Float64=1.0; Threshold=0.01)
@@ -671,8 +670,8 @@ struct TransverseIsotropy2D <: AnisoElastic
     H(F) = det(F) * inv(F)'
     I4(F, N) = (F * N) ⋅ (F * N)
     I5(F, N) = (H(F) * N) ⋅ (H(F) * N)
-    μ, α, β = obj.μ, obj.α, obj.β
-    Ψ(F, N) = μ / (2.0 * α) * (I4(F, N)^α - 1) + μ / (2.0 * β) * (I5(F, N)^β - 1) - μ * logreg(J(F))
+    μ, α1, α2 = obj.μ, obj.α1, obj.α2
+    Ψ(F, N) = μ / (2.0 * α1) * (I4(F, N)^α1 - 1) + μ / (2.0 * α2) * (I5(F, N)^α2 - 1) - μ * logreg(J(F))
 
     ∂I4∂F(F, N) = 2 * ((F * N) ⊗ N)
     ∂I4∂F∂F(F, N) = 2 * (I2 ⊗₁₃²⁴ (N ⊗ N))
@@ -684,14 +683,14 @@ struct TransverseIsotropy2D <: AnisoElastic
     ∂Ψ_∂J(F, N) = -μ * ∂log∂J(J(F))
     ∂Ψ2_∂J2(F, N) = -μ * ∂log2∂J2(J(F))
 
-    ∂Ψu(F, N) = (μ / 2 * (I4(F, N)^(α - 1))) * ∂I4∂F(F, N) +
-                (μ / 2 * (I5(F, N)^(β - 1))) * ∂I5∂F(F, N) +
+    ∂Ψu(F, N) = (μ / 2 * (I4(F, N)^(α1 - 1))) * ∂I4∂F(F, N) +
+                (μ / 2 * (I5(F, N)^(α2 - 1))) * ∂I5∂F(F, N) +
                 ∂Ψ_∂J(F, N) * H(F)
 
-    ∂Ψuu(F, N) = μ / 2 * (α - 1) * (I4(F, N)^(α - 2)) * (∂I4∂F(F, N)) ⊗ (∂I4∂F(F, N)) +
-                 μ / 2 * (I4(F, N)^(α - 1)) * ∂I4∂F∂F(F, N) +
-                 μ / 2 * (β - 1) * (I5(F, N)^(β - 2)) * (∂I5∂F(F, N)) ⊗ (∂I5∂F(F, N)) +
-                 μ / 2 * (I5(F, N)^(β - 1)) * ∂I5∂F∂F(F, N) +
+    ∂Ψuu(F, N) = μ / 2 * (α1 - 1) * (I4(F, N)^(α1 - 2)) * (∂I4∂F(F, N)) ⊗ (∂I4∂F(F, N)) +
+                 μ / 2 * (I4(F, N)^(α1 - 1)) * ∂I4∂F∂F(F, N) +
+                 μ / 2 * (α2 - 1) * (I5(F, N)^(α2 - 2)) * (∂I5∂F(F, N)) ⊗ (∂I5∂F(F, N)) +
+                 μ / 2 * (I5(F, N)^(α2 - 1)) * ∂I5∂F∂F(F, N) +
                  ∂Ψ2_∂J2(F, N) * (H(F) ⊗ H(F)) +
                  ∂Ψ_∂J(F, N) * _∂H∂F_2D()
     return (Ψ, ∂Ψu, ∂Ψuu)
@@ -822,22 +821,22 @@ struct IncompressibleNeoHookean3D <: IsoElastic
 
 end
 
-  function SecondPiola(obj::IncompressibleNeoHookean3D,Λ::Float64=1.0)
-    Ψ(C) = obj.μ / 2 * tr(C) * det(C)^(-1 / 3)
-    S(C) = begin
-      detC = det(C)
-      invC = inv(C)
-      obj.μ * detC^(-1 / 3) * I3 - obj.μ / 3 * tr(C) * detC^(-1 / 3) * invC
-    end
-    ∂S∂C(C) = begin
-      detC = det(C)
-      trC = tr(C)
-      invC = inv(C)
-      IinvC = I3 ⊗ invC
-      1 / 3 * obj.μ * detC^(-1 / 3) * (4 / 3 * trC * invC ⊗ invC - (IinvC + IinvC') - trC / detC * ×ᵢ⁴(C))
-    end
-    return (Ψ, S, ∂S∂C)
+function SecondPiola(obj::IncompressibleNeoHookean3D, Λ::Float64=1.0)
+  Ψ(C) = obj.μ / 2 * tr(C) * det(C)^(-1 / 3)
+  S(C) = begin
+    detC = det(C)
+    invC = inv(C)
+    obj.μ * detC^(-1 / 3) * I3 - obj.μ / 3 * tr(C) * detC^(-1 / 3) * invC
   end
+  ∂S∂C(C) = begin
+    detC = det(C)
+    trC = tr(C)
+    invC = inv(C)
+    IinvC = I3 ⊗ invC
+    1 / 3 * obj.μ * detC^(-1 / 3) * (4 / 3 * trC * invC ⊗ invC - (IinvC + IinvC') - trC / detC * ×ᵢ⁴(C))
+  end
+  return (Ψ, S, ∂S∂C)
+end
 
 struct IncompressibleNeoHookean2D <: IsoElastic
   λ::Float64

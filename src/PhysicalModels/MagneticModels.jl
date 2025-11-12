@@ -119,7 +119,7 @@ struct HardMagnetic <: Magneto
   χr::Float64
   βmok::Float64
   βcoup::Float64
-  function HardMagnetic(; μ0::Float64, αr::Float64, χe::Float64=0.0, χr::Float64=8.0, βmok::Float64=1.0, βcoup::Float64=1.0)
+  function HardMagnetic(; μ0::Float64, αr::Float64, χe::Float64=0.0, χr::Float64=8.0, βmok::Float64=0.0, βcoup::Float64=0.0)
     new(μ0, αr, χe, χr, βmok, βcoup)
   end
 
@@ -167,7 +167,7 @@ struct HardMagnetic2D <: Magneto
   χr::Float64
   βmok::Float64
   βcoup::Float64
-  function HardMagnetic2D(; μ0::Float64, αr::Float64, χe::Float64=0.0, χr::Float64=8.0, βmok::Float64=1.0, βcoup::Float64=1.0)
+  function HardMagnetic2D(; μ0::Float64, αr::Float64, χe::Float64=0.0, χr::Float64=8.0, βmok::Float64=0.0, βcoup::Float64=0.0)
     new(μ0, αr, χe, χr, βmok, βcoup)
   end
 
