@@ -54,6 +54,14 @@ function Gridap.FESpaces.TrialFESpace!(space::MultiFieldFESpace, bc::MultiFieldB
   end
 end
 
+function Gridap.FESpaces.TrialFESpace(space::SingleFieldFESpace, bc::DirichletBC)
+    TrialFESpace(space, bc, 0.0)
+end
+
+function Gridap.FESpaces.TrialFESpace(space::MultiFieldFESpace, bc::MultiFieldBC)
+    TrialFESpace(space, bc, 0.0)
+end
+
 
 function Gridap.FESpaces.TrialFESpace(space::SingleFieldFESpace, ::NothingBC, Λ::Float64)
   space
