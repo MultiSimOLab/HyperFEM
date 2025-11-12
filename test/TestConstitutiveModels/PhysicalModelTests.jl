@@ -595,7 +595,7 @@ end
 
   modelMR = MooneyRivlin2D(λ=3.0, μ1=1.0, μ2=2.0)
 
-  modelID = IdealMagnetic(μ=1.2566e-6, χe=0.0)
+  modelID = IdealMagnetic(μ0=1.2566e-6, χe=0.0)
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = modelID()
   K=Kinematics(Mechano,Solid)
   F, _, _ = get_Kinematics(K)
@@ -667,7 +667,7 @@ end
   ∇φ = VectorValue(1.0, 2.0, 3.0)
   a=40e-3 
   ra=Ref(a)
-  modelID = Magnetic(μ=1.2566e-6, αr=ra ,χe=0.0)
+  modelID = Magnetic(μ0=1.2566e-6, αr=ra ,χe=0.0)
   Ψ, ∂Ψφ, ∂Ψφφ = modelID()
 
   Km=Kinematics(Magneto,Solid)
@@ -691,7 +691,7 @@ end
   ∇φ = VectorValue(1.0, 2.0)
   a=40e-3 
   ra=Ref(a)
-  modelID = Magnetic(μ=1.2566e-6, αr=ra ,χe=0.0)
+  modelID = Magnetic(μ0=1.2566e-6, αr=ra ,χe=0.0)
   Ψ, ∂Ψφ, ∂Ψφφ = modelID()
 
   Km=Kinematics(Magneto,Solid)
