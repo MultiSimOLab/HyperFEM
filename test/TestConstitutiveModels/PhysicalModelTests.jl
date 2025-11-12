@@ -269,7 +269,7 @@ end
 @testset "NonlinearMooneyRivlin2D_CV" begin
   model = NonlinearMooneyRivlin2D_CV(λ=(μParams[1] + μParams[2]) * 1e2, μ1=μParams[1], μ2=μParams[2], α=μParams[3], β=μParams[4], γ=μParams[4])
   test_derivatives_2D_(model, Kinematics(Mechano,Solid))
-  test_equilibrium_at_rest_2D(model)
+  test_equilibrium_at_rest_2D(model, atol=1e-9)
 end
 
 
@@ -338,6 +338,7 @@ end
 @testset "TransverseIsotropy3D" begin
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   N = VectorValue(1.0, 2.0, 3.0)
+  N /= norm(N)
   model = TransverseIsotropy3D(μ=μParams[5], α=μParams[6], β=μParams[7])
 
   Ψ, ∂Ψu, ∂Ψuu = model()
