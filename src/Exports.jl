@@ -85,7 +85,8 @@ end
 @publish PhysicalModels EvolutiveKinematics
 @publish PhysicalModels get_Kinematics
 @publish PhysicalModels getIsoInvariants
-  
+
+@publish PhysicalModels Dissipation
 @publish PhysicalModels initializeStateVariables
 @publish PhysicalModels updateStateVariables!
 

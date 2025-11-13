@@ -119,7 +119,7 @@ struct ThermoElectroMech_Bonet{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectro
   function (obj::ThermoElectroMech_Bonet)(Λ::Float64=1.0; kwargs...)
     @unpack Cv,θr, α, κ, γv, γd = obj.thermo
     # Ψem, ∂Ψem∂F, ∂Ψem∂E, ∂Ψem∂FF, ∂Ψem∂EF, ∂Ψem∂EE = _getCoupling(obj.electro, obj.mechano, Λ)
-    em = ElectroMechModel(electro, mechano)
+    em = ElectroMechModel(obj.electro, obj.mechano)
     Ψem, ∂Ψem∂F, ∂Ψem∂E, ∂Ψem∂FF, ∂Ψem∂EF, ∂Ψem∂EE = em(;kwargs...)
     gd(δθ) = 1/(γd+1) * (((δθ+θr)/θr)^(γd+1) -1)
     ∂gd(δθ) = (δθ+θr)^γd / θr^(γd+1)
