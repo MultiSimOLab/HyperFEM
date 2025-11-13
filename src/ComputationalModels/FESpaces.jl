@@ -44,30 +44,23 @@ end
 
 function Gridap.FESpaces.TrialFESpace!(space::MultiFieldFESpace, bc::MultiFieldBC, Λ::Float64)
   @inbounds for (i, space) in enumerate(space.spaces)
-    TrialFESpace!(space, bc.BoundaryCondition[i], Λ)
+    TrialFESpace!(space, bc[i], Λ)
   end
 end
 
 function Gridap.FESpaces.TrialFESpace!(space::MultiFieldFESpace, bc::MultiFieldBC, Λ::Float64, ΔΛ::Float64)
   @inbounds for (i, space) in enumerate(space.spaces)
-    TrialFESpace!(space, bc.BoundaryCondition[i], Λ, ΔΛ)
+    TrialFESpace!(space, bc[i], Λ, ΔΛ)
   end
 end
 
-function Gridap.FESpaces.TrialFESpace(space::SingleFieldFESpace, bc::DirichletBC)
-    TrialFESpace(space, bc, 0.0)
-end
 
-function Gridap.FESpaces.TrialFESpace(space::MultiFieldFESpace, bc::MultiFieldBC)
-    TrialFESpace(space, bc, 0.0)
-end
-
-
-function Gridap.FESpaces.TrialFESpace(space::SingleFieldFESpace, ::NothingBC, Λ::Float64)
+function Gridap.FESpaces.TrialFESpace(space::SingleFieldFESpace, ::NothingBC, Λ::Float64=0.0)
   space
 end
 
-function Gridap.FESpaces.TrialFESpace(space::SingleFieldFESpace, bc::DirichletBC, Λ::Float64)
+
+function Gridap.FESpaces.TrialFESpace(space::SingleFieldFESpace, bc::DirichletBC, Λ::Float64=0.0)
     trialspace= TrialFESpace(space, map(f -> f(Λ), bc.values))
    @inbounds for i in eachindex(bc.tags)
     if bc.caches[i] isa InterpolableBC
@@ -78,13 +71,13 @@ function Gridap.FESpaces.TrialFESpace(space::SingleFieldFESpace, bc::DirichletBC
  return trialspace
 end
 
-function Gridap.FESpaces.TrialFESpace(space::MultiFieldFESpace, bc::MultiFieldBC, Λ::Float64)
+
+function Gridap.FESpaces.TrialFESpace(space::MultiFieldFESpace, bc::MultiFieldBC, Λ::Float64=0.0)
   U_ = Vector{Union{TrialFESpace,UnconstrainedFESpace}}(undef, length(space))
   @inbounds for (i, space) in enumerate(space.spaces)
-    U_[i] = TrialFESpace(space, bc.BoundaryCondition[i], Λ)
+    U_[i] = TrialFESpace(space, bc[i], Λ)
   end
   return MultiFieldFESpace(U_)
-
 end
 
 
