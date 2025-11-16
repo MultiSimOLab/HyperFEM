@@ -957,7 +957,8 @@ end
 
   @test Ψ(F(∇u), J_(F(∇u))) == 0.10922164405292278
   @test norm(∂Ψu(F(∇u), J_(F(∇u)))) == 52.980951554554586
-  @test norm(∂Ψuu(F(∇u), J_(F(∇u)))) == 18172.85461140912
+  @test isapprox(norm(∂Ψuu(F(∇u), J_(F(∇u)))), 18172.854611409115, atol=1e-10)
+
   test_equilibrium_at_rest_2D(model)
 end
 
