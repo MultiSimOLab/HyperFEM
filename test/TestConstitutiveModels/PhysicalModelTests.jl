@@ -429,8 +429,8 @@ end
 
 
 @testset "ThermoMech_EntropicPolyconvex" begin
-#   63.3 μs      Histogram: log(frequency) by time       169 μs <
-#  Memory estimate: 4.28 KiB, allocs estimate: 89
+  #   63.3 μs      Histogram: log(frequency) by time       169 μs <
+  #  Memory estimate: 4.28 KiB, allocs estimate: 89
   ∇u = 1e-1 * TensorValue(1, 2, 3, 4, 5, 6, 7, 8, 9)
   θt = 21.6
   modmec = MooneyRivlin3D(λ=10.0, μ1=1.0, μ2=1.0, ρ=1.0)
@@ -458,7 +458,7 @@ end
 
 
 @testset "ThermoElectroMech_Bonet" begin
-#  Memory estimate: 0 bytes, allocs estimate: 0.
+  #  Memory estimate: 0 bytes, allocs estimate: 0.
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   ∇φ = VectorValue(1.0, 2.0, 3.0)
   θt = 3.4 - 1.0
@@ -501,7 +501,7 @@ end
 
 
 @testset "VolumetricEnergy" begin
-#  Memory estimate: 0 bytes, allocs estimate: 0.
+  #  Memory estimate: 0 bytes, allocs estimate: 0.
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   model = VolumetricEnergy(λ=0.0)
   test_derivatives_3D_(model, Kinematics(Mechano, Solid))
@@ -512,8 +512,8 @@ end
 
 
 @testset "ThermoElectroMech_Govindjee" begin
-#  121 μs        Histogram: log(frequency) by time       331 μs <
-#  Memory estimate: 18.98 KiB, allocs estimate: 300.
+  #  121 μs        Histogram: log(frequency) by time       331 μs <
+  #  Memory estimate: 18.98 KiB, allocs estimate: 300.
 
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   ∇φ = VectorValue(1.0, 2.0, 3.0)
@@ -606,7 +606,7 @@ end
 
 
 @testset "IdealMagnetic2D" begin
-#  Memory estimate: 0 bytes, allocs estimate: 0.
+  #  Memory estimate: 0 bytes, allocs estimate: 0.
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
   ∇φ = VectorValue(1.0, 2.0)
 
@@ -635,7 +635,7 @@ end
 
 
 @testset "IdealMagnetic" begin
-#  Memory estimate: 0 bytes, allocs estimate: 0.
+  #  Memory estimate: 0 bytes, allocs estimate: 0.
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   ∇φ = VectorValue(1.0, 2.0, 3.0)
 
@@ -671,7 +671,7 @@ end
 
 
 @testset "HardMagnetic_SoftMaterial3D_aniso" begin
-#  Memory estimate: 0 bytes, allocs estimate: 0.
+  #  Memory estimate: 0 bytes, allocs estimate: 0.
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   ∇φ = VectorValue(1.0, 2.0, 3.0)
   N = VectorValue(0.0, 0.0, 1.0)
@@ -713,7 +713,7 @@ end
 
 
 @testset "HardMagnetic_SoftMaterial3D" begin
-#  Memory estimate: 0 bytes, allocs estimate: 0.
+  #  Memory estimate: 0 bytes, allocs estimate: 0.
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   ∇φ = VectorValue(1.0, 2.0, 3.0)
   N = VectorValue(0.0, 0.0, 1.0)
@@ -751,7 +751,7 @@ end
 
 
 @testset "Magnetic3D" begin
-#  Memory estimate: 0 bytes, allocs estimate: 0.
+  #  Memory estimate: 0 bytes, allocs estimate: 0.
   ∇φ = VectorValue(1.0, 2.0, 3.0)
   a = 40e-3
   modelID = Magnetic(μ0=1.2566e-6, αr=a, χe=0.0)
@@ -775,7 +775,7 @@ end
 
 
 @testset "Magnetic2D" begin
-#  Memory estimate: 0 bytes, allocs estimate: 0.
+  #  Memory estimate: 0 bytes, allocs estimate: 0.
   ∇φ = VectorValue(1.0, 2.0)
   a = 40e-3
   modelID = Magnetic(μ0=1.2566e-6, αr=a, χe=0.0)
@@ -800,7 +800,7 @@ end
 
 
 @testset "IdealMagnetic_SoftMaterial2D" begin
-#  Memory estimate: 0 bytes, allocs estimate: 0.
+  #  Memory estimate: 0 bytes, allocs estimate: 0.
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
   ∇φ = VectorValue(1.0, 2.0)
   N = VectorValue(0.0, 1.0)
@@ -843,7 +843,7 @@ end
 
 
 @testset "HardMagnetic_SoftMaterial2D" begin
-#  Memory estimate: 0 bytes, allocs estimate: 0.
+  #  Memory estimate: 0 bytes, allocs estimate: 0.
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
   ∇φ = VectorValue(1.0, 2.0)
   N = VectorValue(0.0, 1.0)
@@ -888,7 +888,7 @@ end
 
 
 @testset "ARAP2D" begin
-#  Memory estimate: 0 bytes, allocs estimate: 0.
+  #  Memory estimate: 0 bytes, allocs estimate: 0.
   model = ARAP2D(μ=μParams[1])
   test_derivatives_2D_(model, Kinematics(Mechano, Solid), rtol=1e-13)
   test_equilibrium_at_rest_2D(model)
@@ -898,7 +898,7 @@ end
 
 
 @testset "ARAP2D_regularized" begin
-#  Memory estimate: 0 bytes, allocs estimate: 0.
+  #  Memory estimate: 0 bytes, allocs estimate: 0.
   model = ARAP2D_regularized(μ=μParams[1])
   test_derivatives_2D_(model, Kinematics(Mechano, Solid), rtol=1e-13)
   test_equilibrium_at_rest_2D(model)
@@ -936,8 +936,8 @@ end
 
 
 @testset "Hessian∇JRegularization" begin
-#  4.09 μs      Histogram: log(frequency) by time      10.8 μs <
-#  Memory estimate: 2.58 KiB, allocs estimate: 11.
+  #  4.09 μs      Histogram: log(frequency) by time      10.8 μs <
+  #  Memory estimate: 2.58 KiB, allocs estimate: 11.
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0) * 1e-3
   ∇u0 = TensorValue(1.0, 2.0, 3.0, 4.0) * 0.0
   model = ARAP2D(μ=μParams[1])
