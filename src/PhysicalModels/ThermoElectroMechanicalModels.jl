@@ -119,17 +119,17 @@ struct ThermoElectroMech_Bonet{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectro
   function (obj::ThermoElectroMech_Bonet)(Λ::Float64=1.0)
     @unpack Cv,θr, α, κ, γv, γd = obj.thermo
     Ψem, ∂Ψem∂F, ∂Ψem∂E, ∂Ψem∂FF, ∂Ψem∂EF, ∂Ψem∂EE = _getCoupling(obj.electro, obj.mechano, Λ)
-    gd(δθ)::Float64 = float(1/(γd+1) * (((δθ+θr)/θr)^(γd+1) -1))
-    ∂gd(δθ)::Float64 = float((δθ+θr)^γd / θr^(γd+1))
-    ∂∂gd(δθ)::Float64 =float( γd*(δθ+θr)^(γd-1) / θr^(γd+1))
-    gv(δθ)::Float64 = float(1/(γv+1) * (((δθ+θr)/θr)^(γv+1) -1))
-    ∂gv(δθ)::Float64 = float((δθ+θr)^γv / θr^(γv+1))
-    ∂∂gv(δθ)::Float64 = float(γv*(δθ+θr)^(γv-1) / θr^(γv+1))
+    gd(δθ)=1/(γd+1) * (((δθ+θr)/θr)^(γd+1) -1)
+    ∂gd(δθ)=(δθ+θr)^γd / θr^(γd+1)
+    ∂∂gd(δθ)= γd*(δθ+θr)^(γd-1) / θr^(γd+1)
+    gv(δθ)=1/(γv+1) * (((δθ+θr)/θr)^(γv+1) -1)
+    ∂gv(δθ)=(δθ+θr)^γv / θr^(γv+1)
+    ∂∂gv(δθ)=γv*(δθ+θr)^(γv-1) / θr^(γv+1)
 
     J(F) = det(F)
     H(F) = det(F) * inv(F)'
 
-    η(F)::Float64 =float(α*(J(F) - 1.0)+Cv/γv)
+    η(F) =α*(J(F) - 1.0)+Cv/γv
     ∂η∂J(F)=α
     ∂η∂F(F)=∂η∂J(F)*H(F)
     ∂2η∂FF(F)=×ᵢ⁴(∂η∂J(F) * F)
