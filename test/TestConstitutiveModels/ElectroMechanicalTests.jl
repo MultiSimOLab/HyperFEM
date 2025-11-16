@@ -45,6 +45,7 @@ end
 
 
 @testset "ElectroMechano" begin
+  #  Memory estimate: 0 bytes, allocs estimate: 0.
   modelMR = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=2.0)
   modelID = IdealDielectric(ε=4.0)
   modelelectro =modelMR+modelID
@@ -64,7 +65,7 @@ end
 
 
 @testset "FlexoElectroMechanics" begin
-
+#  Memory estimate: 0 bytes, allocs estimate: 0.
   # Constitutive models
   ∇umacro = TensorValue(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0) * 1e-2
   ∇u1 = 1e-1 * TensorValue(1, 2, 3, 4, 5, 6, 7, 8, 9)
@@ -100,6 +101,8 @@ end
 
 
 @testset "ViscoElectricModel" begin
+#     157 μs        Histogram: log(frequency) by time        391 μs <
+#  Memory estimate: 240.03 KiB, allocs estimate: 3069.
   hyper_elastic = NeoHookean3D(λ=1000., μ=10.)
   short_term = IncompressibleNeoHookean3D(μ=5., λ=0.)
   viscous_branch1 = ViscousIncompressible(short_term, τ=6.)
