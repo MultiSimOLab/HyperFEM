@@ -467,7 +467,7 @@ end
   modelT = ThermalModel(Cv=17.385, θr=293.0, α=0.00156331, γv=2.0, γd=2.0)
 
   modelTEM = ThermoElectroMech_Bonet(modelT, modelID, modelMR)
-  Ψ, ∂Ψu, ∂ΨE, ∂Ψθ, ∂ΨFF, ∂ΨEE, ∂2Ψθθ, ∂ΨEF, ∂ΨFθ, ∂ΨEθ, η = modelTEM()
+  Ψ, ∂Ψu, ∂ΨE, ∂Ψθ, ∂ΨFF, ∂ΨEE, ∂2Ψθθ, ∂ΨEF, ∂ΨFθ, ∂ΨEθ = modelTEM()
 
   K = Kinematics(Mechano, Solid)
   F, _, _ = get_Kinematics(K)
