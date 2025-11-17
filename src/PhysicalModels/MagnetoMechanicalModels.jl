@@ -62,7 +62,7 @@ function _getCoupling(mag::Union{IdealMagnetic,IdealMagnetic2D}, ::Mechano, Λ::
 end
 
 
-function _getCoupling(mag::HardMagnetic, mec::Mechano, Λ::Float64)
+function _getCoupling(mag::HardMagnetic, ::Mechano, Λ::Float64=1.0)
 
   # Miguel Angel Moreno-Mateos, Mokarram Hossain, Paul Steinmann, Daniel Garcia-Gonzalez,
   # Hard magnetics in ultra-soft magnetorheological elastomers enhance fracture toughness and 
@@ -72,7 +72,8 @@ function _getCoupling(mag::HardMagnetic, mec::Mechano, Λ::Float64)
   μ, αr, χe, χr, βcoup, βmok = mag.μ, mag.αr, mag.χe, mag.χr, mag.βcoup, mag.βmok
   J(F) = det(F)
   H(F) = det(F) * inv(F)'
-  αr *= Λ
+ 
+
   #-------------------------------------------------------------------------------------
   # FIRST TERM
   #-------------------------------------------------------------------------------------
@@ -84,7 +85,7 @@ function _getCoupling(mag::HardMagnetic, mec::Mechano, Λ::Float64)
   Hℋ₀(F, ℋ₀) = H(F) * ℋ₀
   Hℋ₀Hℋ₀(F, ℋ₀) = Hℋ₀(F, ℋ₀) ⋅ Hℋ₀(F, ℋ₀)
 
-  ℋᵣ(N) = αr * N
+  ℋᵣ(N) = αr * Λ* N
   Fℋᵣ(F, N) = F * ℋᵣ(N)
   Ψcoup(F, N) = (μ * J(F)) * (Fℋᵣ(F, N) ⋅ Fℋᵣ(F, N) - ℋᵣ(N) ⋅ ℋᵣ(N))
   ∂Ψcoup_∂F(F, N) = 2 * (μ * J(F)) * (Fℋᵣ(F, N) ⊗ ℋᵣ(N))
@@ -143,7 +144,7 @@ function _getCoupling(mag::HardMagnetic, mec::Mechano, Λ::Float64)
 end
 
 
-function _getCoupling(mag::HardMagnetic2D, mec::Mechano, Λ::Float64)
+function _getCoupling(mag::HardMagnetic2D, ::Mechano, Λ::Float64=1.0)
 
   # Miguel Angel Moreno-Mateos, Mokarram Hossain, Paul Steinmann, Daniel Garcia-Gonzalez,
   # Hard magnetics in ultra-soft magnetorheological elastomers enhance fracture toughness and 
@@ -152,8 +153,7 @@ function _getCoupling(mag::HardMagnetic2D, mec::Mechano, Λ::Float64)
   μ, αr, χe, χr, βcoup, βmok = mag.μ, mag.αr, mag.χe, mag.χr, mag.βcoup, mag.βmok
   J(F) = det(F)
   H(F) = det(F) * inv(F)'
-  αr *= Λ
-
+ 
   # #-------------------------------------------------------------------------------------
   # # FIRST TERM
   # #-------------------------------------------------------------------------------------
@@ -164,7 +164,7 @@ function _getCoupling(mag::HardMagnetic2D, mec::Mechano, Λ::Float64)
   #-------------------------------------------------------------------------------------
   Hℋ₀(F, ℋ₀) = H(F) * ℋ₀
   Hℋ₀Hℋ₀(F, ℋ₀) = Hℋ₀(F, ℋ₀) ⋅ Hℋ₀(F, ℋ₀)
-  ℋᵣ(N) = αr * N
+  ℋᵣ(N) = αr * Λ* N
   Fℋᵣ(F, N) = F * ℋᵣ(N)
   Ψcoup(F, N) = (μ * J(F)) * (Fℋᵣ(F, N) ⋅ Fℋᵣ(F, N) - ℋᵣ(N) ⋅ ℋᵣ(N))
   ∂Ψcoup_∂F(F, N) = 2 * (μ * J(F)) * (Fℋᵣ(F, N) ⊗ ℋᵣ(N))

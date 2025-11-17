@@ -118,7 +118,6 @@ struct ThermoElectroMech_Bonet{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectro
 
   function (obj::ThermoElectroMech_Bonet)(Λ::Float64=1.0; kwargs...)
     @unpack Cv,θr, α, κ, γv, γd = obj.thermo
-    # Ψem, ∂Ψem∂F, ∂Ψem∂E, ∂Ψem∂FF, ∂Ψem∂EF, ∂Ψem∂EE = _getCoupling(obj.electro, obj.mechano, Λ)
     em = ElectroMechModel(obj.electro, obj.mechano)
     Ψem, ∂Ψem∂F, ∂Ψem∂E, ∂Ψem∂FF, ∂Ψem∂EF, ∂Ψem∂EE = em(;kwargs...)
     gd(θ) = 1/(γd+1) * ((θ/θr)^(γd+1) -1)
@@ -131,10 +130,10 @@ struct ThermoElectroMech_Bonet{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectro
     J(F) = det(F)
     H(F) = det(F) * inv(F)'
 
-    ηR(F)=α*(J(F) - 1.0)+Cv/γv
-    ∂ηR∂J(F)=α
-    ∂ηR∂F(F)=∂ηR∂J(F)*H(F)
-    ∂2ηR∂FF(F)=×ᵢ⁴(∂ηR∂J(F) * F)
+    ηR(F) = α*(J(F) - 1.0)+Cv/γv
+    ∂ηR∂J(F) = α
+    ∂ηR∂F(F) = ∂ηR∂J(F)*H(F)
+    ∂2ηR∂FF(F) = ×ᵢ⁴(∂ηR∂J(F) * F)
 
     Ψ(F, E, θ, X...) = Ψem(F, E, X...)*(1.0+gd(θ))+gv(θ)*ηR(F)
 

@@ -19,7 +19,7 @@ struct HessianRegularization <: Mechano
     δ = obj.δ
 
     ∂2Ψ(F) = begin
-      vecval = eigen(get_array(∂2Ψs(F)))
+      vecval = eigen(Symmetric(get_array(∂2Ψs(F))))
       vec = real(vecval.vectors)
       val = real(vecval.values)
       TensorValue(vec * diagm(max.(δ, val)) * vec')
@@ -53,7 +53,7 @@ struct Hessian∇JRegularization <: Mechano
     ∂2Ψ_(F, Jh) = ∂2Ψs(F) + κ * (H(F) ⊗ H(F)) + κ * (J(F) - Jh) * _∂H∂F_2D()
 
     ∂2Ψ(F, Jh) = begin
-      vecval = eigen(get_array(∂2Ψ_(F, Jh)))
+      vecval = eigen(Symmetric(get_array(∂2Ψ_(F, Jh))))
       vec = real(vecval.vectors)
       val = real(vecval.values)
       TensorValue(vec * diagm(max.(δ, val)) * vec')
