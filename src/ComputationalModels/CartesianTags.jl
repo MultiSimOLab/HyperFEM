@@ -2,60 +2,61 @@
 "Shortcuts for the tags of cartesian discrete models."
 module CartesianTags
 
-"Tags indicating points, edges and faces at X0."
+"Tags indicating points, edges and faces at plane X0."
 const faceX0 = [1, 3, 5, 7, 13, 15, 17, 19, 25]
 
-"Tags indicating points, edges and faces at X1."
+"Tags indicating points, edges and faces at plane X1."
 const faceX1 = [2, 4, 6, 8, 14, 16, 18, 20, 26]
 
-"Tags indicating points, edges and faces at Y0."
+"Tags indicating points, edges and faces at plane Y0."
 const faceY0 = [1, 2, 5, 6, 9, 11, 17, 18, 23]
 
-"Tags indicating points, edges and faces at Y1."
+"Tags indicating points, edges and faces at plane Y1."
 const faceY1 = [3, 4, 7, 8, 10, 12, 19, 20, 24]
 
-"Tags indicating points, edges and faces at Z0."
+"Tags indicating points, edges and faces at plane Z0."
 const faceZ0 = [1, 2, 3, 4, 9, 10, 13, 14, 21]
 
-"Tags indicating points, edges and faces at Z1."
+"Tags indicating points, edges and faces at plane Z1."
 const faceZ1 = [5, 6, 7, 8, 11, 12, 15, 16, 22]
 
 
-"Tag indicating the line at  X, Y0, Z0."
+"Tag indicating the edge at  X, Y0, Z0."
 const edgeX00 = [9]
 
-"Tag indicating the line at  X, Y1, Z0."
+"Tag indicating the edge at  X, Y1, Z0."
 const edgeX10 = [10]
 
-"Tag indicating the line at  X, Y0, Z1."
+"Tag indicating the edge at  X, Y0, Z1."
 const edgeX01 = [11]
 
-"Tag indicating the line at  X, Y1, Z1."
+"Tag indicating the edge at  X, Y1, Z1."
 const edgeX11 = [12]
 
-"Tag indicating the line at  X0, Y, Z0."
+"Tag indicating the edge at  X0, Y, Z0."
 const edge0Y0 = [13]
 
-"Tag indicating the line at  X1, Y, Z0."
+"Tag indicating the edge at  X1, Y, Z0."
 const edge1Y0 = [14]
 
-"Tag indicating the line at  X0, Y, Z1."
+"Tag indicating the edge at  X0, Y, Z1."
 const edge0Y1 = [15]
 
-"Tag indicating the line at  X1, Y, Z1."
+"Tag indicating the edge at  X1, Y, Z1."
 const edge1Y1 = [16]
 
-"Tag indicating the line at  X0, Y0, Z."
+"Tag indicating the edge at  X0, Y0, Z."
 const edge00Z = [17]
 
-"Tag indicating the line at  X1, Y0, Z."
+"Tag indicating the edge at  X1, Y0, Z."
 const edge10Z = [18]
 
-"Tag indicating the line at  X0, Y1, Z."
+"Tag indicating the edge at  X0, Y1, Z."
 const edge01Z = [19]
 
-"Tag indicating the line at  X1, Y1, Z."
+"Tag indicating the edge at  X1, Y1, Z."
 const edge11Z = [20]
+
 
 "Tag indicating the point at corner X0, Y0, Z0."
 const corner000 = [1]
