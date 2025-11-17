@@ -107,7 +107,7 @@ struct ThermoElectroMech_Bonet{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectro
   thermo::T
   electro::E
   mechano::M
-  
+
   function ThermoElectroMech_Bonet(thermo::T, electro::E, mechano::M) where {T<:Thermo,E<:Electro,M<:Mechano}
     new{T,E,M}(thermo, electro, mechano)
   end
@@ -116,41 +116,40 @@ struct ThermoElectroMech_Bonet{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectro
     new{T,E,M}(thermo, electro, mechano)
   end
 
-  function (obj::ThermoElectroMech_Bonet)(Λ::Float64=1.0)
+  function (obj::ThermoElectroMech_Bonet)(Λ::Float64=1.0; kwargs...)
     @unpack Cv,θr, α, κ, γv, γd = obj.thermo
-    Ψem, ∂Ψem∂F, ∂Ψem∂E, ∂Ψem∂FF, ∂Ψem∂EF, ∂Ψem∂EE = _getCoupling(obj.electro, obj.mechano, Λ)
-    gd(δθ)=1/(γd+1) * (((δθ+θr)/θr)^(γd+1) -1)
-    ∂gd(δθ)=(δθ+θr)^γd / θr^(γd+1)
-    ∂∂gd(δθ)= γd*(δθ+θr)^(γd-1) / θr^(γd+1)
-    gv(δθ)=1/(γv+1) * (((δθ+θr)/θr)^(γv+1) -1)
-    ∂gv(δθ)=(δθ+θr)^γv / θr^(γv+1)
-    ∂∂gv(δθ)=γv*(δθ+θr)^(γv-1) / θr^(γv+1)
+    em = ElectroMechModel(obj.electro, obj.mechano)
+    Ψem, ∂Ψem∂F, ∂Ψem∂E, ∂Ψem∂FF, ∂Ψem∂EF, ∂Ψem∂EE = em(;kwargs...)
+    gd(θ) = 1/(γd+1) * ((θ/θr)^(γd+1) -1)
+    ∂gd(θ) = θ^γd / θr^(γd+1)
+    ∂∂gd(θ) = γd*θ^(γd-1) / θr^(γd+1)
+    gv(θ) = 1/(γv+1) * ((θ/θr)^(γv+1) -1)
+    ∂gv(θ) = θ^γv / θr^(γv+1)
+    ∂∂gv(θ) = γv*θ^(γv-1) / θr^(γv+1)
 
     J(F) = det(F)
     H(F) = det(F) * inv(F)'
 
-    η(F) =α*(J(F) - 1.0)+Cv/γv
-    ∂η∂J(F)=α
-    ∂η∂F(F)=∂η∂J(F)*H(F)
-    ∂2η∂FF(F)=×ᵢ⁴(∂η∂J(F) * F)
+    ηR(F) = α*(J(F) - 1.0)+Cv/γv
+    ∂ηR∂J(F) = α
+    ∂ηR∂F(F) = ∂ηR∂J(F)*H(F)
+    ∂2ηR∂FF(F) = ×ᵢ⁴(∂ηR∂J(F) * F)
 
-    Ψ(F,E,δθ) = Ψem(F,E)*(1.0+gd(δθ))+gv(δθ)*η(F)
+    Ψ(F, E, θ, X...) = Ψem(F, E, X...)*(1.0+gd(θ))+gv(θ)*ηR(F)
 
-    ∂Ψ_∂F(F, E, δθ)  =   (1.0+gd(δθ)) *∂Ψem∂F(F, E) + gv(δθ)*∂η∂F(F)
-    ∂Ψ_∂E(F, E, δθ)  =   (1.0+gd(δθ)) *∂Ψem∂E(F, E)
-    ∂Ψ_∂δθ(F, E, δθ) =   ∂gd(δθ) *Ψem(F, E) + ∂gv(δθ)*η(F)
+    ∂Ψ_∂F(F, E, θ, X...)  =  (1.0+gd(θ)) *∂Ψem∂F(F, E, X...) + gv(θ)*∂ηR∂F(F)
+    ∂Ψ_∂E(F, E, θ, X...)  =  (1.0+gd(θ)) *∂Ψem∂E(F, E, X...)
+    ∂Ψ_∂θ(F, E, θ, X...)  =  ∂gd(θ) *Ψem(F, E, X...) + ∂gv(θ)*ηR(F)
 
-    ∂2Ψ_∂2F(F, E, δθ) =  (1.0+gd(δθ)) *∂Ψem∂FF(F, E) + gv(δθ)*∂2η∂FF(F)
-    ∂2Ψ_∂2E(F, E, δθ) =  (1.0+gd(δθ)) *∂Ψem∂EE(F, E)
-    ∂2Ψ_∂2δθ(F, E, δθ) =  ∂∂gd(δθ) *Ψem(F, E) + ∂∂gv(δθ)*η(F)
+    ∂2Ψ_∂2F(F, E, θ, X...)  =  (1.0+gd(θ)) *∂Ψem∂FF(F, E, X...) + gv(θ)*∂2ηR∂FF(F)
+    ∂2Ψ_∂2E(F, E, θ, X...)  =  (1.0+gd(θ)) *∂Ψem∂EE(F, E, X...)
+    ∂2Ψ_∂2θ(F, E, θ, X...)  =  ∂∂gd(θ) *Ψem(F, E, X...) + ∂∂gv(θ)*ηR(F)
 
-    ∂ΨEF(F, E, δθ) =  (1.0+gd(δθ)) *∂Ψem∂EF(F, E)
-    ∂ΨFδθ(F, E, δθ) =  ∂gd(δθ) *∂Ψem∂F(F, E) + ∂gv(δθ)*∂η∂F(F)
-    ∂ΨEδθ(F, E, δθ) =  ∂gd(δθ) *∂Ψem∂E(F, E)
+    ∂ΨEF(F, E, θ, X...)  =  (1.0+gd(θ)) *∂Ψem∂EF(F, E, X...)
+    ∂ΨFθ(F, E, θ, X...) =  ∂gd(θ) *∂Ψem∂F(F, E, X...) + ∂gv(θ)*∂ηR∂F(F)
+    ∂ΨEθ(F, E, θ, X...) =  ∂gd(θ) *∂Ψem∂E(F, E, X...)
 
-    entropy(F, E, δθ) = -∂Ψ_∂δθ(F, E, δθ)
-
-    return (Ψ, ∂Ψ_∂F, ∂Ψ_∂E, ∂Ψ_∂δθ, ∂2Ψ_∂2F, ∂2Ψ_∂2E, ∂2Ψ_∂2δθ, ∂ΨEF, ∂ΨFδθ, ∂ΨEδθ, entropy)
+    return (Ψ, ∂Ψ_∂F, ∂Ψ_∂E, ∂Ψ_∂θ, ∂2Ψ_∂2F, ∂2Ψ_∂2E, ∂2Ψ_∂2θ, ∂ΨEF, ∂ΨFθ, ∂ΨEθ)
   end
 end
 
@@ -159,7 +158,7 @@ function Dissipation(obj::ThermoElectroMech_Bonet, Δt)
   Dvis = Dissipation(obj.mechano, Δt)
   gd(δθ) = 1/(γd+1) * (((δθ+θr)/θr)^(γd+1) -1)
   ∂gd(δθ) = (δθ+θr)^γd / θr^(γd+1)
-  D(F, E, δθ, A...) = (1 + gd(δθ)) * Dvis(F, A...)
-  ∂D∂θ(F, E, δθ, A...) = ∂gd(δθ) * Dvis(F, A...)
+  D(F, E, δθ, X...) = (1 + gd(δθ)) * Dvis(F, X...)
+  ∂D∂θ(F, E, δθ, X...) = ∂gd(δθ) * Dvis(F, X...)
   return(D, ∂D∂θ)
 end
