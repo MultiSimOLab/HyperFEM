@@ -462,9 +462,11 @@ end
   ∇u = TensorValue(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0) * 1e-3
   ∇φ = VectorValue(1.0, 2.0, 3.0)
   θt = 3.4 - 1.0
+  θr = 293.0
+  Cv = 17.385
   modelMR = MooneyRivlin3D(λ=0.0, μ1=0.5, μ2=0.5)
   modelID = IdealDielectric(ε=1.0)
-  modelT = ThermalModel(Cv=17.385, θr=293.0, α=0.00156331, γv=2.0, γd=2.0)
+  modelT = ThermalModel(Cv=Cv, θr=θr, α=0.00156331, γv=2.0, γd=2.0)
 
   modelTEM = ThermoElectroMech_Bonet(modelT, modelID, modelMR)
   Ψ, ∂Ψu, ∂ΨE, ∂Ψθ, ∂ΨFF, ∂ΨEE, ∂2Ψθθ, ∂ΨEF, ∂ΨFθ, ∂ΨEθ = modelTEM()
@@ -497,6 +499,10 @@ end
   @test isapprox(∂ΨFθ(F(∇u), E(∇φ), θt), ∂2Ψ_∂2Fθ(F(∇u), E(∇φ), θt); rtol=1e-14)
   @test isapprox(∂ΨEF(F(∇u), E(∇φ), θt), ∂2Ψ_∂EF(F(∇u), E(∇φ), θt); rtol=1e-14)
 
+  F0 = I3
+  E0 = VectorValue(0.,0.,0.)
+  cv(F,E,θ,x...) = -θ*∂∂Ψtem∂θθ(F,E,θ,x...)
+  @test isapprox(Cv, cv(F0, E0, θr))
 end
 
 
