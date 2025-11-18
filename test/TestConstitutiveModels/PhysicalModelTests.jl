@@ -501,8 +501,8 @@ end
 
   F0 = I3
   E0 = VectorValue(0.,0.,0.)
-  cv(F,E,θ,x...) = -θ*∂∂Ψtem∂θθ(F,E,θ,x...)
-  @test isapprox(Cv, cv(F0, E0, θr))
+  cv(F,E,θ,x...) = -θ*∂2Ψ∂2θ(F,E,θ,x...)
+  @test isapprox(Cv, cv(F0, E0, θr); rtol=1e-14)
 end
 
 
