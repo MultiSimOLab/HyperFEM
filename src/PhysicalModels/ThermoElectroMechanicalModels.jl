@@ -117,7 +117,7 @@ struct ThermoElectroMech_Bonet{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectro
   end
 
   function (obj::ThermoElectroMech_Bonet)(Λ::Float64=1.0; kwargs...)
-    @unpack Cv,θr, α, κ, γv, γd = obj.thermo
+    @unpack Cv, θr, α, κ, γv, γd = obj.thermo
     em = ElectroMechModel(obj.electro, obj.mechano)
     Ψem, ∂Ψem∂F, ∂Ψem∂E, ∂Ψem∂FF, ∂Ψem∂EF, ∂Ψem∂EE = em(;kwargs...)
     gd(θ) = 1/(γd+1) * ((θ/θr)^(γd+1) -1)
@@ -135,18 +135,18 @@ struct ThermoElectroMech_Bonet{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectro
     ∂ηR∂F(F) = ∂ηR∂J(F)*H(F)
     ∂2ηR∂FF(F) = ×ᵢ⁴(∂ηR∂J(F) * F)
 
-    Ψ(F, E, θ, X...) = Ψem(F, E, X...)*(1.0+gd(θ))+gv(θ)*ηR(F)
+    Ψ(F, E, θ, X...) = Ψem(F, E, X...)*(1.0+gd(θ)) - θr*gv(θ)*ηR(F)
 
-    ∂Ψ_∂F(F, E, θ, X...)  =  (1.0+gd(θ)) *∂Ψem∂F(F, E, X...) + gv(θ)*∂ηR∂F(F)
+    ∂Ψ_∂F(F, E, θ, X...)  =  (1.0+gd(θ)) *∂Ψem∂F(F, E, X...) - θr*gv(θ)*∂ηR∂F(F)
     ∂Ψ_∂E(F, E, θ, X...)  =  (1.0+gd(θ)) *∂Ψem∂E(F, E, X...)
-    ∂Ψ_∂θ(F, E, θ, X...)  =  ∂gd(θ) *Ψem(F, E, X...) + ∂gv(θ)*ηR(F)
+    ∂Ψ_∂θ(F, E, θ, X...)  =  ∂gd(θ) *Ψem(F, E, X...) - θr*∂gv(θ)*ηR(F)
 
-    ∂2Ψ_∂2F(F, E, θ, X...)  =  (1.0+gd(θ)) *∂Ψem∂FF(F, E, X...) + gv(θ)*∂2ηR∂FF(F)
+    ∂2Ψ_∂2F(F, E, θ, X...)  =  (1.0+gd(θ)) *∂Ψem∂FF(F, E, X...) - θr*gv(θ)*∂2ηR∂FF(F)
     ∂2Ψ_∂2E(F, E, θ, X...)  =  (1.0+gd(θ)) *∂Ψem∂EE(F, E, X...)
-    ∂2Ψ_∂2θ(F, E, θ, X...)  =  ∂∂gd(θ) *Ψem(F, E, X...) + ∂∂gv(θ)*ηR(F)
+    ∂2Ψ_∂2θ(F, E, θ, X...)  =  ∂∂gd(θ) *Ψem(F, E, X...) - θr*∂∂gv(θ)*ηR(F)
 
     ∂ΨEF(F, E, θ, X...)  =  (1.0+gd(θ)) *∂Ψem∂EF(F, E, X...)
-    ∂ΨFθ(F, E, θ, X...) =  ∂gd(θ) *∂Ψem∂F(F, E, X...) + ∂gv(θ)*∂ηR∂F(F)
+    ∂ΨFθ(F, E, θ, X...) =  ∂gd(θ) *∂Ψem∂F(F, E, X...) - θr*∂gv(θ)*∂ηR∂F(F)
     ∂ΨEθ(F, E, θ, X...) =  ∂gd(θ) *∂Ψem∂E(F, E, X...)
 
     return (Ψ, ∂Ψ_∂F, ∂Ψ_∂E, ∂Ψ_∂θ, ∂2Ψ_∂2F, ∂2Ψ_∂2E, ∂2Ψ_∂2θ, ∂ΨEF, ∂ΨFθ, ∂ΨEθ)
