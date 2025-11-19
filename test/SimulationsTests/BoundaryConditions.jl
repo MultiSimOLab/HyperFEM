@@ -124,7 +124,7 @@ end
 
   α = CellState(1.0, dΩair)
   linesearch = Injectivity_Preserving_LS(α, Uu, Vu; maxiter=50, αmin=1e-16, ρ=0.5, c=0.95)
-  nls_vacmech = Newton_RaphsonSolver(LUSolver(); maxiter=10, rtol=2, verbose=false, linesearch=linesearch)
+  nls_vacmech = Newton_RaphsonSolver(LUSolver(); maxiter=10, rtol=2, verbose=true, linesearch=linesearch)
 
   xh = FEFunction(Uu, zero_free_values(Uu))
   comp_model_vacmech = StaticNonlinearModel(res_vacmech, jac_vacmech, Uu, Vu, Du_air; nls=nls_vacmech, xh=xh)
