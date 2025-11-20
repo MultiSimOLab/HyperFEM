@@ -4,7 +4,7 @@ using Gridap.FESpaces
 @testset "Dirichlet BC testing analytical mapping" begin
 
   meshfile = "test_BC1.msh"
-  geomodel = GmshDiscreteModel("./test/models/" * meshfile)
+  geomodel = GmshDiscreteModel("test/models/" * meshfile)
 
   # Domains
   order = 1
@@ -44,16 +44,16 @@ end
 @testset "Mesh movement stabilization" begin
 
   meshfile = "test_BC2.msh"
-  geomodel = GmshDiscreteModel("./test/models/" * meshfile)
+  geomodel = GmshDiscreteModel("test/models/" * meshfile)
 
-  μParams = [6456.9137547089595, 896.4633794151492,
+  Params = [6456.9137547089595, 896.4633794151492,
     1.999999451256222,
     1.9999960497608036,
     11747.646562400318,
     0.7841068624959612, 1.5386288924587603]
 
-  model_vacuum_mech_ = NonlinearMooneyRivlin2D_CV(λ=1 * μParams[1], μ1=μParams[1], μ2=0.0, α1=6.0, α2=1.0, γ=6.0)
-  model_vacuum_mech = HessianRegularization(mechano=model_vacuum_mech_, δ=1e-6 * μParams[1])
+  model_vacuum_mech_ = NonlinearMooneyRivlin2D_CV(λ=1 * Params[1], μ1=Params[1], μ2=0.0, α1=6.0, α2=1.0, γ=6.0)
+  model_vacuum_mech = HessianRegularization(mechano=model_vacuum_mech_, δ=1e-6 * Params[1])
 
 
   # Domains
