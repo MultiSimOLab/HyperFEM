@@ -144,7 +144,8 @@ src="https://github.com/MultiSimOLab/HyperFEM/blob/main/docs/imgs/sims_.png?raw=
 
 In order to give credit to the HyperFEM contributors, we ask that you please reference the paper:
 
-> In process
+C. Perez‐Garcia, R. Ortigosa, J. Martínez‐Frutos, and D. Garcia‐Gonzalez, **Topology and material optimization in ultra-soft magnetoactive structures: making advantage of residual anisotropies.** Adv. Mater. (2025): e18489. https://https://doi.org/10.1002/adma.202518489
+ 
 
 along with the required citations for [Gridap](https://github.com/gridap/Gridap.jl).
 

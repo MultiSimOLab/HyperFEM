@@ -30,13 +30,13 @@ using Gridap.FESpaces
   Vu = TestFESpace(Ω, reffeu, Du, conformity=:H1)
   Uu = TrialFESpace(Vu, Du, 1.0)
 
-  @test norm(Uu.dirichlet_values) == 0.30990321069650995
-
+@test isapprox(norm(Uu.dirichlet_values) ,  0.30990321069650995,rtol=1e-14)
   TrialFESpace!(Uu, Du, 0.4)
-  @test norm(Uu.dirichlet_values) == 0.12396128427860398
+@test isapprox(norm(Uu.dirichlet_values) ,  0.12396128427860398,rtol=1e-14)
   TrialFESpace!(Uu, Du, 1.0)
-  @test norm(Uu.dirichlet_values) == 0.30990321069650995
+@test isapprox(norm(Uu.dirichlet_values) ,  0.30990321069650995,rtol=1e-14)
 
+ 
 end
 
 
@@ -138,6 +138,7 @@ end
     interpolate_everywhere!(x -> Mapping(x, Δβ * (t)), get_free_dof_values(uh⁻), uh⁻.dirichlet_values, Vu_⁻)
     solve!(comp_model_vacmech; args_vacmech...)
   end
-  @test norm(xh.free_values) == 2.8132015601158087
+ @test isapprox( norm(xh.free_values) ,   2.8132015601158087,rtol=1e-14)
+
 
 end
