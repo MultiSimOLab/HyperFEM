@@ -4,8 +4,7 @@ using Gridap.FESpaces
 @testset "Dirichlet BC testing analytical mapping" begin
 
   meshfile = "test_BC1.msh"
-  geomodel = GmshDiscreteModel("test/models/" * meshfile)
-
+  geomodel = GmshDiscreteModel(projdir("test/models/" * meshfile))
   # Domains
   order = 1
   degree = 1 * order
@@ -44,7 +43,7 @@ end
 @testset "Mesh movement stabilization" begin
 
   meshfile = "test_BC2.msh"
-  geomodel = GmshDiscreteModel("test/models/" * meshfile)
+  geomodel = GmshDiscreteModel(projdir("test/models/" * meshfile))
 
   Params = [6456.9137547089595, 896.4633794151492,
     1.999999451256222,
@@ -128,7 +127,7 @@ end
 
   xh = FEFunction(Uu, zero_free_values(Uu))
   comp_model_vacmech = StaticNonlinearModel(res_vacmech, jac_vacmech, Uu, Vu, Du_air; nls=nls_vacmech, xh=xh)
-  args_vacmech = Dict(:stepping => (nsteps=1, maxbisec=5), :ProjectDirichlet =>true)
+  args_vacmech = Dict(:stepping => (nsteps=1, maxbisec=5), :ProjectDirichlet => true)
 
   nsteps = 10
   flagconv = 1 # convergence flag 0 (max bisections) 1 (max steps)
