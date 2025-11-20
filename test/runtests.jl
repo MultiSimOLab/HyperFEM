@@ -6,26 +6,18 @@ using Test
 @testset "HyperFEMTests" verbose = true begin
 
   include("TestConstitutiveModels/runtests.jl")
-
-  include("TestTensorAlgebra/runtests.jl")
-
-  include("TestWeakForms/runtests.jl")
-
-  include("SimulationsTests/runtests.jl")
-
-end;
-
-@show "Second round"
-
-
-@testset "HyperFEMTests" verbose = true begin
-
   include("TestConstitutiveModels/runtests.jl")
 
   include("TestTensorAlgebra/runtests.jl")
+  include("TestTensorAlgebra/runtests.jl")
 
+  include("TestWeakForms/runtests.jl")
   include("TestWeakForms/runtests.jl")
 
   include("SimulationsTests/runtests.jl")
+  include("SimulationsTests/runtests.jl")
 
 end;
+
+
+ 
