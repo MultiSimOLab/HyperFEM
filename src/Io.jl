@@ -1,7 +1,6 @@
-
 module IO
 
-using .HyperFEM
+using HyperFEM
 
 export setupfolder
 export projdir
