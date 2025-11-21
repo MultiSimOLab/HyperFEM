@@ -1,6 +1,8 @@
 
 module IO
 
+using .HyperFEM
+
 export setupfolder
 export projdir
 export stem
