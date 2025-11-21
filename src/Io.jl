@@ -1,3 +1,11 @@
+module IO
+
+using HyperFEM
+
+export setupfolder
+export projdir
+export stem
+
 """
 Make sure the specified folder exists.
 
@@ -42,4 +50,21 @@ Return the path to the specified folders relative to the HyperFEM path.
 function projdir(folders::String...)
   base_folder = dirname(dirname(pathof(HyperFEM)))
   joinpath(base_folder, folders...)
+end
+
+"""
+Return the file name without extension.
+
+# Examples
+    stem("a/b/c")          → "c"
+    stem("a/b/c.jl")       → "c"
+    stem("a/b/.gitignore") → ".gitignore"
+    stem("a/b/foo.tar.gz") → "foo.tar"
+"""
+function stem(path::AbstractString)
+  name = basename(path)
+  root, ext = splitext(name)
+  root
+end
+
 end

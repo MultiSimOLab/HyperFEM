@@ -2,7 +2,6 @@ using Gridap
 using HyperFEM
 using Test
 
-
 @testset "HyperFEMTests" verbose = true begin
 
   include("TestConstitutiveModels/runtests.jl")
@@ -14,6 +13,3 @@ using Test
   include("SimulationsTests/runtests.jl")
 
 end;
-
-
- 

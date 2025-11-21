@@ -139,6 +139,6 @@ end
 @publish Solvers Roman_LS
 @publish Solvers update_cellstate!
 
-export setupfolder
-export projdir
-export filedir
+@publish IO setupfolder
+@publish IO projdir
+@publish IO stem
