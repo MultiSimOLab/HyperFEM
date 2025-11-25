@@ -49,3 +49,5 @@ SUITE["Tensor algebra"]["δδ_μ_2d"] = @benchmarkable δᵢₖδⱼₗ2D + δ�
 SUITE["Tensor algebra"]["δδ_λ_2d"] = @benchmarkable 1.0 * δᵢⱼδₖₗ2D
 SUITE["Tensor algebra"]["Cofactor"] = @benchmarkable cof(A)
 SUITE["Tensor algebra"]["Det(A)Inv(A')"] = @benchmarkable det(A)*inv(A')
+SUITE["Tensor algebra"]["A:A"] = @benchmarkable A:A
+SUITE["Tensor algebra"]["tr(A'·A)"] = @benchmarkable tr(A'·A)

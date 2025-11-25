@@ -101,6 +101,13 @@ end
 end
 
 
+@testset "double contraction" begin
+  A = TensorValue(1.:9...)
+  @test A:A == tr(A'·A)
+  @test A:A == sum(i -> i^2, 1:9)
+end
+
+
 @testset "sqrt" begin
   A = TensorValue(1.:9...)
   A = A'*A + I3
