@@ -41,12 +41,12 @@ end
 
 
 function solve!(m::StaggeredModel;
-    stepping=(nsteps=20, nsubsteps=1 , maxbisec=15),
-    presolver=(τ,∆τ)->nothing,
+    stepping=(nsteps=20, nsubsteps=1, maxbisec=15),
+    presolver=(τ, ∆τ) -> nothing,
     kargsolve)
 
-    nsubsteps=stepping[:nsubsteps]
-    nsteps=stepping[:nsteps]
+    nsubsteps = stepping[:nsubsteps]
+    nsteps = stepping[:nsteps]
 
     x⁺, x⁻ = m.caches
     map((x) -> TrialFESpace!(x.spaces[1], x.dirichlet, 0.0), m.compmodels)
@@ -58,7 +58,7 @@ function solve!(m::StaggeredModel;
         println("*******************************************")
         println("           Staggered Step: $τ              ")
         println("*******************************************")
-        presolver(τ,∆τ)
+        presolver(τ, ∆τ)
         stevol(Λ) = ∆τ * (Λ + τ)
         map(x -> updateBC!(x.dirichlet, x.dirichlet.caches, [stevol for _ in 1:length(x.dirichlet.caches)]), m.compmodels)
         for τ_inner in 1:nsubsteps
@@ -144,22 +144,22 @@ function solve!(m::StaticNonlinearModel;
     while Λ < 1.0
         Λ += ∆Λ
         if Λ > 1.0
-        ∆Λ = 1.0 - (Λ - ∆Λ)
-        Λ = min(1.0, Λ)
+            ∆Λ = 1.0 - (Λ - ∆Λ)
+            Λ = min(1.0, Λ)
         end
         if ProjectDirichlet
             α = dirichlet_preconditioning!(x, m, Λ, ∆Λ, nls)
         end
-       #@show α
+        #@show α
         Λ -= ∆Λ
-        ∆Λ = α*∆Λ
+        ∆Λ = α * ∆Λ
         TrialFESpace!(Un, m.dirichlet, Λ)
         Λ += ∆Λ
 
         # U.dirichlet_values .+= α*∆U.dirichlet_values
- 
+
         TrialFESpace!(U, m.dirichlet, Λ)
-        
+
         res = m.res(Λ)
         jac = m.jac(Λ)
         op = get_algebraic_operator(FEOperator(res, jac, U, V, assem_U))
@@ -169,7 +169,7 @@ function solve!(m::StaticNonlinearModel;
         if !converged(nls.log.tols, nls.log.num_iters, r_abs, r_rel)
             @warn "Bisection performed!"
             x .= x⁻
-            Λ -= α*∆Λ 
+            Λ -= α * ∆Λ
             ∆Λ = ∆Λ / 2
             nbisect += 1
             # @assert(nbisect <= stepping[:maxbisec], "Maximum number of bisections reached")
@@ -213,7 +213,7 @@ function dirichlet_preconditioning!(x::Vector{Float64}, m::StaticNonlinearModel,
     duh = get_dirichlet_preconditioner(m::StaticNonlinearModel, Λ::Float64, ∆Λ::Float64)
     # update step
     α = update_cellstate!(m.caches[1].linesearch, get_state(m), duh)
-     x .+= α * get_free_dof_values(duh)
+    x .+= α * get_free_dof_values(duh)
     return α
 end
 
@@ -347,26 +347,27 @@ end
 
 
 
+
 #*******************************************************************************	
 #    					 StaticLinearModel
 #*******************************************************************************	
 
 
 struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
-    res::A
-    jac::B
+    lf::A
+    bf::B
     spaces::C
     dirichlet::D
     caches::E
 
     function StaticLinearModel(
-        res::Function, jac::Function, U, V, dirbc;
+        lf::Function, bf::Function, U, V, dirbc;
         assem_U=SparseMatrixAssembler(U, V),
         ls::LinearSolver=LUSolver(),
         xh::FEFunction=FEFunction(U, zero_free_values(U)))
 
         spaces = (U, V)
-        op = AffineFEOperator(jac, res, U, V, assem_U)
+        op = AffineFEOperator(bf, lf, U, V, assem_U)
         K, b = get_matrix(op), get_vector(op)
         x = get_free_dof_values(xh)
         # x = allocate_in_domain(K)
@@ -375,23 +376,23 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
         caches = (ns, K, b, x, assem_U)
 
 
-        A, B, C = typeof(res), typeof(jac), typeof(spaces)
+        A, B, C = typeof(lf), typeof(bf), typeof(spaces)
         D, E = typeof(dirbc), typeof(caches)
-        return new{A,B,C,D,E}(res, jac, spaces, dirbc, caches)
+        return new{A,B,C,D,E}(lf, bf, spaces, dirbc, caches)
     end
 
 
 
     function StaticLinearModel(
-        res::Vector{<:Function}, jac::Function, U0, V0, dirbc;
+        lf::Vector{<:Function}, bf::Function, U0, V0, dirbc;
         assem_U0=SparseMatrixAssembler(U0, V0),
         ls::LinearSolver=LUSolver())
 
-        nblocks = length(res)
+        nblocks = length(lf)
         U, V = repeat_spaces(nblocks, U0, V0)
         spaces = (U, V)
         ##  cache
-        K = assemble_matrix(jac, assem_U0, U0, V0) # 1D
+        K = assemble_matrix(bf, assem_U0, U0, V0) # 1D
         b = allocate_in_range(K)
         fill!(b, zero(eltype(b))) # 1D
         x = repeated_allocate_in_domain(nblocks, K)
@@ -399,21 +400,21 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
         ns = numerical_setup(symbolic_setup(ls, K), K) # 1D
         caches = (ns, K, b, x, assem_U0)
 
-        A, B, C = Vector{<:Function}, typeof(jac), typeof(spaces)
+        A, B, C = Vector{<:Function}, typeof(bf), typeof(spaces)
         D, E = typeof(dirbc), typeof(caches)
-        return new{A,B,C,D,E}(res, jac, spaces, dirbc, caches)
+        return new{A,B,C,D,E}(lf, bf, spaces, dirbc, caches)
     end
 
 
 
     function StaticLinearModel(
-        jac::Function, U, V, dirbc;
+        bf::Function, U, V, dirbc;
         assem_U=SparseMatrixAssembler(U, V),
         ls::LinearSolver=LUSolver(),
         xh::FEFunction=FEFunction(U, zero_free_values(U)))
 
         spaces = (U, V)
-        K = assemble_matrix(jac, assem_U, U, V)
+        K = assemble_matrix(bf, assem_U, U, V)
         b = allocate_in_range(K)
         fill!(b, zero(eltype(b)))
         x = get_free_dof_values(xh)
@@ -422,20 +423,20 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
         ns = numerical_setup(symbolic_setup(ls, K), K) # 1D
         caches = (ns, K, b, x, assem_U)
 
-        A, B, C = Nothing, typeof(jac), typeof(spaces)
+        A, B, C = Nothing, typeof(bf), typeof(spaces)
         D, E = typeof(dirbc), typeof(caches)
-        return new{A,B,C,D,E}(nothing, jac, spaces, dirbc, caches)
+        return new{A,B,C,D,E}(nothing, bf, spaces, dirbc, caches)
     end
 
 
 
     function (m::StaticLinearModel)(x::AbstractVector{Float64}; Assembly=false)
         U, V = m.spaces
-        jac = m.jac
+        bf = m.bf
         ns, K, b, _, assem_U = m.caches
         b .= x
         if Assembly
-            assemble_matrix!(jac, K, assem_U, U, V)
+            assemble_matrix!(bf, K, assem_U, U, V)
         end
         numerical_setup!(ns, K)
         Algebra.solve!(x, ns, b)
@@ -445,11 +446,11 @@ struct StaticLinearModel{A,B,C,D,E} <: ComputationalModel
     function (m::StaticLinearModel)(xh::SingleFieldFEFunction; Measure=nothing, Assembly=false, kwargs...)
         x_ = get_free_dof_values(xh)
         _, V = m.spaces
-        jac = m.jac
+        bf = m.bf
         ns, K, b, _, assem_U = m.caches
         assemble_vector!((v) -> ∫(xh * v)Measure, b, assem_U, V)
         if Assembly
-            assemble_matrix!(jac, K, assem_U, U, V)
+            assemble_matrix!(bf, K, assem_U, U, V)
         end
         numerical_setup!(ns, K)
         Algebra.solve!(x_, ns, b)
@@ -465,13 +466,17 @@ function solve!(m::StaticLinearModel; Assembly=true, post=PostProcessor())
 
     reset!(post)
     U, V = m.spaces
-    jac = m.jac
-    res = m.res
+    bf = m.bf
+    lf = m.lf
     ns, K, b, x, assem_U = m.caches
     if Assembly
-        assemble_matrix_and_vector!(jac, res, K, b, assem_U, U, V)
-    else
-        assemble_vector!(res, b, assem_U, V)
+        u = get_trial_fe_basis(U)
+        v = get_fe_basis(V)
+        uhd = zero(U)
+        matcontribs = bf(u, v)
+        veccontribs = lf(v)
+        data = collect_cell_matrix_and_vector(U, V, matcontribs, veccontribs, uhd)
+        assemble_matrix_and_vector!(K, b, assem_U, data)
     end
     numerical_setup!(ns, K)
     Algebra.solve!(x, ns, b)
@@ -487,10 +492,10 @@ function solve!(m::StaticLinearModel, b::Vector{Float64}; Assembly=true, post=Po
 
     reset!(post)
     U, V = m.spaces
-    jac = m.jac
+    bf = m.bf
     ns, K, _, x, assem_U = m.caches
     if Assembly
-        assemble_matrix!(jac, K, assem_U, U, V)
+        assemble_matrix!(bf, K, assem_U, U, V)
     end
     numerical_setup!(ns, K)
     Algebra.solve!(x, ns, b)
@@ -506,17 +511,17 @@ function solve!(m::StaticLinearModel{Vector{<:Function},<:Any,<:Any,<:Any,<:Any}
     U, V = m.spaces
     U0 = U[1]
     V0 = V[1]
-    jac = m.jac
-    res = m.res
+    bf = m.bf
+    lf = m.lf
     ns, K, b, x, assem_U0 = m.caches
 
     if Assembly
-        assemble_matrix!(jac, K, assem_U0, U0, V0)
+        assemble_matrix!(bf, K, assem_U0, U0, V0)
     end
 
     numerical_setup!(ns, K)
 
-    map(blocks(x), res) do xi, li
+    map(blocks(x), lf) do xi, li
         assemble_vector!(li, b, assem_U0, V0)
         Algebra.solve!(xi, ns, b)
     end
