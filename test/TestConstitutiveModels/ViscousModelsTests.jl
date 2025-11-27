@@ -151,11 +151,20 @@ end;
   hyper_elastic_model = NeoHookean3D(λ=λ, μ=μ)
   cons_model = GeneralizedMaxwell(hyper_elastic_model)
   test_viscous_derivatives_numerical(cons_model, rtolP=1e-10, rtolH=1e-9)
-end;
+end
 
 @testset "GeneralizedMaxwell NeoHookean 1-branch" begin
   hyper_elastic_model = NeoHookean3D(λ=λ, μ=μ)
   branch1 = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=μ1), τ=τ1)
   cons_model = GeneralizedMaxwell(hyper_elastic_model, branch1)
   test_viscous_derivatives_numerical(cons_model, rtolP=1e-3, rtolH=1e-2)
-end;
+end
+
+@testset "Dissipation ViscousIncompressible" begin
+  branch1 = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=μ1), τ=τ1)
+  D = Dissipation(branch1, 0.1)
+  F = I3
+  Fn = I3
+  A = VectorValue(I3..., 0)
+  @test D(F, Fn, A) < 1e-6
+end
