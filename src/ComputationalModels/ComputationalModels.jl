@@ -50,6 +50,7 @@ export updateBC!
 export DirichletCoupling
 export InterpolableBC
 export InterpolableBC!
+export add_tag_from_vertex_filter!
 
 
 include("FESpaces.jl")
