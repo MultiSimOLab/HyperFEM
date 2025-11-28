@@ -8,9 +8,9 @@ export step
 export sigmoid
 export constant
 
-"Return an unbounded ramp function. By default, it is the identity. Otherwise, the scaling factor is 1/T."
+"Return a bounded ramp function from 0 to 1. By default, it is the identity. Otherwise, the scaling factor is 1/T."
 function ramp(T::Float64=1.0)
-  t::Float64 -> t/T
+  t::Float64 -> max(min(t/T, 1.0), 0.0)
 end
 
 "Return a triangular evolution function ranging from 0 to 1, centered at T, having edges at 0 and 2T."
@@ -24,7 +24,7 @@ function triangular(T0::Float64, Tmax::Float64)
     Δ = Tmax - T0
     u = (t - T0) / Δ
     v = (t - Tmax) / Δ
-    max(min(u, 1.0-v), .0)
+    max(min(u, 1.0-v), 0.0)
   end
 end
 
