@@ -131,7 +131,7 @@ end
   viscous_branch2 = ViscousIncompressible(short_term, τ=60.)
   visco_elastic = GeneralizedMaxwell(hyper_elastic, viscous_branch1, viscous_branch2)
   dielectric = IdealDielectric(ε=1.0)
-  model =dielectric+visco_elastic
+  model = dielectric+visco_elastic
   Ke=Kinematics(Electro,Solid)
   E = get_Kinematics(Ke)
   K=Kinematics(Mechano,Solid)
@@ -140,7 +140,7 @@ end
   Uvn *= det(Uvn)^(-1/3)
   λvn = 1e-3
   Avn = VectorValue(Uvn..., λvn)
-  update_time_step!(cons_model, 0.01)
+  update_time_step!(model, 0.01)
   Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = model()
   @test norm(∂Ψu(F(∇u), E(∇φ), F(∇un), Avn, Avn)) ≈ 25.102080194257017
   @test norm(∂Ψuu(F(∇u), E(∇φ), F(∇un), Avn, Avn)) ≈ 3110.9722775475557
