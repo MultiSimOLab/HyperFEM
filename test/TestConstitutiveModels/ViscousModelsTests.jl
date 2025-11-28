@@ -192,10 +192,11 @@ end
   Ge = cof(Ce)
   ∂Se∂Ce = ∂S∂C(Ce)
   ∂Se = -1/τ * (Se - λ*Ge)
-  @show scaling = 100*abs(tr(∂Se∂Ce))
-  Dvis_ref = -Se ⊙ (inv(2*∂Se∂Ce + scaling*Ge⊗Ge) ⊙ ∂Se)
-  for α = 1:4
-    @show Dvis = -Se ⊙ (inv(2*∂Se∂Ce + 10^α*scaling*Ge⊗Ge) ⊙ ∂Se)
+  α = 100*abs(tr(∂Se∂Ce))
+  Dvis_ref = -Se ⊙ (inv(2*∂Se∂Ce + α*Ge⊗Ge) ⊙ ∂Se)
+  for m = 1:4
+    Dvis = -Se ⊙ (inv(2*∂Se∂Ce + 10^m*α*Ge⊗Ge) ⊙ ∂Se)
     @test abs(Dvis - Dvis_ref) / Dvis_ref < 1e-6
+    # @show Dvis
   end
 end
