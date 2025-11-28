@@ -81,6 +81,7 @@ export DerivativeStrategy
 export initializeStateVariables
 export updateStateVariables!
 export initialize_state
+export update_state!
 export update_time_step!
 
 export Kinematics
