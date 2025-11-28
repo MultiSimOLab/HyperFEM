@@ -49,6 +49,7 @@ function visco_elastic_simulation(;t_end=15, writevtk=true, verbose=true)
   Γ1  = BoundaryTriangulation(model, tags=D_bc.tags[4])
   dΓ1 = Measure(Γ1, degree)
   Δt = 0.05
+  update_time_step!(cons_model, Δt)
 
   # FE spaces
   reffe = ReferenceFE(lagrangian, VectorValue{3,Float64}, order)
@@ -63,9 +64,9 @@ function visco_elastic_simulation(;t_end=15, writevtk=true, verbose=true)
   F,_,_ = get_Kinematics(k)
   Fnh = F∘∇(unh)'
 
-  set_time_step!(cons_model, Δt)
-  res(Λ) = (u,v)->residual(cons_model, k, u, v, dΩ, t_end * Λ, Fnh, state_vars...; Δt=Δt)
-  jac(Λ) = (u,du,v)->jacobian(cons_model, k, u, du, v, dΩ, t_end * Λ, Fnh, state_vars...; Δt=Δt)
+  set_time_step!(cons_model)
+  res(Λ) = (u,v)->residual(cons_model, k, u, v, dΩ, t_end * Λ, Fnh, state_vars...)
+  jac(Λ) = (u,du,v)->jacobian(cons_model, k, u, du, v, dΩ, t_end * Λ, Fnh, state_vars...)
 
   ls = LUSolver()
   nls = NewtonSolver(ls; maxiter=20, atol=1.e-6, rtol=1.e-6, verbose=verbose)
@@ -75,11 +76,11 @@ function visco_elastic_simulation(;t_end=15, writevtk=true, verbose=true)
   σΓ = Float64[]
 
   function driverpost(post)
-    σh11, _... = Piola(cons_model, Kinematics(Mechano,Solid),uh, unh, state_vars, Ω, dΩ, 0.0, Δt)
+    σh11, _... = Piola(cons_model, Kinematics(Mechano,Solid),uh, unh, state_vars, Ω, dΩ, 0.0)
     σΓ1 = sum(∫(σh11)dΓ1) / sum(∫(1.0)dΓ1)
     push!(σΓ, σΓ1)
     push!(λx, 1.0 + component_LInf(uh, :x, Ω) / long)
-    updateStateVariables!(state_vars, cons_model, Δt, F∘(∇(uh)'), F∘(∇(unh)'))
+    updateStateVariables!(state_vars, cons_model, F∘(∇(uh)'), F∘(∇(unh)'))
   end
 
   post_model = PostProcessor(comp_model, driverpost; is_vtk=writevtk, filepath="")

@@ -117,7 +117,8 @@ end
   Uvn *= det(Uvn)^(-1/3)
   λvn = 1e-3
   Avn = VectorValue(Uvn..., λvn)
-  Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = model(Δt=0.01)
+  update_time_step!(model, 0.01)
+  Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = model()
   @test norm(∂Ψu(F(∇u), E(∇φ), F(∇un), Avn)) ≈ 25.049301121178615
   @test norm(∂Ψuu(F(∇u), E(∇φ), F(∇un), Avn)) ≈ 3110.7607787445168
 end
@@ -139,7 +140,8 @@ end
   Uvn *= det(Uvn)^(-1/3)
   λvn = 1e-3
   Avn = VectorValue(Uvn..., λvn)
-  Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = model(Δt=0.01)
+  update_time_step!(cons_model, 0.01)
+  Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ = model()
   @test norm(∂Ψu(F(∇u), E(∇φ), F(∇un), Avn, Avn)) ≈ 25.102080194257017
   @test norm(∂Ψuu(F(∇u), E(∇φ), F(∇un), Avn, Avn)) ≈ 3110.9722775475557
 end

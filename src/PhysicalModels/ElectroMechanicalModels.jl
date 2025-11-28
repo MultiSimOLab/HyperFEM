@@ -33,8 +33,8 @@ struct ElectroMechModel{E<:Electro,M<:Mechano} <: ElectroMechano
     ∂Ψφφ(F, E, N) = ∂Ψem_φφ(F, E)
     return (Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ)
   end
-  function (obj::ElectroMechModel{<:Electro,<:ViscoElastic})(Λ::Float64=1.0; Δt)
-    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano(Λ, Δt=Δt)
+  function (obj::ElectroMechModel{<:Electro,<:ViscoElastic})(Λ::Float64=1.0)
+    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano()
     Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.electro, obj.mechano, Λ)
     Ψ(F, E, Fn, A...) = Ψm(F, Fn, A...) + Ψem(F, E)
     ∂Ψu(F, E, Fn, A...) = ∂Ψm_u(F, Fn, A...) + ∂Ψem_u(F, E)

@@ -89,6 +89,7 @@ end
 @publish PhysicalModels Dissipation
 @publish PhysicalModels initializeStateVariables
 @publish PhysicalModels updateStateVariables!
+@publish PhysicalModels update_time_step!
 
 @publish WeakForms residual
 @publish WeakForms jacobian

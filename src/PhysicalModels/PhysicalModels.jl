@@ -80,7 +80,7 @@ export DerivativeStrategy
 export initializeStateVariables
 export updateStateVariables!
 export update_state!
-export set_time_step!
+export update_time_step!
 
 export Kinematics
 export KinematicDescription
@@ -177,7 +177,7 @@ end
 """
 Set the time step to be used internally by the constitutive model.
 """
-function set_time_step!(::PhysicalModel, Δt::Float64)
+function update_time_step!(::PhysicalModel, Δt::Float64)
   Δt
 end
 
