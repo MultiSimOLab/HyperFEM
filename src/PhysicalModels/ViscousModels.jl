@@ -22,6 +22,10 @@ struct ViscousIncompressible <: Visco
   end
 end
 
+function update_time_step!(obj::ViscousIncompressible, Δt::Float64)
+  obj.Δt[] = Δt
+end
+
 function initializeStateVariables(::ViscousIncompressible, points::Measure)
   v = VectorValue(1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0)
   CellState(v, points)
@@ -58,9 +62,8 @@ struct GeneralizedMaxwell <: ViscoElastic
 end
 
 function update_time_step!(obj::GeneralizedMaxwell, Δt::Float64)
+  foreach(b -> update_time_step!(b, Δt), obj.branches)
   obj.Δt[] = Δt
-  foreach(b -> b.Δt[] = Δt, obj.branches)
-  Δt
 end
 
 function initializeStateVariables(obj::GeneralizedMaxwell, points::Measure)
