@@ -37,7 +37,7 @@ end
 Calculate the residual using the given constitutive model and finite element functions.
 """
 function residual(physicalmodel::Mechano, km::KinematicModel, u, v, dΩ, Λ=1.0, vars...; kwargs...)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+  haskey(kwargs, :Δt) && @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   _, ∂Ψu, _ = physicalmodel(; kwargs...)
   F, _, _   = get_Kinematics(km; Λ=Λ)
   ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘∇(u)', vars...)))dΩ
@@ -49,7 +49,7 @@ end
 Calculate the jacobian using the given constitutive model and finite element functions.
 """
 function jacobian(physicalmodel::Mechano, km::KinematicModel, u, du, v, dΩ, Λ=1.0, vars...; kwargs...)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+  haskey(kwargs, :Δt) && @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   _, _, ∂Ψuu = physicalmodel(; kwargs...)
   F, _, _    = get_Kinematics(km; Λ=Λ)
   ∫(∇(v)' ⊙ ((∂Ψuu ∘ (F∘∇(u)', vars...)) ⊙ ∇(du)'))dΩ
@@ -72,8 +72,7 @@ end
 # Stagered strategy
 # -----------------
 function residual(physicalmodel::ThermoElectroMechano, ::Type{Mechano}, kine::NTuple{3,KinematicModel},(u, φ, θ), v, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
-  DΨ= physicalmodel(Λ)
+  DΨ = physicalmodel()
   F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
   E     = get_Kinematics(kine[2]; Λ=Λ)
   ∂Ψu=DΨ[2]
@@ -81,8 +80,7 @@ function residual(physicalmodel::ThermoElectroMechano, ::Type{Mechano}, kine::NT
 end
 
 function residual(physicalmodel::ThermoElectroMechano, ::Type{Electro}, kine::NTuple{3,KinematicModel}, (u, φ, θ), vφ, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
-  DΨ= physicalmodel(Λ)
+  DΨ = physicalmodel()
   F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
   E     = get_Kinematics(kine[2]; Λ=Λ)
   ∂Ψφ=DΨ[3]
@@ -90,14 +88,14 @@ function residual(physicalmodel::ThermoElectroMechano, ::Type{Electro}, kine::NT
 end
 
 function residual(physicalmodel::ThermoElectroMechano, ::Type{Thermo}, kine::NTuple{3,KinematicModel}, (u, φ, θ), vθ, dΩ, Λ=1.0, Δt=0.0, vars...)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+  @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   κ = physicalmodel.thermo.κ
   D, ∂D = Dissipation(Δt)
   return ∫(κ * ∇(θ) ⋅ ∇(vθ) -D(u, φ, θ, vars...))dΩ
 end
 
 function transient_residual(physicalmodel::ThermoElectroMechano, ::Type{Thermo}, kine::NTuple{3,KinematicModel}, (u, φ, θ), (un, φn, θn), vθ, dΩ, Λ=1.0, Δt=0.0, vars...)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+  @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   DΨ = physicalmodel(Δt=Δt)
   η = -DΨ[4]
   return ∫((1/Δt)*(θ*η(F,E,θ,vars...) - θn*η(Fn,En,θn,vars...) + η(F,E,θ)*(θ - θn)))dΩ
@@ -105,37 +103,32 @@ end
 
 
 function jacobian(physicalmodel::ThermoElectroMechano, ::Type{Mechano}, kine::NTuple{3,KinematicModel}, (u, φ, θ), du, v, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
-  DΨ= physicalmodel()
+  DΨ = physicalmodel()
   F,_,_ = get_Kinematics(kine[1])
   E     = get_Kinematics(kine[2])
-  ∂Ψuu=DΨ[5]
+  ∂Ψuu = DΨ[5]
   ∫(∇(v)' ⊙ ((∂Ψuu ∘ (F∘(∇(u)'), E∘(∇(φ)), θ)) ⊙ (∇(du)')))dΩ
 end
 
 function jacobian(physicalmodel::ThermoElectroMechano, ::Type{Electro}, kine::NTuple{3,KinematicModel}, (u, φ, θ), dφ, vφ, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
-  DΨ= physicalmodel()
+  DΨ = physicalmodel()
   F,_,_ = get_Kinematics(kine[1])
   E     = get_Kinematics(kine[2])
-  ∂Ψφφ=DΨ[6]
+  ∂Ψφφ = DΨ[6]
   ∫(∇(vφ) ⋅ ((∂Ψφφ ∘ (F∘(∇(u)'), E∘(∇(φ)), θ)) ⋅ ∇(dφ)))dΩ
 end
 
 function jacobian(physicalmodel::ThermoElectroMechano, ::Type{Thermo}, kine::NTuple{3,KinematicModel}, dθ, vθ, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   κ = physicalmodel.thermo.κ
   ∫(κ * ∇(dθ) ⋅ ∇(vθ))dΩ
 end
 
 function jacobian(physicalmodel::ThermoElectroMechano, ::Type{Thermo}, kine::NTuple{3,KinematicModel}, (u, φ, θ)::Tuple, dθ, vθ, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   κ = physicalmodel.thermo.κ
   ∫((κ ∘ (u, φ, θ)) * ∇(dθ) ⋅ ∇(vθ))dΩ
 end
 
 function jacobian(physicalmodel::ThermoElectroMechano, ::Type{ElectroMechano}, kine::NTuple{3,KinematicModel},(u, φ, θ), (du, dφ), (v,vφ), dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   DΨ = physicalmodel()
   F,_,_ = get_Kinematics(kine[1])
   E     = get_Kinematics(kine[2])
@@ -145,34 +138,30 @@ function jacobian(physicalmodel::ThermoElectroMechano, ::Type{ElectroMechano}, k
 end
 
 function jacobian(physicalmodel::ThermoElectroMechano, ::Type{ThermoMechano},kine::NTuple{3,KinematicModel}, (u, φ, θ), dθ, v, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   DΨ = physicalmodel()
   F,_,_ = get_Kinematics(kine[1])
   E     = get_Kinematics(kine[2])
-  ∂Ψuθ=DΨ[9]
+  ∂Ψuθ = DΨ[9]
   ∫(∇(v)' ⊙ (∂Ψuθ ∘ (F∘(∇(u)'), E∘(∇(φ)), θ)) * dθ)dΩ 
 end
 
 function jacobian(physicalmodel::ThermoElectroMechano, ::Type{ThermoElectro}, kine::NTuple{3,KinematicModel},(u, φ, θ), dθ, vφ, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   DΨ= physicalmodel()
   F,_,_ = get_Kinematics(kine[1])
   E     = get_Kinematics(kine[2])
-  ∂Ψφθ=DΨ[10]
+  ∂Ψφθ = DΨ[10]
   -1.0*∫(∇(vφ) ⋅ ((∂Ψφθ ∘ (F∘(∇(u)'), E∘(∇(φ)), θ)) * dθ))dΩ
 end
 
 # Monolithic strategy
 # -------------------
 function residual(physicalmodel::ThermoElectroMechano, kine::NTuple{3,KinematicModel}, (u, φ, θ), (v, vφ, vθ), dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   residual(physicalmodel, Mechano, kine, (u, φ, θ), v, dΩ) +
   residual(physicalmodel, Electro, kine, (u, φ, θ), vφ, dΩ) +
   residual(physicalmodel, Thermo, kine,(u, φ, θ), vθ, dΩ)
 end
 
-function jacobian(physicalmodel::ThermoElectroMechano, kine::NTuple{3,KinematicModel}, (u, φ, θ), (du, dφ, dθ), (v, vφ, vθ),  dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+function jacobian(physicalmodel::ThermoElectroMechano, kine::NTuple{3,KinematicModel}, (u, φ, θ), (du, dφ, dθ), (v, vφ, vθ), dΩ, Λ=1.0)
   jacobian(physicalmodel, Mechano, kine, (u, φ, θ), du, v, dΩ) +
   jacobian(physicalmodel, Electro, kine, (u, φ, θ), dφ, vφ, dΩ) +
   jacobian(physicalmodel, Thermo, kine, dθ, vθ, dΩ) +
@@ -188,8 +177,7 @@ end
 
 # Stagered strategy
 # -----------------
-function residual(physicalmodel::ThermoMechano, ::Type{Mechano},  kine::NTuple{2,KinematicModel}, (u, θ), v, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+function residual(physicalmodel::ThermoMechano, ::Type{Mechano}, kine::NTuple{2,KinematicModel}, (u, θ), v, dΩ, Λ=1.0)
   DΨ = physicalmodel()
   F,_,_ = get_Kinematics(kine[1])
   ∂Ψu = DΨ[2]
@@ -197,33 +185,28 @@ function residual(physicalmodel::ThermoMechano, ::Type{Mechano},  kine::NTuple{2
 end
 
 function residual(physicalmodel::ThermoMechano, ::Type{Thermo}, kine::NTuple{2,KinematicModel}, (u, θ), vθ, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   κ = physicalmodel.thermo.κ
   ∫(κ * ∇(θ) ⋅ ∇(vθ))dΩ
 end
 
 function jacobian(physicalmodel::ThermoMechano, ::Type{Mechano}, kine::NTuple{2,KinematicModel}, (u, θ), du, v, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   DΨ = physicalmodel()
   F,_,_ = get_Kinematics(kine[1])
   ∂Ψuu = DΨ[4]
   ∫(∇(v)' ⊙ ((∂Ψuu ∘ (F∘(∇(u)'), θ)) ⊙ (∇(du)')))dΩ
 end
 
-function jacobian(physicalmodel::ThermoMechano, ::Type{Thermo},  kine::NTuple{2,KinematicModel},dθ, vθ, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+function jacobian(physicalmodel::ThermoMechano, ::Type{Thermo}, kine::NTuple{2,KinematicModel},dθ, vθ, dΩ, Λ=1.0)
   κ = physicalmodel.thermo.κ
   ∫(κ * ∇(dθ) ⋅ ∇(vθ))dΩ
 end
 
-function jacobian(physicalmodel::ThermoMechano, ::Type{Thermo},  kine::NTuple{2,KinematicModel}, (u, θ)::Tuple, dθ, vθ, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+function jacobian(physicalmodel::ThermoMechano, ::Type{Thermo}, kine::NTuple{2,KinematicModel}, (u, θ)::Tuple, dθ, vθ, dΩ, Λ=1.0)
   κ=physicalmodel.thermo.κ
   ∫((κ ∘ (u, θ)) * ∇(dθ) ⋅ ∇(vθ))dΩ
 end
 
-function jacobian(physicalmodel::ThermoMechano, ::Type{ThermoMechano},  kine::NTuple{2,KinematicModel}, (u, θ), (du, dθ), v, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+function jacobian(physicalmodel::ThermoMechano, ::Type{ThermoMechano}, kine::NTuple{2,KinematicModel}, (u, θ), (du, dθ), v, dΩ, Λ=1.0)
   DΨ = physicalmodel()
   F,_,_ = get_Kinematics(kine[1])
   ∂Ψuθ = DΨ[6]
@@ -232,14 +215,12 @@ end
 
 # Monolithic strategy
 # -------------------
-function residual(physicalmodel::ThermoMechano,  kine::NTuple{2,KinematicModel},(u, θ), (v, vθ), dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+function residual(physicalmodel::ThermoMechano, kine::NTuple{2,KinematicModel},(u, θ), (v, vθ), dΩ, Λ=1.0)
   residual(physicalmodel, Mechano, kine, (u, θ), v, dΩ) +
   residual(physicalmodel, Thermo, kine, (u, θ), vθ, dΩ)
 end
 
-function jacobian(physicalmodel::ThermoMechano,  kine::NTuple{2,KinematicModel}, (u, θ), (du, dθ), (v, vθ),  dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+function jacobian(physicalmodel::ThermoMechano, kine::NTuple{2,KinematicModel}, (u, θ), (du, dθ), (v, vθ), dΩ, Λ=1.0)
   jacobian(physicalmodel, Mechano, kine, (u, θ), du, v, dΩ) +
   jacobian(physicalmodel, Thermo, kine,dθ, vθ, dΩ) +
   jacobian(physicalmodel, ThermoMechano, kine,(u, θ), (du, dθ), v, dΩ)
@@ -261,7 +242,6 @@ include("ElectroMechanics.jl")
  
 
 function residual(physicalmodel::FlexoElectro, ::Type{Mechano},  kine::NTuple{2,KinematicModel}, (u, φ, ϕ₁, ϕ₂, ϕ₃), v, dΩ, X, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   DΨ = physicalmodel()
   κ = physicalmodel.κ
   F,_,_ = get_Kinematics(kine[1])
@@ -272,7 +252,6 @@ function residual(physicalmodel::FlexoElectro, ::Type{Mechano},  kine::NTuple{2,
 end
 
 function residual(physicalmodel::FlexoElectro, ::Type{Electro}, kine::NTuple{2,KinematicModel}, (u, φ), vφ, dΩ, X, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   DΨ = physicalmodel()
   F,_,_ = get_Kinematics(kine[1])
   E     = get_Kinematics(kine[2])
@@ -281,7 +260,6 @@ function residual(physicalmodel::FlexoElectro, ::Type{Electro}, kine::NTuple{2,K
 end
 
 function residual(physicalmodel::FlexoElectro, ::Type{FlexoElectro}, kine::NTuple{2,KinematicModel},(u, ϕ₁, ϕ₂, ϕ₃), (δϕ₁, δϕ₂, δϕ₃), dΩ, X, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   DΨ = physicalmodel()
   κ = physicalmodel.κ
   Φ = DΨ[7]
@@ -289,7 +267,6 @@ function residual(physicalmodel::FlexoElectro, ::Type{FlexoElectro}, kine::NTupl
 end
 
 function jacobian(physicalmodel::FlexoElectro, ::Type{Mechano}, kine::NTuple{2,KinematicModel},(u, φ), du, v, dΩ, X, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   DΨ = physicalmodel()
   κ = physicalmodel.κ
   F,_,_ = get_Kinematics(kine[1])
@@ -300,7 +277,6 @@ function jacobian(physicalmodel::FlexoElectro, ::Type{Mechano}, kine::NTuple{2,K
 end
 
 function jacobian(physicalmodel::FlexoElectro, ::Type{Electro}, kine::NTuple{2,KinematicModel},(u, φ), dφ, vφ, dΩ, X, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   DΨ = physicalmodel()
   F,_,_ = get_Kinematics(kine[1])
   E     = get_Kinematics(kine[2])
@@ -309,7 +285,6 @@ function jacobian(physicalmodel::FlexoElectro, ::Type{Electro}, kine::NTuple{2,K
 end
 
 function jacobian(physicalmodel::FlexoElectro, ::Type{ElectroMechano}, kine::NTuple{2,KinematicModel},(u, φ), (du, dφ), (v, vφ), dΩ, X, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   DΨ = physicalmodel()
   F,_,_ = get_Kinematics(kine[1])
   E     = get_Kinematics(kine[2])
@@ -319,8 +294,7 @@ function jacobian(physicalmodel::FlexoElectro, ::Type{ElectroMechano}, kine::NTu
 end
 
 
-function jacobian(physicalmodel::FlexoElectro, ::Type{FlexoElectro}, kine::NTuple{2,KinematicModel},(ϕ₁,ϕ₂,ϕ₃), (du, dϕ₁,dϕ₂,dϕ₃), (v, δϕ₁,δϕ₂,δϕ₃), dΩ, X, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+function jacobian(physicalmodel::FlexoElectro, ::Type{FlexoElectro}, kine::NTuple{2,KinematicModel}, (ϕ₁,ϕ₂,ϕ₃), (du, dϕ₁,dϕ₂,dϕ₃), (v, δϕ₁,δϕ₂,δϕ₃), dΩ, X, Λ=1.0)
   DΨ = physicalmodel()
   κ = physicalmodel.κ
   Φ = DΨ[7]
@@ -334,14 +308,12 @@ end
 # -------------------
 
 function residual(physicalmodel::FlexoElectro, kine::NTuple{2,KinematicModel},(u, φ, ϕ₁, ϕ₂, ϕ₃), (v, vφ, δϕ₁, δϕ₂, δϕ₃), dΩ, X, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   residual(physicalmodel, Mechano, kine,(u, φ, ϕ₁, ϕ₂, ϕ₃), v, dΩ, X) +
   residual(physicalmodel, Electro, kine,(u, φ), vφ, dΩ, X) +
   residual(physicalmodel, FlexoElectro, kine,(u, ϕ₁, ϕ₂, ϕ₃), (δϕ₁, δϕ₂, δϕ₃), dΩ, X)
 end
 
 function jacobian(physicalmodel::FlexoElectro, kine::NTuple{2,KinematicModel},(u, φ, ϕ₁,ϕ₂,ϕ₃), (du, dφ, dϕ₁,dϕ₂,dϕ₃), (v, vφ, δϕ₁,δϕ₂,δϕ₃), dΩ, X, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   jacobian(physicalmodel, Mechano, kine,(u, φ), du, v, dΩ, X) +
   jacobian(physicalmodel, Electro, kine,(u, φ), dφ, vφ, dΩ, X) +
   jacobian(physicalmodel, ElectroMechano, kine,(u, φ), (du, dφ), (v, vφ), dΩ, X)+
@@ -356,7 +328,6 @@ end
 # Stagered strategy
 # -----------------
 function residual(physicalmodel::ThermoElectroMech_PINNs, ::Type{Mechano}, kine::NTuple{2,KinematicModel}, (u, φ, θ), v, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   DΨ = physicalmodel()
   F, _, _ = get_Kinematics(kine[1])
   E = get_Kinematics(kine[2])
@@ -364,8 +335,7 @@ function residual(physicalmodel::ThermoElectroMech_PINNs, ::Type{Mechano}, kine:
   return ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘(∇(u)'), E∘(∇(φ)), θ)))dΩ
 end
 
-function residual(physicalmodel::ThermoElectroMech_PINNs, ::Type{Electro},  kine::NTuple{2,KinematicModel},(u, φ, θ), vφ, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+function residual(physicalmodel::ThermoElectroMech_PINNs, ::Type{Electro}, kine::NTuple{2,KinematicModel},(u, φ, θ), vφ, dΩ, Λ=1.0)
   DΨ = physicalmodel()
   F, _, _ = get_Kinematics(kine[1])
   E = get_Kinematics(kine[2])
@@ -373,15 +343,13 @@ function residual(physicalmodel::ThermoElectroMech_PINNs, ::Type{Electro},  kine
   return -1.0*∫(∇(vφ)' ⋅ (∂Ψφ ∘ (F∘(∇(u)'), E∘(∇(φ)), θ)))dΩ
 end
 
-function residual(physicalmodel::ThermoElectroMech_PINNs, ::Type{Thermo},  kine::NTuple{2,KinematicModel},(u, φ, θ), vθ, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+function residual(physicalmodel::ThermoElectroMech_PINNs, ::Type{Thermo}, kine::NTuple{2,KinematicModel},(u, φ, θ), vθ, dΩ, Λ=1.0)
   κ=physicalmodel.κ
   return ∫(κ * ∇(θ) ⋅ ∇(vθ))dΩ
 end
 
 
-function jacobian(physicalmodel::ThermoElectroMech_PINNs, ::Type{Mechano},  kine::NTuple{2,KinematicModel},(u, φ, θ), du, v, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+function jacobian(physicalmodel::ThermoElectroMech_PINNs, ::Type{Mechano}, kine::NTuple{2,KinematicModel},(u, φ, θ), du, v, dΩ, Λ=1.0)
   DΨ = physicalmodel()
   F, _, _ = get_Kinematics(kine[1])
   E = get_Kinematics(kine[2])
@@ -389,8 +357,7 @@ function jacobian(physicalmodel::ThermoElectroMech_PINNs, ::Type{Mechano},  kine
   ∫(∇(v)' ⊙ ((∂Ψuu ∘ (F∘(∇(u)'), E∘(∇(φ)), θ)) ⊙ (∇(du)')))dΩ
 end
 
-function jacobian(physicalmodel::ThermoElectroMech_PINNs, ::Type{Electro},  kine::NTuple{2,KinematicModel},(u, φ, θ), dφ, vφ, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+function jacobian(physicalmodel::ThermoElectroMech_PINNs, ::Type{Electro}, kine::NTuple{2,KinematicModel},(u, φ, θ), dφ, vφ, dΩ, Λ=1.0)
   DΨ = physicalmodel()
   F, _, _ = get_Kinematics(kine[1])
   E = get_Kinematics(kine[2])
@@ -398,20 +365,17 @@ function jacobian(physicalmodel::ThermoElectroMech_PINNs, ::Type{Electro},  kine
   ∫(∇(vφ) ⋅ ((∂Ψφφ ∘ (F∘(∇(u)'), E∘(∇(φ)), θ)) ⋅ ∇(dφ)))dΩ
 end
 
-function jacobian(physicalmodel::ThermoElectroMech_PINNs, ::Type{Thermo},  kine::NTuple{2,KinematicModel},dθ, vθ, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+function jacobian(physicalmodel::ThermoElectroMech_PINNs, ::Type{Thermo}, kine::NTuple{2,KinematicModel},dθ, vθ, dΩ, Λ=1.0)
   κ = physicalmodel.κ
   ∫(κ * ∇(dθ) ⋅ ∇(vθ))dΩ
 end
 
-function jacobian(physicalmodel::ThermoElectroMech_PINNs, ::Type{Thermo},  kine::NTuple{2,KinematicModel},(u, φ, θ)::Tuple, dθ, vθ, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+function jacobian(physicalmodel::ThermoElectroMech_PINNs, ::Type{Thermo}, kine::NTuple{2,KinematicModel},(u, φ, θ)::Tuple, dθ, vθ, dΩ, Λ=1.0)
   κ = physicalmodel.κ
   ∫((κ ∘ (u, φ, θ)) * ∇(dθ) ⋅ ∇(vθ))dΩ
 end
 
-function jacobian(physicalmodel::ThermoElectroMech_PINNs, ::Type{ElectroMechano},  kine::NTuple{2,KinematicModel},(u, φ, θ), (du, dφ), (v,vφ), dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+function jacobian(physicalmodel::ThermoElectroMech_PINNs, ::Type{ElectroMechano}, kine::NTuple{2,KinematicModel},(u, φ, θ), (du, dφ), (v,vφ), dΩ, Λ=1.0)
   DΨ = physicalmodel()
   F, _, _ = get_Kinematics(kine[1])
   E = get_Kinematics(kine[2])
@@ -421,7 +385,6 @@ function jacobian(physicalmodel::ThermoElectroMech_PINNs, ::Type{ElectroMechano}
 end
 
 function jacobian(physicalmodel::ThermoElectroMech_PINNs, ::Type{ThermoMechano}, kine::NTuple{2,KinematicModel}, (u, φ, θ), dθ, v, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   DΨ = physicalmodel()
   F, _, _ = get_Kinematics(kine[1])
   E = get_Kinematics(kine[2])
@@ -430,7 +393,6 @@ function jacobian(physicalmodel::ThermoElectroMech_PINNs, ::Type{ThermoMechano},
 end
 
 function jacobian(physicalmodel::ThermoElectroMech_PINNs, ::Type{ThermoElectro}, kine::NTuple{2,KinematicModel}, (u, φ, θ), dθ, vφ, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   DΨ = physicalmodel()
   F, _, _ = get_Kinematics(kine[1])
   E = get_Kinematics(kine[2])
@@ -441,14 +403,12 @@ end
 # Monolithic strategy
 # -------------------
 function residual(physicalmodel::ThermoElectroMech_PINNs,  kine::NTuple{2,KinematicModel},(u, φ, θ), (v, vφ, vθ), dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   residual(physicalmodel, Mechano, kine,(u, φ, θ), v, dΩ) +
   residual(physicalmodel, Electro, kine,(u, φ, θ), vφ, dΩ) +
   residual(physicalmodel, Thermo, kine,(u, φ, θ), vθ, dΩ)
 end
 
 function jacobian(physicalmodel::ThermoElectroMech_PINNs, kine::NTuple{2,KinematicModel}, (u, φ, θ), (du, dφ, dθ), (v, vφ, vθ),  dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   jacobian(physicalmodel, Mechano, kine,(u, φ, θ), du, v, dΩ) +
   jacobian(physicalmodel, Electro, kine,(u, φ, θ), dφ, vφ, dΩ) +
   jacobian(physicalmodel, Thermo, kine,dθ, vθ, dΩ) +
@@ -458,7 +418,6 @@ function jacobian(physicalmodel::ThermoElectroMech_PINNs, kine::NTuple{2,Kinemat
 end
 
 function transient_residual(physicalmodel::ThermoElectroMech_Bonet, ::Type{Thermo}, kine::NTuple{3,KinematicModel}, (u, φ, θ), vθ, dΩ, Λ=1.0)
-  @warn "The arguments 'Λ' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   κ = physicalmodel.thermo.κ
   return ∫(κ * ∇(θ) ⋅ ∇(vθ))dΩ
 end

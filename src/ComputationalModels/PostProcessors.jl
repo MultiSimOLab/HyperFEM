@@ -77,7 +77,6 @@ function Jacobian(uh,km)
 end
 
 function Piola(physmodel::ThermoElectroMechano, kine::NTuple{3,KinematicModel}, uh, φh, θh, Ω, dΩ, Λ=1.0)
-  @warn "The argument 't' will be removed shortly. Just kept to avoid breaking benchmarks..."
   DΨ = physmodel()
   F, _, _ = get_Kinematics(kine[1])
   E = get_Kinematics(kine[2])
@@ -94,14 +93,14 @@ end
 
 
 function Piola(model::Elasto, km::KinematicModel, uh, unh, state_vars, Ω, dΩ, t, Δt=0)
-  @warn "The arguments 't' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+  @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   σh = Piola(model,km,uh)
   interpolate_L2_tensor(σh, Ω, dΩ)
 end
 
 
 function Piola(model::ViscoElastic, km::KinematicModel, uh, unh, state_vars, Ω, dΩ, t=0, Δt=0)
-  @warn "The arguments 't' and 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+  @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
   σh = Piola(model, km, uh, unh, state_vars)
   interpolate_L2_tensor(σh, Ω, dΩ)
 end
@@ -123,10 +122,9 @@ end
 
 
 function Entropy(physmodel::ThermoElectroMechano,  kine::NTuple{3,KinematicModel}, uh, φh, θh, Ω, dΩ, Λ=1.0)
-  @warn "The argument 'Λ' will be removed shortly. Just kept to avoid breaking benchmarks..."
   DΨ = physmodel()
-  F,_,_ = get_Kinematics(kine[1])
-  E     = get_Kinematics(kine[2])
+  F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
+  E     = get_Kinematics(kine[2]; Λ=Λ)
   η = -DΨ[4]
   refL2 = ReferenceFE(lagrangian, Float64, 0)
   ref = ReferenceFE(lagrangian, Float64, 1)
@@ -138,10 +136,9 @@ end
 
 
 function D0(physmodel::ThermoElectroMechano,  kine::NTuple{3,KinematicModel}, uh, φh, θh, Ω, dΩ, Λ=1.0)
-  @warn "The argument 'Λ' will be removed shortly. Just kept to avoid breaking benchmarks..."
   DΨ = physmodel()
-  F,_,_ = get_Kinematics(kine[1])
-  E     = get_Kinematics(kine[2])
+  F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
+  E     = get_Kinematics(kine[2]; Λ=Λ)
   ∂ΨE = DΨ[3]
   refL2 = ReferenceFE(lagrangian, Float64, 0)
   ref = ReferenceFE(lagrangian, Float64, 1)
