@@ -74,12 +74,13 @@ export ThermoElectro
 export FlexoElectro
 export EnergyInterpolationScheme
 export SecondPiola
+export Dissipation
 
 export DerivativeStrategy
 
 export initializeStateVariables
 export updateStateVariables!
-export update_state!
+export initialize_state
 export update_time_step!
 
 export Kinematics
@@ -146,14 +147,19 @@ include("PINNs.jl")
 """
 Initialize the state variables for the given constitutive model and discretization.
 """
+function initialize_state(::PhysicalModel, points::Measure)
+  return nothing
+end
 function initializeStateVariables(::PhysicalModel, points::Measure)
   return nothing
 end
 
 
 """
-Update the state variables. The state variables must be initialized using the function 'initializeStateVariables'.
+Update the state variables. The state variables must be initialized using the function 'initialize_state'.
 """
+function update_state!(::PhysicalModel, vars...)
+end
 function updateStateVariables!(::Any, ::PhysicalModel, vars...)
 end
 

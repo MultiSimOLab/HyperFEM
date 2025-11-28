@@ -53,6 +53,14 @@ function update_time_step!(obj::ElectroMechModel, Δt::Float64)
   update_time_step!(obj.mechano, Δt)
 end
 
+function initialize_state(obj::ElectroMechano, points::Measure)
+  initialize_state(obj.mechano, points)
+end
+
+function update_state!(obj::ElectroMechano, args...)
+  update_state!(obj.mechano, args...)
+end
+
 function initializeStateVariables(obj::ElectroMechano, points::Measure)
   initializeStateVariables(obj.mechano, points)
 end

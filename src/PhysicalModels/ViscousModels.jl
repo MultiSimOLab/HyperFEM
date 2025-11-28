@@ -26,6 +26,17 @@ function update_time_step!(obj::ViscousIncompressible, Δt::Float64)
   obj.Δt[] = Δt
 end
 
+function initialize_state(::ViscousIncompressible, points::Measure)
+  v = VectorValue(1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0)
+  CellState(v, points)
+end
+
+function update_state!(obj::ViscousIncompressible, state, F, Fn)
+  _, Se, ∂Se∂Ce = SecondPiola(obj.elasto)
+  return_mapping(A, F, Fn) = ReturnMapping(obj, Se, ∂Se∂Ce, F, Fn, A)
+  update_state!(return_mapping, state, F, Fn)
+end
+
 function initializeStateVariables(::ViscousIncompressible, points::Measure)
   v = VectorValue(1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0)
   CellState(v, points)
@@ -64,6 +75,15 @@ end
 function update_time_step!(obj::GeneralizedMaxwell, Δt::Float64)
   foreach(b -> update_time_step!(b, Δt), obj.branches)
   obj.Δt[] = Δt
+end
+
+function initialize_state(obj::GeneralizedMaxwell, points::Measure)
+  map(b -> initialize_state(b, points), obj.branches)
+end
+
+function update_state!(obj::GeneralizedMaxwell, states, F, Fn)
+  @assert length(obj.branches) == length(states)
+  map((b, s) -> update_state!(b, s, F, Fn), obj.branches, states)
 end
 
 function initializeStateVariables(obj::GeneralizedMaxwell, points::Measure)
