@@ -39,6 +39,7 @@ end
 
 
 function trAA(A::TensorValue{3, 3, T, N}) where {T, N}
+  @warn "trAA is deprecated and will be removed. Use the double contraction operator : instead." maxlog=1
   return sum(A.data[i]*A.data[i] for i in 1:N)
 end
 
