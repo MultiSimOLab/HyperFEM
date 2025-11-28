@@ -117,6 +117,8 @@ end
 @publish ComputationalModels  GmshDiscreteModel
 @publish ComputationalModels  updateBC!
 @publish ComputationalModels  PostProcessor
+@publish ComputationalModels  vtk_save
+@publish ComputationalModels  get_pvd
 @publish ComputationalModels  PostMetrics
 @publish ComputationalModels  StaggeredModel
 @publish ComputationalModels  Cauchy
