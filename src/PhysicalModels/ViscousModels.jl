@@ -514,7 +514,7 @@ function ViscousDissipation(obj::ViscousIncompressible,
   Se = Se_(Ce)
   Ge = cof(Ce)
   ∂Se∂Ce = ∂Se∂Ce_(Ce)
-  α = 1.e5abs(tr(∂Se∂Ce))  # Ensure invertibility of the elasticity tensor.
+  α = 1.e3abs(tr(∂Se∂Ce))  # Ensure invertibility of the elasticity tensor.
   invCCe = inv(2*∂Se∂Ce + α*Ge⊗Ge)
   ∂Se = -1/τ * (Se - λα*Ge)
   Dvis = -Se ⊙ (invCCe ⊙ ∂Se)
