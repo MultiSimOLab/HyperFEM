@@ -168,3 +168,34 @@ end
   A = VectorValue(I3..., 0)
   @test D(F, Fn, A) < 1e-6
 end
+
+@testset "Dissipation invertibility" begin
+  Δt = 0.1
+  μ = 1.0
+  τ = 1.234
+  short_term = IncompressibleNeoHookean3D(λ=0., μ=μ)
+  branch1 = ViscousIncompressible(short_term, τ=τ)
+  branch1.Δt[] = Δt
+
+  Ψ, S, ∂S∂C = SecondPiola(short_term)
+  return_mapping(C,Cet,Cen,λ) = HyperFEM.PhysicalModels.return_mapping_algorithm!(branch1, S, ∂S∂C, C, Cet, Cen, λ)
+
+  F = I3 + TensorValue(1e-1, zeros(8)...)
+  Fn = I3 + TensorValue(2e-2, zeros(8)...)
+  Uvn = isochoric_F(I3 + TensorValue(2e-2, zeros(8)...))
+  C = F'·F
+  Cn = Fn'·Fn
+  Cet = inv(Uvn)' · C · inv(Uvn)
+  Cen = inv(Uvn)' · Cn · inv(Uvn)
+  Ce, λ = return_mapping(C, Cet, Cen, 0)
+  Se = S(Ce)
+  Ge = cof(Ce)
+  ∂Se∂Ce = ∂S∂C(Ce)
+  ∂Se = -1/τ * (Se - λ*Ge)
+  @show scaling = 100*abs(tr(∂Se∂Ce))
+  Dvis_ref = -Se ⊙ (inv(2*∂Se∂Ce + scaling*Ge⊗Ge) ⊙ ∂Se)
+  for α = 1:4
+    @show Dvis = -Se ⊙ (inv(2*∂Se∂Ce + 10^α*scaling*Ge⊗Ge) ⊙ ∂Se)
+    @test abs(Dvis - Dvis_ref) / Dvis_ref < 1e-6
+  end
+end
