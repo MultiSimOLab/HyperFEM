@@ -220,18 +220,18 @@ function ∂Ce_∂C(::ViscousIncompressible, γα, ∂Se∂Ce_, invUvn, Ce, Ce_t
     ∂Ce_trial_∂C = invUvn ⊗₁₃²⁴ invUvn
     #------------------------------------------
     # Derivative of return mapping with respect to Ce and λα
-    #------------------------------------------   
+    #------------------------------------------
     K11 = ∂Se∂Ce - (1-γα) * λα * ×ᵢ⁴(Ce)
     K12 = -(1-γα) * Ge
     K21 = Ge
     #------------------------------------------
     # Derivative of return mapping with respect to C
-    #------------------------------------------   
+    #------------------------------------------
     F1 = γα * ∂Se∂Ce_trial * ∂Ce_trial_∂C
     F2 = G
     #------------------------------------------
     # Derivative of {Ce,λα} with respect to C
-    #------------------------------------------   
+    #------------------------------------------
     K = MMatrix{10,10}(zeros(10, 10))
     K[1:9, 1:9] = get_array(K11)    # TODO: Check the TensorValue interface
     K[1:9, 10] = get_array(K12)[:]
@@ -492,7 +492,9 @@ function ViscousDissipation(obj::ViscousIncompressible, Δt::Float64,
   #------------------------------------------
   τ = obj.τ
   Se = Se_(Ce)
-  invCCe = inv(2*∂Se∂Ce_(Ce))
+  Ge = cof(Ce)
+  α = 1.e5abs(tr(Se))  # Ensure invertibility of the elasticity tensor.
+  invCCe = inv(2*∂Se∂Ce_(Ce) + α*Ge⊗Ge)
   ∂Se = -1/τ * (Se - λα*cof(Ce))
   Dvis = -Se ⊙ (invCCe ⊙ ∂Se)
   Dvis
