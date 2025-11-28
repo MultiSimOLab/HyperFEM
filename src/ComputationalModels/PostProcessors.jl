@@ -76,13 +76,13 @@ function Jacobian(uh,km)
   J ∘ F ∘ ∇(uh)
 end
 
-function Piola(physmodel::ThermoElectroMechano,kine::NTuple{3,KinematicModel}, uh, φh, θh, Ω, dΩ, Λ=1.0)
-    DΨ = physmodel(Λ)
-    F, _, _ = get_Kinematics(kine[1])
-    E = get_Kinematics(kine[2])
-    ∂Ψu = DΨ[2]
-    σh = ∂Ψu ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)
-    interpolate_L2_tensor(σh, Ω, dΩ)
+function Piola(physmodel::ThermoElectroMechano, kine::NTuple{3,KinematicModel}, uh, φh, θh, Ω, dΩ, Λ=1.0)
+  DΨ = physmodel()
+  F, _, _ = get_Kinematics(kine[1])
+  E = get_Kinematics(kine[2])
+  ∂Ψu = DΨ[2]
+  σh = ∂Ψu ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)
+  interpolate_L2_tensor(σh, Ω, dΩ)
 end
 
 
@@ -92,110 +92,114 @@ function Cauchy(args...)
 end
 
 
-function Piola(model::Elasto,km::KinematicModel,uh, unh, state_vars, Ω, dΩ, t, Δt)
-    σh = Piola(model,km,uh)
-    interpolate_L2_tensor(σh, Ω, dΩ)
+function Piola(model::Elasto, km::KinematicModel, uh, unh, state_vars, Ω, dΩ, t, Δt=0)
+  @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+  σh = Piola(model,km,uh)
+  interpolate_L2_tensor(σh, Ω, dΩ)
 end
 
 
-function Piola(model::ViscoElastic, km::KinematicModel, uh, unh, state_vars, Ω, dΩ, t, Δt)
-    σh = Piola(model, km, uh, unh, state_vars, Δt)
-    interpolate_L2_tensor(σh, Ω, dΩ)
+function Piola(model::ViscoElastic, km::KinematicModel, uh, unh, state_vars, Ω, dΩ, t=0, Δt=0)
+  @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+  σh = Piola(model, km, uh, unh, state_vars)
+  interpolate_L2_tensor(σh, Ω, dΩ)
 end
 
 
-function Piola(model::Elasto, km::KinematicModel,uh, vars...)
-    _, ∂Ψu, _ = model()
-    F, _, _ = get_Kinematics(km)
-    ∂Ψu ∘ (F∘∇(uh))
+function Piola(model::Elasto, km::KinematicModel, uh, vars...)
+  _, ∂Ψu, _ = model()
+  F, _, _ = get_Kinematics(km)
+  ∂Ψu ∘ (F∘∇(uh))
 end
 
 
-function Piola(model::ViscoElastic,  km::KinematicModel, uh, unh, states, Δt)
-    _, ∂Ψu, _ = model(Δt=Δt)
-    F, _, _ = get_Kinematics(km)
-    ∂Ψu ∘ (F∘∇(uh), F∘∇(unh), states...)
+function Piola(model::ViscoElastic,  km::KinematicModel, uh, unh, states, Δt=model.Δt[])
+  @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+  _, ∂Ψu, _ = model(Δt=Δt)
+  F, _, _ = get_Kinematics(km)
+  ∂Ψu ∘ (F∘∇(uh), F∘∇(unh), states...)
 end
 
 
 function Entropy(physmodel::ThermoElectroMechano,  kine::NTuple{3,KinematicModel}, uh, φh, θh, Ω, dΩ, Λ=1.0)
-    DΨ = physmodel(Λ)
-    F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
-    E     = get_Kinematics(kine[2]; Λ=Λ)
-    η = DΨ[11]
-    refL2 = ReferenceFE(lagrangian, Float64, 0)
-    ref = ReferenceFE(lagrangian, Float64, 1)
-    VL2 = FESpace(Ω, refL2, conformity=:L2)
-    V = FESpace(Ω, ref, conformity=:H1)
-    ηh = interpolate_everywhere(L2_Projection((η ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)), dΩ, VL2), V)
-    return ηh
+  DΨ = physmodel()
+  F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
+  E     = get_Kinematics(kine[2]; Λ=Λ)
+  η = -DΨ[4]
+  refL2 = ReferenceFE(lagrangian, Float64, 0)
+  ref = ReferenceFE(lagrangian, Float64, 1)
+  VL2 = FESpace(Ω, refL2, conformity=:L2)
+  V = FESpace(Ω, ref, conformity=:H1)
+  ηh = interpolate_everywhere(L2_Projection((η ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)), dΩ, VL2), V)
+  return ηh
 end
 
+
 function D0(physmodel::ThermoElectroMechano,  kine::NTuple{3,KinematicModel}, uh, φh, θh, Ω, dΩ, Λ=1.0)
-    DΨ = physmodel(Λ)
-    F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
-    E     = get_Kinematics(kine[2]; Λ=Λ)
-    ∂ΨE = DΨ[3]
-    refL2 = ReferenceFE(lagrangian, Float64, 0)
-    ref = ReferenceFE(lagrangian, Float64, 1)
-    VL2 = FESpace(Ω, refL2, conformity=:L2)
-    V = FESpace(Ω, ref, conformity=:H1)
-    n1 = VectorValue(-1.0, 0.0, 0.0)
-    n2 = VectorValue(0.0, -1.0, 0.0)
-    n3 = VectorValue(0.0, 0.0, -1.0)
-    D0_1h = interpolate_everywhere(L2_Projection(n1 ⋅(∂ΨE ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)), dΩ, VL2), V)
-    D0_2h = interpolate_everywhere(L2_Projection(n2 ⋅(∂ΨE ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)), dΩ, VL2), V)
-    D0_3h = interpolate_everywhere(L2_Projection(n3 ⋅(∂ΨE ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)), dΩ, VL2), V)
-    return (D0_1h,D0_2h,D0_3h)
+  DΨ = physmodel()
+  F,_,_ = get_Kinematics(kine[1]; Λ=Λ)
+  E     = get_Kinematics(kine[2]; Λ=Λ)
+  ∂ΨE = DΨ[3]
+  refL2 = ReferenceFE(lagrangian, Float64, 0)
+  ref = ReferenceFE(lagrangian, Float64, 1)
+  VL2 = FESpace(Ω, refL2, conformity=:L2)
+  V = FESpace(Ω, ref, conformity=:H1)
+  n1 = VectorValue(-1.0, 0.0, 0.0)
+  n2 = VectorValue(0.0, -1.0, 0.0)
+  n3 = VectorValue(0.0, 0.0, -1.0)
+  D0_1h = interpolate_everywhere(L2_Projection(n1 ⋅(∂ΨE ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)), dΩ, VL2), V)
+  D0_2h = interpolate_everywhere(L2_Projection(n2 ⋅(∂ΨE ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)), dΩ, VL2), V)
+  D0_3h = interpolate_everywhere(L2_Projection(n3 ⋅(∂ΨE ∘ (F∘(∇(uh)'), E∘(∇(φh)), θh)), dΩ, VL2), V)
+  return (D0_1h,D0_2h,D0_3h)
 end
 
 
 function interpolate_L2_tensor(A, Ω, dΩ, Γ=Ω)
-    refL2 = ReferenceFE(lagrangian, Float64, 0)
-    reffe = ReferenceFE(lagrangian, Float64, 1)
-    VL2 = FESpace(Ω, refL2, conformity=:L2)
-    VH1 = FESpace(Γ, reffe, conformity=:H1)
-    n1 = VectorValue(1.0, 0.0, 0.0)
-    n2 = VectorValue(0.0, 1.0, 0.0)
-    n3 = VectorValue(0.0, 0.0, 1.0)
-    A11 = interpolate_everywhere(L2_Projection(n1 ⋅ A ⋅ n1, dΩ, VL2), VH1)
-    A12 = interpolate_everywhere(L2_Projection(n1 ⋅ A ⋅ n2, dΩ, VL2), VH1)
-    A13 = interpolate_everywhere(L2_Projection(n1 ⋅ A ⋅ n3, dΩ, VL2), VH1)
-    A22 = interpolate_everywhere(L2_Projection(n2 ⋅ A ⋅ n2, dΩ, VL2), VH1)
-    A23 = interpolate_everywhere(L2_Projection(n2 ⋅ A ⋅ n3, dΩ, VL2), VH1)
-    A33 = interpolate_everywhere(L2_Projection(n3 ⋅ A ⋅ n3, dΩ, VL2), VH1)
-    trA = interpolate_everywhere(L2_Projection(tr ∘ A,     dΩ, VL2), VH1)
-    (A11, A12, A13, A22, A23, A33, trA)
+  refL2 = ReferenceFE(lagrangian, Float64, 0)
+  reffe = ReferenceFE(lagrangian, Float64, 1)
+  VL2 = FESpace(Ω, refL2, conformity=:L2)
+  VH1 = FESpace(Γ, reffe, conformity=:H1)
+  n1 = VectorValue(1.0, 0.0, 0.0)
+  n2 = VectorValue(0.0, 1.0, 0.0)
+  n3 = VectorValue(0.0, 0.0, 1.0)
+  A11 = interpolate_everywhere(L2_Projection(n1 ⋅ A ⋅ n1, dΩ, VL2), VH1)
+  A12 = interpolate_everywhere(L2_Projection(n1 ⋅ A ⋅ n2, dΩ, VL2), VH1)
+  A13 = interpolate_everywhere(L2_Projection(n1 ⋅ A ⋅ n3, dΩ, VL2), VH1)
+  A22 = interpolate_everywhere(L2_Projection(n2 ⋅ A ⋅ n2, dΩ, VL2), VH1)
+  A23 = interpolate_everywhere(L2_Projection(n2 ⋅ A ⋅ n3, dΩ, VL2), VH1)
+  A33 = interpolate_everywhere(L2_Projection(n3 ⋅ A ⋅ n3, dΩ, VL2), VH1)
+  trA = interpolate_everywhere(L2_Projection(tr ∘ A,     dΩ, VL2), VH1)
+  (A11, A12, A13, A22, A23, A33, trA)
 end
 
 
 function interpolate_L2_vector(b, Ω, dΩ, Γ=Ω)
-    refL2 = ReferenceFE(lagrangian, Float64, 0)
-    reffe = ReferenceFE(lagrangian, Float64, 1)
-    VL2 = FESpace(Ω, refL2, conformity=:L2)
-    VH1 = FESpace(Γ, reffe, conformity=:H1)
-    n1 = VectorValue(1.0, 0.0, 0.0)
-    n2 = VectorValue(0.0, 1.0, 0.0)
-    n3 = VectorValue(0.0, 0.0, 1.0)
-    b1 = interpolate_everywhere(L2_Projection(n1 ⋅ b, dΩ, VL2), VH1)
-    b1 = interpolate_everywhere(L2_Projection(n2 ⋅ b, dΩ, VL2), VH1)
-    b1 = interpolate_everywhere(L2_Projection(n3 ⋅ b, dΩ, VL2), VH1)
-    (b1, b2, b3)
+  refL2 = ReferenceFE(lagrangian, Float64, 0)
+  reffe = ReferenceFE(lagrangian, Float64, 1)
+  VL2 = FESpace(Ω, refL2, conformity=:L2)
+  VH1 = FESpace(Γ, reffe, conformity=:H1)
+  n1 = VectorValue(1.0, 0.0, 0.0)
+  n2 = VectorValue(0.0, 1.0, 0.0)
+  n3 = VectorValue(0.0, 0.0, 1.0)
+  b1 = interpolate_everywhere(L2_Projection(n1 ⋅ b, dΩ, VL2), VH1)
+  b1 = interpolate_everywhere(L2_Projection(n2 ⋅ b, dΩ, VL2), VH1)
+  b1 = interpolate_everywhere(L2_Projection(n3 ⋅ b, dΩ, VL2), VH1)
+  (b1, b2, b3)
 end
 
 
 function interpolate_L2_scalar(x, Ω, dΩ, Γ=Ω)
-    refL2 = ReferenceFE(lagrangian, Float64, 0)
-    reffe = ReferenceFE(lagrangian, Float64, 1)
-    VL2 = FESpace(Ω, refL2, conformity=:L2)
-    VH1 = FESpace(Γ, reffe, conformity=:H1)
-    interpolate_everywhere(L2_Projection(x, dΩ, VL2), VH1)
+  refL2 = ReferenceFE(lagrangian, Float64, 0)
+  reffe = ReferenceFE(lagrangian, Float64, 1)
+  VL2 = FESpace(Ω, refL2, conformity=:L2)
+  VH1 = FESpace(Γ, reffe, conformity=:H1)
+  interpolate_everywhere(L2_Projection(x, dΩ, VL2), VH1)
 end
 
 
 function L2_Projection(u, dΩ, V)
-    a(w, v) = ∫(w * v) * dΩ
-    l(v)    = ∫(v * u) * dΩ
-    op      = AffineFEOperator(a, l, V, V)
-    solve(op)
+  a(w, v) = ∫(w * v) * dΩ
+  l(v)    = ∫(v * u) * dΩ
+  op      = AffineFEOperator(a, l, V, V)
+  solve(op)
 end

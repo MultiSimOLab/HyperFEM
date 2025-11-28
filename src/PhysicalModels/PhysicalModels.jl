@@ -80,6 +80,7 @@ export DerivativeStrategy
 export initializeStateVariables
 export updateStateVariables!
 export update_state!
+export set_time_step!
 
 export Kinematics
 export KinematicDescription
@@ -142,19 +143,42 @@ include("PINNs.jl")
 # Physical models interface
 # ============================================
 
+"""
+Initialize the state variables for the given constitutive model and discretization.
+"""
 function initializeStateVariables(::PhysicalModel, points::Measure)
   return nothing
 end
 
+
+"""
+Update the state variables. The state variables must be initialized using the function 'initializeStateVariables'.
+"""
 function updateStateVariables!(::Any, ::PhysicalModel, vars...)
 end
 
+
+"""
+Return the dissipation and its derivatives if any.
+"""
 function Dissipation(::PhysicalModel, args...)
   D(::Any...) = 0.0
 end
 
+
+"""
+Return the energy density and its derivatives as functions of C instead of F.
+"""
 function SecondPiola(::T, args...) where {T<:PhysicalModel}
   throw("The function 'SecondPiola' has not been implemented for $T.")
+end
+
+
+"""
+Set the time step to be used internally by the constitutive model.
+"""
+function set_time_step!(::PhysicalModel, Δt::Float64)
+  Δt
 end
 
 end
