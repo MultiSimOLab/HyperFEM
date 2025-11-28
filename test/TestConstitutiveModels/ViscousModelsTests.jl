@@ -70,7 +70,7 @@ end
 
 
 function test_viscous_derivatives_numerical(model; rtolP=1e-12, rtolH=1e-12)
-  update_time_step!(model, Δt=1e-2)
+  update_time_step!(model, 1e-2)
   Ψ, ∂Ψu, ∂Ψuu = model()
   F = TensorValue(1.:9...) * 1e-3 + I3
   Fn = TensorValue(1.:9...) * 5e-4 + I3
@@ -131,7 +131,7 @@ end
 
 @testset "ViscousIncompressible2" begin
   visco = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=1.0), τ=10.0)
-  update_time_step!(visco, Δt=0.1)
+  update_time_step!(visco, 0.1)
   Ψ, ∂Ψu, ∂Ψuu = visco()
   F    =  1e-2*TensorValue(1,2,3,4,5,6,7,8,9) + I3
   Fn   =  5e-3*TensorValue(1,2,3,4,5,6,7,8,9) + I3

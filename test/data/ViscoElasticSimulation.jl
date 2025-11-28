@@ -64,7 +64,6 @@ function visco_elastic_simulation(;t_end=15, writevtk=true, verbose=true)
   F,_,_ = get_Kinematics(k)
   Fnh = F∘∇(unh)'
 
-  set_time_step!(cons_model)
   res(Λ) = (u,v)->residual(cons_model, k, u, v, dΩ, t_end * Λ, Fnh, state_vars...)
   jac(Λ) = (u,du,v)->jacobian(cons_model, k, u, du, v, dΩ, t_end * Λ, Fnh, state_vars...)
 
