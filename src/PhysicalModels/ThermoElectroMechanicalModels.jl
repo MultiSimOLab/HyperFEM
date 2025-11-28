@@ -153,9 +153,15 @@ struct ThermoElectroMech_Bonet{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectro
   end
 end
 
-function Dissipation(obj::ThermoElectroMech_Bonet, Δt)
+function update_time_step!(obj::ThermoElectroMech_Bonet, Δt::Float64)
+  update_time_step!(obj.thermo, Δt)
+  update_time_step!(obj.electro, Δt)
+  update_time_step!(obj.mechano, Δt)
+end
+
+function Dissipation(obj::ThermoElectroMech_Bonet)
   @unpack Cv,θr, α, κ, γv, γd = obj.thermo
-  Dvis = Dissipation(obj.mechano, Δt)
+  Dvis = Dissipation(obj.mechano)
   gd(δθ) = 1/(γd+1) * (((δθ+θr)/θr)^(γd+1) -1)
   ∂gd(δθ) = (δθ+θr)^γd / θr^(γd+1)
   D(F, E, δθ, X...) = (1 + gd(δθ)) * Dvis(F, X...)

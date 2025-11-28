@@ -36,9 +36,8 @@ end
 
 Calculate the residual using the given constitutive model and finite element functions.
 """
-function residual(physicalmodel::Mechano, km::KinematicModel, u, v, dΩ, Λ=1.0, vars...; kwargs...)
-  haskey(kwargs, :Δt) && @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
-  _, ∂Ψu, _ = physicalmodel(; kwargs...)
+function residual(physicalmodel::Mechano, km::KinematicModel, u, v, dΩ, Λ=1.0, vars...)
+  _, ∂Ψu, _ = physicalmodel()
   F, _, _   = get_Kinematics(km; Λ=Λ)
   ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘∇(u)', vars...)))dΩ
 end
@@ -48,9 +47,8 @@ end
 
 Calculate the jacobian using the given constitutive model and finite element functions.
 """
-function jacobian(physicalmodel::Mechano, km::KinematicModel, u, du, v, dΩ, Λ=1.0, vars...; kwargs...)
-  haskey(kwargs, :Δt) && @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
-  _, _, ∂Ψuu = physicalmodel(; kwargs...)
+function jacobian(physicalmodel::Mechano, km::KinematicModel, u, du, v, dΩ, Λ=1.0, vars...)
+  _, _, ∂Ψuu = physicalmodel()
   F, _, _    = get_Kinematics(km; Λ=Λ)
   ∫(∇(v)' ⊙ ((∂Ψuu ∘ (F∘∇(u)', vars...)) ⊙ ∇(du)'))dΩ
 end
@@ -87,16 +85,14 @@ function residual(physicalmodel::ThermoElectroMechano, ::Type{Electro}, kine::NT
   return -1.0*∫(∇(vφ)' ⋅ (∂Ψφ ∘ (F∘(∇(u)'), E∘(∇(φ)), θ)))dΩ
 end
 
-function residual(physicalmodel::ThermoElectroMechano, ::Type{Thermo}, kine::NTuple{3,KinematicModel}, (u, φ, θ), vθ, dΩ, Λ=1.0, Δt=0.0, vars...)
-  @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+function residual(physicalmodel::ThermoElectroMechano, ::Type{Thermo}, kine::NTuple{3,KinematicModel}, (u, φ, θ), vθ, dΩ, Λ=1.0, vars...)
   κ = physicalmodel.thermo.κ
-  D, ∂D = Dissipation(Δt)
+  D, ∂D = Dissipation()
   return ∫(κ * ∇(θ) ⋅ ∇(vθ) -D(u, φ, θ, vars...))dΩ
 end
 
-function transient_residual(physicalmodel::ThermoElectroMechano, ::Type{Thermo}, kine::NTuple{3,KinematicModel}, (u, φ, θ), (un, φn, θn), vθ, dΩ, Λ=1.0, Δt=0.0, vars...)
-  @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
-  DΨ = physicalmodel(Δt=Δt)
+function transient_residual(physicalmodel::ThermoElectroMechano, ::Type{Thermo}, kine::NTuple{3,KinematicModel}, (u, φ, θ), (un, φn, θn), vθ, dΩ, Λ, Δt, vars...)
+  DΨ = physicalmodel()
   η = -DΨ[4]
   return ∫((1/Δt)*(θ*η(F,E,θ,vars...) - θn*η(Fn,En,θn,vars...) + η(F,E,θ)*(θ - θn)))dΩ
 end

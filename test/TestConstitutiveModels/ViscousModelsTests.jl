@@ -70,7 +70,8 @@ end
 
 
 function test_viscous_derivatives_numerical(model; rtolP=1e-12, rtolH=1e-12)
-  Ψ, ∂Ψu, ∂Ψuu = model(Δt = 1e-2)
+  update_time_step!(model, 1e-2)
+  Ψ, ∂Ψu, ∂Ψuu = model()
   F = TensorValue(1.:9...) * 1e-3 + I3
   Fn = TensorValue(1.:9...) * 5e-4 + I3
   Uvn = isochoric_F(TensorValue(1.,2.,3.,2.,4.,5.,3.,5.,6.) * 2e-4 + I3)
@@ -94,7 +95,7 @@ end
 
 
 struct EmptyElastic <: Elasto
-  function (::EmptyElastic)(Λ=0.0)
+  function (::EmptyElastic)()
     Ψ(F) = 0.0
     ∂Ψu(F) = TensorValue(zeros(9)...)
     ∂Ψuu(F) = TensorValue(zeros(81)...)
@@ -130,7 +131,8 @@ end
 
 @testset "ViscousIncompressible2" begin
   visco = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=1.0), τ=10.0)
-  Ψ, ∂Ψu, ∂Ψuu = visco(Δt = 0.1)
+  update_time_step!(visco, 0.1)
+  Ψ, ∂Ψu, ∂Ψuu = visco()
   F    =  1e-2*TensorValue(1,2,3,4,5,6,7,8,9) + I3
   Fn   =  5e-3*TensorValue(1,2,3,4,5,6,7,8,9) + I3
   Fvn  =  2e-2*TensorValue(1.0,2.0,3.0,4.0,5.0,8.7,6.5,4.3,6.5) + I3
