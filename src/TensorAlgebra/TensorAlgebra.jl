@@ -4,11 +4,8 @@ using Gridap
 using Gridap.TensorValues
 using StaticArrays
 using LinearAlgebra
-import Base: *
-import Base: +
-import Base: sqrt
+import Base: *, +, (:), sqrt
 
-export (*)
 export (×ᵢ⁴)
 export (+)
 export (⊗₁₂³)

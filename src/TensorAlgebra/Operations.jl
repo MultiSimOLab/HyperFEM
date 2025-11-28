@@ -10,6 +10,14 @@ function (*)(Ten1::TensorValue, Ten2::TensorValue)
 end
 
 
+"""
+Double contraction of second order tensors, which is equivalent to tr(a'·b)
+"""
+function (:)(a::TensorValue{D1,D2}, b::TensorValue{D1,D2}) where {D1,D2}
+  sum(a.data .* b.data)
+end
+
+
 @generated function (+)(A::TensorValue{D,D,Float64}, B::TensorValue{D,D,Float64}) where {D}
   str = ""
   for i in 1:D*D
