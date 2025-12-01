@@ -92,15 +92,13 @@ function Cauchy(args...)
 end
 
 
-function Piola(model::Elasto, km::KinematicModel, uh, unh, state_vars, Ω, dΩ, t, Δt=0)
-  @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+function Piola(model::Elasto, km::KinematicModel, uh, unh, state_vars, Ω, dΩ, t=0)
   σh = Piola(model,km,uh)
   interpolate_L2_tensor(σh, Ω, dΩ)
 end
 
 
-function Piola(model::ViscoElastic, km::KinematicModel, uh, unh, state_vars, Ω, dΩ, t=0, Δt=0)
-  @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
+function Piola(model::ViscoElastic, km::KinematicModel, uh, unh, state_vars, Ω, dΩ, t=0)
   σh = Piola(model, km, uh, unh, state_vars)
   interpolate_L2_tensor(σh, Ω, dΩ)
 end
@@ -113,9 +111,8 @@ function Piola(model::Elasto, km::KinematicModel, uh, vars...)
 end
 
 
-function Piola(model::ViscoElastic,  km::KinematicModel, uh, unh, states, Δt=model.Δt[])
-  @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
-  _, ∂Ψu, _ = model(Δt=Δt)
+function Piola(model::ViscoElastic,  km::KinematicModel, uh, unh, states)
+  _, ∂Ψu, _ = model()
   F, _, _ = get_Kinematics(km)
   ∂Ψu ∘ (F∘∇(uh), F∘∇(unh), states...)
 end

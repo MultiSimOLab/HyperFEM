@@ -13,9 +13,7 @@ struct ViscousIncompressible <: Visco
   function ViscousIncompressible(elasto; τ::Float64)
     new(elasto, τ, 0)
   end
-  function (obj::ViscousIncompressible)(Λ::Float64=1.0; Δt::Float64)
-    @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
-    obj.Δt[] = Δt
+  function (obj::ViscousIncompressible)()
     Ψe, Se, ∂Se∂Ce   = SecondPiola(obj.elasto)
     Ψ(F, Fn, A)      = Energy(obj, Ψe, Se, ∂Se∂Ce, F, Fn, A)
     ∂Ψ∂F(F, Fn, A)   = Piola(obj, Se, ∂Se∂Ce, F, Fn, A)
@@ -24,22 +22,33 @@ struct ViscousIncompressible <: Visco
   end
 end
 
-function initializeStateVariables(::ViscousIncompressible, points::Measure)
+function update_time_step!(obj::ViscousIncompressible, Δt::Float64)
+  obj.Δt[] = Δt
+end
+
+function initialize_state(::ViscousIncompressible, points::Measure)
   v = VectorValue(1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0)
   CellState(v, points)
 end
 
-function updateStateVariables!(state, obj::ViscousIncompressible, Δt, F, Fn)
-  @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
-  obj.Δt[] = Δt
+function update_state!(obj::ViscousIncompressible, state, F, Fn)
   _, Se, ∂Se∂Ce = SecondPiola(obj.elasto)
   return_mapping(A, F, Fn) = ReturnMapping(obj, Se, ∂Se∂Ce, F, Fn, A)
   update_state!(return_mapping, state, F, Fn)
 end
 
-function Dissipation(obj::ViscousIncompressible, Δt)
-  @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
-  obj.Δt[] = Δt
+function initializeStateVariables(::ViscousIncompressible, points::Measure)
+  v = VectorValue(1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0)
+  CellState(v, points)
+end
+
+function updateStateVariables!(state, obj::ViscousIncompressible, F, Fn)
+  _, Se, ∂Se∂Ce = SecondPiola(obj.elasto)
+  return_mapping(A, F, Fn) = ReturnMapping(obj, Se, ∂Se∂Ce, F, Fn, A)
+  update_state!(return_mapping, state, F, Fn)
+end
+
+function Dissipation(obj::ViscousIncompressible)
   _, Se, ∂Se∂Ce = SecondPiola(obj.elasto)
   D(F, Fn, A) = ViscousDissipation(obj, Se, ∂Se∂Ce, F, Fn, A)
 end
@@ -51,11 +60,9 @@ struct GeneralizedMaxwell <: ViscoElastic
   function GeneralizedMaxwell(longTerm::Elasto, branches::Visco...)
     new(longTerm,branches,0)
   end
-  function (obj::GeneralizedMaxwell)(Λ::Float64=1.0; Δt::Float64)
-    @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
-    obj.Δt[] = Δt
+  function (obj::GeneralizedMaxwell)()
     Ψe, ∂Ψeu, ∂Ψeuu = obj.longterm()
-    DΨv = map(b -> b(Δt=Δt), obj.branches)
+    DΨv = map(b -> b(), obj.branches)
     Ψα, ∂Ψαu, ∂Ψαuu = map(i -> getindex.(DΨv, i), 1:3)
     Ψα, ∂Ψαu, ∂Ψαuu = transpose(DΨv)
     Ψ(F, Fn, A...) = mapreduce((Ψi, Ai) -> Ψi(F, Fn, Ai), +, Ψα, A; init=Ψe(F))
@@ -65,29 +72,33 @@ struct GeneralizedMaxwell <: ViscoElastic
   end
 end
 
-function set_time_step!(obj::GeneralizedMaxwell, Δt::Float64)
+function update_time_step!(obj::GeneralizedMaxwell, Δt::Float64)
+  foreach(b -> update_time_step!(b, Δt), obj.branches)
   obj.Δt[] = Δt
-  foreach(b -> b.Δt[] = Δt, obj.branches)
-  Δt
+end
+
+function initialize_state(obj::GeneralizedMaxwell, points::Measure)
+  map(b -> initialize_state(b, points), obj.branches)
+end
+
+function update_state!(obj::GeneralizedMaxwell, states, F, Fn)
+  @assert length(obj.branches) == length(states)
+  map((b, s) -> update_state!(b, s, F, Fn), obj.branches, states)
 end
 
 function initializeStateVariables(obj::GeneralizedMaxwell, points::Measure)
   map(b -> initializeStateVariables(b, points), obj.branches)
 end
 
-function updateStateVariables!(states, obj::GeneralizedMaxwell, Δt, F, Fn)
-  @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
-  obj.Δt[] = Δt
+function updateStateVariables!(states, obj::GeneralizedMaxwell, F, Fn)
   @assert length(obj.branches) == length(states)
   for (branch, state) in zip(obj.branches, states)
-    updateStateVariables!(state, branch, Δt, F, Fn)
+    updateStateVariables!(state, branch, F, Fn)
   end
 end
 
-function Dissipation(obj::GeneralizedMaxwell, Δt)
-  @warn "The argument 'Δt' will be removed shortly. Just kept to avoid breaking benchmarks..."
-  obj.Δt[] = Δt
-  Dα = map(b -> Dissipation(b, Δt), obj.branches)
+function Dissipation(obj::GeneralizedMaxwell)
+  Dα = map(Dissipation, obj.branches)
   D(F, Fn, A...) = mapreduce((Di, Ai) -> Di(F, Fn, Ai), +, Dα, A)
 end
 

@@ -13,6 +13,7 @@ using ..TensorAlgebra: trAA
 using StaticArrays
 
 import Base: +
+import Gridap: update_state!
 
 export Yeoh3D
 export NeoHookean3D
@@ -74,13 +75,14 @@ export ThermoElectro
 export FlexoElectro
 export EnergyInterpolationScheme
 export SecondPiola
+export Dissipation
 
 export DerivativeStrategy
 
 export initializeStateVariables
 export updateStateVariables!
-export update_state!
-export set_time_step!
+export initialize_state
+export update_time_step!
 
 export Kinematics
 export KinematicDescription
@@ -146,14 +148,19 @@ include("PINNs.jl")
 """
 Initialize the state variables for the given constitutive model and discretization.
 """
+function initialize_state(::PhysicalModel, points::Measure)
+  return nothing
+end
 function initializeStateVariables(::PhysicalModel, points::Measure)
   return nothing
 end
 
 
 """
-Update the state variables. The state variables must be initialized using the function 'initializeStateVariables'.
+Update the state variables. The state variables must be initialized using the function 'initialize_state'.
 """
+function update_state!(::PhysicalModel, vars...)
+end
 function updateStateVariables!(::Any, ::PhysicalModel, vars...)
 end
 
@@ -177,7 +184,7 @@ end
 """
 Set the time step to be used internally by the constitutive model.
 """
-function set_time_step!(::PhysicalModel, Δt::Float64)
+function update_time_step!(::PhysicalModel, Δt::Float64)
   Δt
 end
 
