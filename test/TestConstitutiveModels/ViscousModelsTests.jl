@@ -1,8 +1,7 @@
 
 using Gridap.TensorValues
 using Gridap.Arrays
-using HyperFEM.TensorAlgebra
-using HyperFEM.PhysicalModels
+using HyperFEM
 using StaticArrays
 using Test
 
@@ -192,11 +191,16 @@ end
   Ge = cof(Ce)
   ∂Se∂Ce = ∂S∂C(Ce)
   ∂Se = -1/τ * (Se - λ*Ge)
-  α = 100*abs(tr(∂Se∂Ce))
-  Dvis_ref = -Se ⊙ (inv(2*∂Se∂Ce + α*Ge⊗Ge) ⊙ ∂Se)
-  for m = 1:4
-    Dvis = -Se ⊙ (inv(2*∂Se∂Ce + 10^m*α*Ge⊗Ge) ⊙ ∂Se)
-    @test abs(Dvis - Dvis_ref) / Dvis_ref < 1e-6
-    # @show Dvis
+  α = abs(tr(∂Se∂Ce))
+  Dvis_ref = -Se ⊙ (inv(2*∂Se∂Ce + 1e8α*Ge⊗Ge) ⊙ ∂Se)
+  e_rel = Float64[]
+  m_values = [10^m for m = 3:7]
+  for m ∈ m_values
+    Dvis = -Se ⊙ (inv(2*∂Se∂Ce + m*α*Ge⊗Ge) ⊙ ∂Se)
+    e = abs(Dvis - Dvis_ref) / Dvis_ref
+    push!(e_rel, e)
+    @test e < 1e-6
   end
+  # p = plot(m, e_rel, xaxis=:log, yaxis=:log, xlabel="m", ylabel="relative error", lw=2)
+  # display(p)   # The plot is relevant for the range m_values=[10^m for m=0:7]
 end
