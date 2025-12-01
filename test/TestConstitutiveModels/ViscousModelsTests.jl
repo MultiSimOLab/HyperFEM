@@ -1,8 +1,7 @@
 
 using Gridap.TensorValues
 using Gridap.Arrays
-using HyperFEM.TensorAlgebra
-using HyperFEM.PhysicalModels
+using HyperFEM
 using StaticArrays
 using Test
 
@@ -169,4 +168,41 @@ end
   Fn = I3
   A = VectorValue(I3..., 0)
   @test D(F, Fn, A) < 1e-6
+end
+
+@testset "Dissipation invertibility" begin
+  Δt = 0.1
+  μ = 1.0
+  τ = 1.234
+  short_term = IncompressibleNeoHookean3D(λ=0., μ=μ)
+  branch1 = ViscousIncompressible(short_term, τ=τ)
+  branch1.Δt[] = Δt
+
+  Ψ, S, ∂S∂C = SecondPiola(short_term)
+  return_mapping(C,Cet,Cen,λ) = HyperFEM.PhysicalModels.return_mapping_algorithm!(branch1, S, ∂S∂C, C, Cet, Cen, λ)
+
+  F = I3 + TensorValue(1e-1, zeros(8)...)
+  Fn = I3 + TensorValue(2e-2, zeros(8)...)
+  Uvn = isochoric_F(I3 + TensorValue(2e-2, zeros(8)...))
+  C = F'·F
+  Cn = Fn'·Fn
+  Cet = inv(Uvn)' · C · inv(Uvn)
+  Cen = inv(Uvn)' · Cn · inv(Uvn)
+  Ce, λ = return_mapping(C, Cet, Cen, 0)
+  Se = S(Ce)
+  Ge = cof(Ce)
+  ∂Se∂Ce = ∂S∂C(Ce)
+  ∂Se = -1/τ * (Se - λ*Ge)
+  α = abs(tr(∂Se∂Ce))
+  Dvis_ref = -Se ⊙ (inv(2*∂Se∂Ce + 1e8α*Ge⊗Ge) ⊙ ∂Se)
+  e_rel = Float64[]
+  m_values = [10^m for m = 3:7]
+  for m ∈ m_values
+    Dvis = -Se ⊙ (inv(2*∂Se∂Ce + m*α*Ge⊗Ge) ⊙ ∂Se)
+    e = abs(Dvis - Dvis_ref) / Dvis_ref
+    push!(e_rel, e)
+    @test e < 1e-6
+  end
+  # p = plot(m, e_rel, xaxis=:log, yaxis=:log, xlabel="m", ylabel="relative error", lw=2)
+  # display(p)   # The plot is relevant for the range m_values=[10^m for m=0:7]
 end
