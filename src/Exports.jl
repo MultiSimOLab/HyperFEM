@@ -86,6 +86,7 @@ end
 @publish PhysicalModels get_Kinematics
 @publish PhysicalModels getIsoInvariants
 
+@publish PhysicalModels SecondPiola
 @publish PhysicalModels Dissipation
 @publish PhysicalModels initializeStateVariables
 @publish PhysicalModels updateStateVariables!

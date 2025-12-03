@@ -830,7 +830,7 @@ struct IncompressibleNeoHookean3D <: IsoElastic
 end
 
 function SecondPiola(obj::IncompressibleNeoHookean3D, Λ::Float64=1.0)
-  Ψ(C) = obj.μ / 2 * tr(C) * det(C)^(-1 / 3)
+  Ψ(C) = obj.μ / 2 * tr(C) * det(C)^(-1 / 3) - 3 * obj.μ / 2
   S(C) = begin
     detC = det(C)
     invC = inv(C)

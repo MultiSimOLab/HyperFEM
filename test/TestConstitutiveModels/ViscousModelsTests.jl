@@ -1,7 +1,7 @@
 
 using Gridap.TensorValues
 using Gridap.Arrays
-using HyperFEM
+using HyperFEM, HyperFEM.TensorAlgebra
 using StaticArrays
 using Test
 
@@ -167,7 +167,7 @@ end
   F = I3
   Fn = I3
   A = VectorValue(I3..., 0)
-  @test D(F, Fn, A) < 1e-6
+  @test D(F, Fn, A) == 0
 end
 
 @testset "Dissipation invertibility" begin
@@ -205,4 +205,27 @@ end
   end
   # p = plot(m, e_rel, xaxis=:log, yaxis=:log, xlabel="m", ylabel="relative error", lw=2)
   # display(p)   # The plot is relevant for the range m_values=[10^m for m=0:7]
+end
+
+
+@testset "GeneralizedMaxell energy at rest" begin
+  hyper_elastic_model = NeoHookean3D(λ=λ, μ=μ)
+  short_term = IncompressibleNeoHookean3D(λ=0., μ=μ1)
+  visco_branch = ViscousIncompressible(short_term, τ=τ1)
+  cons_model = GeneralizedMaxwell(hyper_elastic_model, visco_branch)
+  update_time_step!(cons_model, 0.1)
+  Ψ, ∂Ψ∂F, ∂∂Ψ∂FF = cons_model()
+  F1 = I3
+  A1 = VectorValue(I3..., 0)
+  @test Ψ(F1, F1, A1) == 0
+
+  Ψh, ∂Ψh∂F, ∂∂Ψh∂FF = hyper_elastic_model()
+  @test Ψh(F1) == 0
+
+  Ψv, ∂Ψv∂F, ∂∂Ψv∂FF = visco_branch()
+  @test Ψv(F1, F1, A1) == 0
+
+  Ψe, Se, ∂Se∂Ce = SecondPiola(short_term)
+  C = F1'·F1
+  @test Ψe(C) == 0
 end
