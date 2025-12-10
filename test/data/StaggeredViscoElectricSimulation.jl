@@ -142,6 +142,6 @@ function staggered_visco_electric_simulation(; t_end=2, writevtk=true, verbose=t
   (t, uz)
 end
 
-t, uz = staggered_visco_electric_simulation(; t_end=2, writevtk=false, verbose=true)
-using Plots
-p = plot(t, uz)
+# t, uz = staggered_visco_electric_simulation(; t_end=2, writevtk=true, verbose=true)
+# using Plots
+# p = plot(t, uz)
