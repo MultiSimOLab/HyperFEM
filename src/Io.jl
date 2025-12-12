@@ -5,6 +5,8 @@ using HyperFEM
 export setupfolder
 export projdir
 export stem
+export MockPVD
+export mockpvd
 
 """
 Make sure the specified folder exists.
@@ -66,5 +68,21 @@ function stem(path::AbstractString)
   root, ext = splitext(name)
   root
 end
+
+"""
+Mock struct to emulate pvd files.
+"""
+struct MockPVD end
+
+"""
+Mock function to emulate the creation of pvd files.
+
+# Example
+    pvdstrategy = writevtk ? createpvd : mockpvd
+    pvdstrategy(outpath) do pvd
+      ...
+    end
+"""
+mockpvd(f, args...; kwargs...) = f(MockPVD())
 
 end

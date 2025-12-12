@@ -1,3 +1,5 @@
+using HyperFEM
+using Test
 
 filename = projdir("test/data/ViscoElasticSimulation.jl")
 include(filename)
