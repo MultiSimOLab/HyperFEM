@@ -55,6 +55,9 @@ physmodel_mec = NeoHookean3D(λ=10.0, μ=1.0)
 physmodel_elec = IdealDielectric(ε=1.0)
 physmodel= ElectroMechModel(mechano=physmodel_mec, electro=physmodel_elec)
 
+# Functionals for Energy and Analytical derivatives
+Ψ,∂ΨF, ∂ΨE, ∂ΨFF,∂ΨEF,∂ΨEE   = physmodel()
+
 # Setup integration
 order = 1
 degree = 2 * order
@@ -99,17 +102,14 @@ ke=Kinematics(Electro,Solid)
 F,_,_ = get_Kinematics(kM)
 E     = get_Kinematics(ke)
 
-
 # residual and jacobian function of load factor
-_,∂Ψu, ∂Ψφ, ∂Ψuu,∂Ψφu,∂Ψφφ   = physmodel()
+res(Λ) = ((u, φ), (v, vφ)) ->   ∫(∇(v)' ⊙ (∂ΨF ∘ (F∘∇(u)', E∘∇(φ))))dΩ -
+                                ∫(∇(vφ) ⋅ (∂ΨE ∘ (F∘∇(u)', E∘∇(φ))))dΩ
 
-res(Λ) = ((u, φ), (v, vφ)) ->   ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘∇(u)', E∘∇(φ))))dΩ -
-                                ∫(∇(vφ) ⋅ (∂Ψφ ∘ (F∘∇(u)', E∘∇(φ))))dΩ
-
-jac(Λ) = ((u, φ), (du, dφ), (v, vφ)) ->  ∫(∇(v)' ⊙ ((∂Ψuu ∘ (F∘∇(u)', E∘∇(φ))) ⊙ ∇(du)'))dΩ +
-                                         ∫(∇(vφ)' ⋅ ((∂Ψφφ ∘ (F∘∇(u)', E∘∇(φ))) ⋅ ∇(dφ)))dΩ -
-                                         ∫(∇(dφ) ⋅ ((∂Ψφu ∘ (F∘∇(u)', E∘∇(φ))) ⊙ ∇(v)'))dΩ -
-                                         ∫(∇(vφ) ⋅ ((∂Ψφu ∘ (F∘∇(u)', E∘∇(φ))) ⊙ ∇(du)'))dΩ 
+jac(Λ) = ((u, φ), (du, dφ), (v, vφ)) ->  ∫(∇(v)' ⊙ ((∂ΨFF ∘ (F∘∇(u)', E∘∇(φ))) ⊙ ∇(du)'))dΩ +
+                                         ∫(∇(vφ)' ⋅ ((∂ΨEE ∘ (F∘∇(u)', E∘∇(φ))) ⋅ ∇(dφ)))dΩ -
+                                         ∫(∇(dφ) ⋅ ((∂ΨEF ∘ (F∘∇(u)', E∘∇(φ))) ⊙ ∇(v)'))dΩ -
+                                         ∫(∇(vφ) ⋅ ((∂ΨEF ∘ (F∘∇(u)', E∘∇(φ))) ⊙ ∇(du)'))dΩ 
 # nonlinear solver
 ls = LUSolver()
 nls_ = NewtonSolver(ls; maxiter=20, atol=1.e-10, rtol=1.e-8, verbose=true)
