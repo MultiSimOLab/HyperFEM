@@ -96,10 +96,20 @@ U = MultiFieldFESpace([Uu, Uφ])
 km=Kinematics(Mechano,Solid)
 ke=Kinematics(Electro,Solid)
 
-# residual and jacobian function of load factor
-res(Λ) = ((u, φ), (v, vφ)) -> residual(physmodel, (km,ke),(u, φ), (v, vφ), dΩ)
-jac(Λ) = ((u, φ), (du, dφ), (v, vφ)) -> jacobian(physmodel, (km,ke), (u, φ), (du, dφ), (v,vφ),dΩ)
+F,_,_ = get_Kinematics(kM)
+E     = get_Kinematics(ke)
 
+
+# residual and jacobian function of load factor
+_,∂Ψu, ∂Ψφ, ∂Ψuu,∂Ψφu,∂Ψφφ   = physmodel()
+
+res(Λ) = ((u, φ), (v, vφ)) ->   ∫(∇(v)' ⊙ (∂Ψu ∘ (F∘∇(u)', E∘∇(φ))))dΩ -
+                                ∫(∇(vφ) ⋅ (∂Ψφ ∘ (F∘∇(u)', E∘∇(φ))))dΩ
+
+jac(Λ) = ((u, φ), (du, dφ), (v, vφ)) ->  ∫(∇(v)' ⊙ ((∂Ψuu ∘ (F∘∇(u)', E∘∇(φ))) ⊙ ∇(du)'))dΩ +
+                                         ∫(∇(vφ)' ⋅ ((∂Ψφφ ∘ (F∘∇(u)', E∘∇(φ))) ⋅ ∇(dφ)))dΩ -
+                                         ∫(∇(dφ) ⋅ ((∂Ψφu ∘ (F∘∇(u)', E∘∇(φ))) ⊙ ∇(v)'))dΩ -
+                                         ∫(∇(vφ) ⋅ ((∂Ψφu ∘ (F∘∇(u)', E∘∇(φ))) ⊙ ∇(du)'))dΩ 
 # nonlinear solver
 ls = LUSolver()
 nls_ = NewtonSolver(ls; maxiter=20, atol=1.e-10, rtol=1.e-8, verbose=true)
