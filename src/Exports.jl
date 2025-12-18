@@ -88,8 +88,6 @@ end
 
 @publish PhysicalModels SecondPiola
 @publish PhysicalModels Dissipation
-@publish PhysicalModels initializeStateVariables
-@publish PhysicalModels updateStateVariables!
 @publish PhysicalModels initialize_state
 @publish PhysicalModels update_time_step!
 
