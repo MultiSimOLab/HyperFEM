@@ -22,13 +22,19 @@ function visco_elastic_simulation(;t_end=15, writevtk=true, verbose=true)
   add_tag_from_tags!(labels, "moving", CartesianTags.faceX1)
 
   # Constitutive model
-  μ = 1.367e4    # Pa
-  λ = 1000μ      # Pa
-  μv₁ = 3.153e5  # Pa
-  τv₁ = 10.72    # s
+  μ = 1.37e4   # Pa
+  λ = 100μ     # Pa
+  μ₁ = 5.64e4  # Pa
+  τ₁ = 0.82    # s
+  μ₂ = 3.15e4  # Pa
+  τ₂ = 10.7    # s
+  μ₃ = 1.98e4  # Pa
+  τ₃ = 500.0   # s
   hyper_elastic_model = NeoHookean3D(λ=λ, μ=μ)
-  viscous_branch = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=μv₁), τ=τv₁)
-  cons_model = GeneralizedMaxwell(hyper_elastic_model, viscous_branch)
+  viscous_branch_1 = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=μ₁), τ=τ₁)
+  viscous_branch_2 = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=μ₂), τ=τ₂)
+  viscous_branch_3 = ViscousIncompressible(IncompressibleNeoHookean3D(λ=0., μ=μ₃), τ=τ₃)
+  cons_model = GeneralizedMaxwell(hyper_elastic_model, viscous_branch_1, viscous_branch_2, viscous_branch_3)
   k=Kinematics(Mechano,Solid)
 
   # Dirichlet boundary conditions
