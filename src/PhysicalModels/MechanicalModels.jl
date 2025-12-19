@@ -148,35 +148,9 @@ function (obj::MultiAnisoElastic)(args...)
   Ψα     = map(x -> x[1], DΨ)
   ∂Ψα∂F  = map(x -> x[2], DΨ)
   ∂Ψα∂FF = map(x -> x[3], DΨ)
-  function Ψ(F, N)
-    val = 0
-    for (Ψi, Ni) in zip(Ψα, N)
-      val += Ψi(F, Ni)
-    end
-    return val
-  end
-  function ∂Ψ∂F(F, N) 
-    val = TensorValue(0, 0, 0, 0, 0, 0, 0, 0, 0)
-    for (∂Ψi∂F, Ni) in zip(∂Ψα∂F, N)
-      val += ∂Ψi∂F(F, Ni)
-    end
-    return val
-  end
-  function ∂Ψ∂FF(F, N) 
-    val = TensorValue(0, 0, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0, 0)
-    for (∂Ψi∂FF, Ni) in zip(∂Ψα∂FF, N)
-      val += ∂Ψi∂FF(F, Ni)
-    end
-    return val
-  end
+  Ψ(F, N)     = mapreduce((Ψi, Ni) -> Ψi(F, Ni), +, Ψα, N)
+  ∂Ψ∂F(F, N)  = mapreduce((∂Ψi∂F, Ni) -> ∂Ψi∂F(F, Ni), +, ∂Ψα∂F, N)
+  ∂Ψ∂FF(F, N) = mapreduce((∂Ψi∂FF, Ni) -> ∂Ψi∂FF(F, Ni), +, ∂Ψα∂FF, N)
   (Ψ, ∂Ψ∂F, ∂Ψ∂FF)
 end
 
