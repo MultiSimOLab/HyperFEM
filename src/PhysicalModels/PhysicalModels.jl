@@ -79,8 +79,6 @@ export Dissipation
 
 export DerivativeStrategy
 
-export initializeStateVariables
-export updateStateVariables!
 export initialize_state
 export update_time_step!
 
@@ -151,17 +149,12 @@ Initialize the state variables for the given constitutive model and discretizati
 function initialize_state(::PhysicalModel, points::Measure)
   return nothing
 end
-function initializeStateVariables(::PhysicalModel, points::Measure)
-  return nothing
-end
 
 
 """
 Update the state variables. The state variables must be initialized using the function 'initialize_state'.
 """
 function update_state!(::PhysicalModel, vars...)
-end
-function updateStateVariables!(::Any, ::PhysicalModel, vars...)
 end
 
 

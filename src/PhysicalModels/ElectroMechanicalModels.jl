@@ -61,14 +61,6 @@ function update_state!(obj::ElectroMechano, args...)
   update_state!(obj.mechano, args...)
 end
 
-function initializeStateVariables(obj::ElectroMechano, points::Measure)
-  initializeStateVariables(obj.mechano, points)
-end
-
-function updateStateVariables!(state, obj::ElectroMechano, args...)
-  updateStateVariables!(state, obj.mechano, args)
-end
-
 
 function _getCoupling(elec::Electro, mec::Mechano, Λ::Float64)
   J(F) = det(F)

@@ -37,17 +37,6 @@ function update_state!(obj::ViscousIncompressible, state, F, Fn)
   update_state!(return_mapping, state, F, Fn)
 end
 
-function initializeStateVariables(::ViscousIncompressible, points::Measure)
-  v = VectorValue(1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0)
-  CellState(v, points)
-end
-
-function updateStateVariables!(state, obj::ViscousIncompressible, F, Fn)
-  _, Se, ∂Se∂Ce = SecondPiola(obj.elasto)
-  return_mapping(A, F, Fn) = ReturnMapping(obj, Se, ∂Se∂Ce, F, Fn, A)
-  update_state!(return_mapping, state, F, Fn)
-end
-
 function Dissipation(obj::ViscousIncompressible)
   _, Se, ∂Se∂Ce = SecondPiola(obj.elasto)
   D(F, Fn, A) = ViscousDissipation(obj, Se, ∂Se∂Ce, F, Fn, A)
@@ -61,14 +50,15 @@ struct GeneralizedMaxwell <: ViscoElastic
     new(longTerm,branches,0)
   end
   function (obj::GeneralizedMaxwell)()
-    Ψe, ∂Ψeu, ∂Ψeuu = obj.longterm()
-    DΨv = map(b -> b(), obj.branches)
-    Ψα, ∂Ψαu, ∂Ψαuu = map(i -> getindex.(DΨv, i), 1:3)
-    Ψα, ∂Ψαu, ∂Ψαuu = transpose(DΨv)
-    Ψ(F, Fn, A...) = mapreduce((Ψi, Ai) -> Ψi(F, Fn, Ai), +, Ψα, A; init=Ψe(F))
-    ∂Ψu(F, Fn, A...) = mapreduce((∂Ψiu, Ai) -> ∂Ψiu(F, Fn, Ai), +, ∂Ψαu, A; init=∂Ψeu(F))
-    ∂Ψuu(F, Fn, A...) = mapreduce((∂Ψiuu, Ai) -> ∂Ψiuu(F, Fn, Ai), +, ∂Ψαuu, A; init=∂Ψeuu(F))
-    return (Ψ, ∂Ψu, ∂Ψuu)
+    Ψe, ∂ΨeF, ∂ΨeFF = obj.longterm()
+    DΨv   = map(b -> b(), obj.branches)
+    Ψα    = map(x -> x[1], DΨv)
+    ∂ΨαF  = map(x -> x[2], DΨv)
+    ∂ΨαFF = map(x -> x[3], DΨv)
+    Ψ(F, Fn, A...)     = mapreduce((Ψi, Ai) -> Ψi(F, Fn, Ai), +, Ψα, A; init=Ψe(F))
+    ∂Ψ∂F(F, Fn, A...)  = mapreduce((∂ΨiF, Ai) -> ∂ΨiF(F, Fn, Ai), +, ∂ΨαF, A; init=∂ΨeF(F))
+    ∂Ψ∂FF(F, Fn, A...) = mapreduce((∂ΨiFF, Ai) -> ∂ΨiFF(F, Fn, Ai), +, ∂ΨαFF, A; init=∂ΨeFF(F))
+    (Ψ, ∂Ψ∂F, ∂Ψ∂FF)
   end
 end
 
@@ -84,17 +74,6 @@ end
 function update_state!(obj::GeneralizedMaxwell, states, F, Fn)
   @assert length(obj.branches) == length(states)
   map((b, s) -> update_state!(b, s, F, Fn), obj.branches, states)
-end
-
-function initializeStateVariables(obj::GeneralizedMaxwell, points::Measure)
-  map(b -> initializeStateVariables(b, points), obj.branches)
-end
-
-function updateStateVariables!(states, obj::GeneralizedMaxwell, F, Fn)
-  @assert length(obj.branches) == length(states)
-  for (branch, state) in zip(obj.branches, states)
-    updateStateVariables!(state, branch, F, Fn)
-  end
 end
 
 function Dissipation(obj::GeneralizedMaxwell)

@@ -144,17 +144,15 @@ Base.hcat(a::AnisoElastic...) = MultiAnisoElastic(a)
 
 
 function (obj::MultiAnisoElastic)(args...)
-  DΨ = map(a -> a(args...), obj.Models)
-  Ψα, ∂Ψα∂F, ∂Ψα∂FF = transpose(DΨ)
-  Ψ(F, N) = mapreduce((Ψi, Ni) -> Ψi(F, Ni), +, Ψα, N)
-  ∂Ψ∂F(F, N) = mapreduce((∂Ψi∂F, Ni) -> ∂Ψi∂F(F, Ni), +, ∂Ψα∂F, N)
+  DΨ     = map(a -> a(args...), obj.Models)
+  Ψα     = map(x -> x[1], DΨ)
+  ∂Ψα∂F  = map(x -> x[2], DΨ)
+  ∂Ψα∂FF = map(x -> x[3], DΨ)
+  Ψ(F, N)     = mapreduce((Ψi, Ni) -> Ψi(F, Ni), +, Ψα, N)
+  ∂Ψ∂F(F, N)  = mapreduce((∂Ψi∂F, Ni) -> ∂Ψi∂F(F, Ni), +, ∂Ψα∂F, N)
   ∂Ψ∂FF(F, N) = mapreduce((∂Ψi∂FF, Ni) -> ∂Ψi∂FF(F, Ni), +, ∂Ψα∂FF, N)
   (Ψ, ∂Ψ∂F, ∂Ψ∂FF)
 end
-
-transpose(x::NTuple{N,<:Tuple{<:Function,<:Function,<:Function}}) where N = map(i -> getindex.(x, i), 1:3)
-
-
 
 
 # ===================
