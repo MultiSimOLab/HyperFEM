@@ -105,7 +105,7 @@ abstract type Elasto <: Mechano end
 abstract type IsoElastic <: Elasto end
 abstract type AnisoElastic <: Elasto end
 abstract type Visco <: Mechano end
-abstract type ViscoElastic <: Mechano end
+abstract type ViscoElastic{E<:Elasto} <: Mechano end
 
 abstract type MultiPhysicalModel <: PhysicalModel end
 abstract type ElectroMechano <: MultiPhysicalModel end
