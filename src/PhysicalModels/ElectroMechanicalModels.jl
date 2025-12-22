@@ -33,7 +33,7 @@ struct ElectroMechModel{E<:Electro,M<:Mechano} <: ElectroMechano
     ∂Ψφφ(F, E, N) = ∂Ψem_φφ(F, E)
     return (Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ)
   end
-  function (obj::ElectroMechModel{<:Electro,<:ViscoElastic})(Λ::Float64=1.0)
+  function (obj::ElectroMechModel{<:Electro,<:ViscoElastic{<:IsoElastic}})(Λ::Float64=1.0)
     Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano()
     Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.electro, obj.mechano, Λ)
     Ψ(F, E, Fn, A...) = Ψm(F, Fn, A...) + Ψem(F, E)
@@ -42,6 +42,17 @@ struct ElectroMechModel{E<:Electro,M<:Mechano} <: ElectroMechano
     ∂Ψuu(F, E, Fn, A...) = ∂Ψm_uu(F, Fn, A...) + ∂Ψem_uu(F, E)
     ∂Ψφu(F, E, Fn, A...) = ∂Ψem_φu(F, E)
     ∂Ψφφ(F, E, Fn, A...) = ∂Ψem_φφ(F, E)
+    return (Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ)
+  end
+  function (obj::ElectroMechModel{<:Electro,<:ViscoElastic{<:AnisoElastic}})()
+    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano()
+    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.electro, obj.mechano)
+    Ψ(F, E, n, Fn, A...) = Ψm(F, n, Fn, A...) + Ψem(F, E)
+    ∂Ψu(F, E, n, Fn, A...) = ∂Ψm_u(F, n, Fn, A...) + ∂Ψem_u(F, E)
+    ∂Ψφ(F, E, n, Fn, A...) = ∂Ψem_φ(F, E)
+    ∂Ψuu(F, E, n, Fn, A...) = ∂Ψm_uu(F, n, Fn, A...) + ∂Ψem_uu(F, E)
+    ∂Ψφu(F, E, n, Fn, A...) = ∂Ψem_φu(F, E)
+    ∂Ψφφ(F, E, n, Fn, A...) = ∂Ψem_φφ(F, E)
     return (Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ)
   end
 end
@@ -53,12 +64,12 @@ function update_time_step!(obj::ElectroMechModel, Δt::Float64)
   update_time_step!(obj.mechano, Δt)
 end
 
-function initialize_state(obj::ElectroMechano, points::Measure)
+function initialize_state(obj::ElectroMechModel, points::Measure)
   initialize_state(obj.mechano, points)
 end
 
-function update_state!(obj::ElectroMechano, args...)
-  update_state!(obj.mechano, args...)
+function update_state!(obj::ElectroMechModel, state, F, E, args...)
+  update_state!(obj.mechano, state, F, args...)
 end
 
 
