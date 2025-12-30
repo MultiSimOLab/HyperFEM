@@ -103,7 +103,7 @@ function Gridap.FESpaces.TrialFESpace(space::SingleFieldFESpace, bc::DirichletBC
 end
 
 function Gridap.FESpaces.TrialFESpace(space::MultiFieldFESpace, bc::MultiFieldBC, Λ::Float64=0.0)
-  U_ = Vector{Union{TrialFESpace,UnconstrainedFESpace}}(undef, length(space))
+  U_ = Vector{Union{TrialFESpace,UnconstrainedFESpace,ConstantFESpace}}(undef, length(space))
   @inbounds for (i, space) in enumerate(space.spaces)
     U_[i] = TrialFESpace(space, bc[i], Λ)
   end
