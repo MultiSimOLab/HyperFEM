@@ -11,18 +11,6 @@ using Gridap.FESpaces: get_assembly_strategy
 import Gridap: solve!
 
 using BlockArrays
-# using GridapPETSc, GridapPETSc.PETSC
-# using GridapPETSc: PetscScalar, PetscInt, PETSC
-
-# using GridapDistributed
-# using GridapDistributed: DistributedDiscreteModel, DistributedTriangulation,
-#   DistributedFESpace, DistributedDomainContribution, to_parray_of_arrays,
-#   allocate_in_domain, DistributedCellField, DistributedMultiFieldCellField,
-#   DistributedMultiFieldFEBasis, BlockPMatrix, BlockPVector, change_ghost
-
-# using PartitionedArrays
-# using PartitionedArrays: getany
-
 using GridapSolvers
 using GridapSolvers.LinearSolvers, GridapSolvers.NonlinearSolvers, GridapSolvers.BlockSolvers
 using GridapSolvers.SolverInterfaces: SolverVerboseLevel, SOLVER_VERBOSE_NONE, SOLVER_VERBOSE_LOW, SOLVER_VERBOSE_HIGH
