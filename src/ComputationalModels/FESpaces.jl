@@ -146,9 +146,9 @@ function instantiate_caches(x, nls::Newton_RaphsonSolver, op::NonlinearOperator)
 end
 
 
-function instantiate_caches(x, nls::PETScNonlinearSolver, op::NonlinearOperator)
-  return GridapPETSc._setup_cache(x, nls, op)
-end
+# function instantiate_caches(x, nls::PETScNonlinearSolver, op::NonlinearOperator)
+#   return GridapPETSc._setup_cache(x, nls, op)
+# end
 
 
 
