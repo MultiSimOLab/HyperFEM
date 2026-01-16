@@ -43,6 +43,7 @@ end
 function solve!(m::StaggeredModel;
     stepping=(nsteps=20, nsubsteps=1, maxbisec=15),
     presolver=(τ, ∆τ) -> nothing,
+    evolτ=ramp(1.0),
     kargsolve)
 
     nsubsteps = stepping[:nsubsteps]
@@ -59,7 +60,10 @@ function solve!(m::StaggeredModel;
         println("           Staggered Step: $τ              ")
         println("*******************************************")
         presolver(τ, ∆τ)
-        stevol(Λ) = ∆τ * (Λ + τ)
+        τ⁻=evolτ(τ*∆τ)
+        τ⁺=evolτ((τ+1)*∆τ)
+        stevol(Λ) = τ⁻+ (τ⁺-τ⁻)*Λ
+        # stevol(Λ) = ∆τ * (Λ + τ)
         map(x -> updateBC!(x.dirichlet, x.dirichlet.caches, [stevol for _ in 1:length(x.dirichlet.caches)]), m.compmodels)
         for τ_inner in 1:nsubsteps
             map((x) -> TrialFESpace!(x.spaces[1], x.dirichlet, 1.0), m.compmodels)
@@ -141,7 +145,7 @@ function solve!(m::StaticNonlinearModel;
     x⁻ .= x
     α = 1.0
 
-    while Λ < 1.0
+    while !isapprox(Λ, 1.0; atol=1e-12)
         Λ += ∆Λ
         if Λ > 1.0
             ∆Λ = 1.0 - (Λ - ∆Λ)
