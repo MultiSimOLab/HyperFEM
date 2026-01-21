@@ -12,8 +12,8 @@ struct ElectroMechModel{E<:Electro,M<:Mechano} <: ElectroMechano
   end
 
   function (obj::ElectroMechModel{<:Electro,<:IsoElastic})(Λ::Float64=1.0)
-    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano(Λ)
-    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.electro, obj.mechano, Λ)
+    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano()
+    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.electro, obj.mechano)
     Ψ(F, E) = Ψm(F) + Ψem(F, E)
     ∂Ψu(F, E) = ∂Ψm_u(F) + ∂Ψem_u(F, E)
     ∂Ψφ(F, E) = ∂Ψem_φ(F, E)
@@ -23,8 +23,8 @@ struct ElectroMechModel{E<:Electro,M<:Mechano} <: ElectroMechano
     return (Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ)
   end
   function (obj::ElectroMechModel{<:Electro,<:AnisoElastic})(Λ::Float64=1.0)
-    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano(Λ)
-    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.electro, obj.mechano, Λ)
+    Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano()
+    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.electro, obj.mechano)
     Ψ(F, E, N) = Ψm(F, N) + Ψem(F, E)
     ∂Ψu(F, E, N) = ∂Ψm_u(F, N) + ∂Ψem_u(F, E)
     ∂Ψφ(F, E, N) = ∂Ψem_φ(F, E)
@@ -35,7 +35,7 @@ struct ElectroMechModel{E<:Electro,M<:Mechano} <: ElectroMechano
   end
   function (obj::ElectroMechModel{<:Electro,<:ViscoElastic{<:IsoElastic}})(Λ::Float64=1.0)
     Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano()
-    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.electro, obj.mechano, Λ)
+    Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.electro, obj.mechano)
     Ψ(F, E, Fn, A...) = Ψm(F, Fn, A...) + Ψem(F, E)
     ∂Ψu(F, E, Fn, A...) = ∂Ψm_u(F, Fn, A...) + ∂Ψem_u(F, E)
     ∂Ψφ(F, E, Fn, A...) = ∂Ψem_φ(F, E)
@@ -44,7 +44,7 @@ struct ElectroMechModel{E<:Electro,M<:Mechano} <: ElectroMechano
     ∂Ψφφ(F, E, Fn, A...) = ∂Ψem_φφ(F, E)
     return (Ψ, ∂Ψu, ∂Ψφ, ∂Ψuu, ∂Ψφu, ∂Ψφφ)
   end
-  function (obj::ElectroMechModel{<:Electro,<:ViscoElastic{<:AnisoElastic}})()
+  function (obj::ElectroMechModel{<:Electro,<:ViscoElastic{<:AnisoElastic}})(Λ::Float64=1.0)
     Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano()
     Ψem, ∂Ψem_u, ∂Ψem_φ, ∂Ψem_uu, ∂Ψem_φu, ∂Ψem_φφ = _getCoupling(obj.electro, obj.mechano)
     Ψ(F, E, n, Fn, A...) = Ψm(F, n, Fn, A...) + Ψem(F, E)
@@ -73,7 +73,7 @@ function update_state!(obj::ElectroMechModel, state, F, E, args...)
 end
 
 
-function _getCoupling(elec::Electro, mec::Mechano, Λ::Float64)
+function _getCoupling(elec::Electro, mec::Mechano, Λ::Float64=0.0)
   J(F) = det(F)
   H(F) = det(F) * inv(F)'
   # Energy #
