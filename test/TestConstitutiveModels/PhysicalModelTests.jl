@@ -246,6 +246,13 @@ end
   test_equilibrium_at_rest_3D(model)
 end
 
+@testset "Gent2D" begin
+  #  Memory estimate: 0 bytes, allocs estimate: 0.
+  model = Gent2D(λ=3.0, μ=1.0, Jm=1000.0, γ=1.0)
+  test_derivatives_2D_(model, Kinematics(Mechano, Solid))
+  test_equilibrium_at_rest_2D(model)
+end
+
 
 @testset "MooneyRivlin2D" begin
   #  Memory estimate: 0 bytes, allocs estimate: 0.
