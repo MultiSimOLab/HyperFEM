@@ -57,8 +57,6 @@ struct ElectroMechModel{E<:Electro,M<:Mechano} <: ElectroMechano
   end
 end
 
-ViscoElectricModel = ElectroMechModel{<:Electro,<:ViscoElastic}
-
 function update_time_step!(obj::ElectroMechModel, Δt::Float64)
   update_time_step!(obj.electro, Δt)
   update_time_step!(obj.mechano, Δt)
@@ -70,6 +68,11 @@ end
 
 function update_state!(obj::ElectroMechModel, state, F, E, args...)
   update_state!(obj.mechano, state, F, args...)
+end
+
+function Dissipation(obj::ElectroMechModel)
+  Dvis = Dissipation(obj.mechano)
+  D(F, E, X...) = Dvis(F, X...)
 end
 
 
