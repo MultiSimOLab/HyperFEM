@@ -57,8 +57,6 @@ struct ElectroMechModel{E<:Electro,M<:Mechano} <: ElectroMechano
   end
 end
 
-ViscoElectricModel = ElectroMechModel{<:Electro,<:ViscoElastic}
-
 function update_time_step!(obj::ElectroMechModel, Δt::Float64)
   update_time_step!(obj.electro, Δt)
   update_time_step!(obj.mechano, Δt)

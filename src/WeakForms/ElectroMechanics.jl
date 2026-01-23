@@ -72,12 +72,12 @@ end
 # Monolithic strategy
 # -------------------
 
-function residual(physicalmodel::ViscoElectricModel, kine::NTuple{2,KinematicModel},  (u, φ), (v, vφ), dΩ, Λ, un, A)
+function residual(physicalmodel::ElectroMechModel{<:Electro,<:ViscoElastic}, kine::NTuple{2,KinematicModel},  (u, φ), (v, vφ), dΩ, Λ, un, A)
     residual(physicalmodel, Mechano, kine, (u, φ), v, dΩ, Λ, un, A) +
     residual(physicalmodel, Electro, kine, (u, φ), vφ, dΩ, Λ, un, A)
 end
 
-function jacobian(physicalmodel::ViscoElectricModel, kine::NTuple{2,KinematicModel}, (u, φ), (du, dφ), (v, vφ), dΩ, Λ, un, A)
+function jacobian(physicalmodel::ElectroMechModel{<:Electro,<:ViscoElastic}, kine::NTuple{2,KinematicModel}, (u, φ), (du, dφ), (v, vφ), dΩ, Λ, un, A)
     jacobian(physicalmodel, Mechano, kine,(u, φ), du, v, dΩ, Λ, un, A) +
     jacobian(physicalmodel, Electro, kine,(u, φ), dφ, vφ, dΩ, Λ, un, A) +
     jacobian(physicalmodel, ElectroMechano, kine,(u, φ), (du, dφ), (v, vφ), dΩ, Λ, un, A)
