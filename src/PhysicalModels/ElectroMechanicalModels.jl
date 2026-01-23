@@ -72,6 +72,11 @@ function update_state!(obj::ElectroMechModel, state, F, E, args...)
   update_state!(obj.mechano, state, F, args...)
 end
 
+function Dissipation(obj::ElectroMechModel)
+  Dvis = Dissipation(obj.mechano)
+  D(F, E, X...) = Dvis(F, X...)
+end
+
 
 function _getCoupling(elec::Electro, mec::Mechano, Λ::Float64=0.0)
   J(F) = det(F)
