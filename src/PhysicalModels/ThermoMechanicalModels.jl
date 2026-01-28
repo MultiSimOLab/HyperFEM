@@ -1,5 +1,22 @@
 
 # ===================
+# Common functions
+# ===================
+
+function initialize_state(obj::TM, points::Measure) where {TM<:ThermoMechano}
+  initialize_state(obj.mechano, points)
+end
+
+function update_state!(obj::TM, state, F, θ, args...) where {TM<:ThermoMechano}
+  update_state!(obj.mechano, state, F, args...)
+end
+
+function update_time_step!(obj::TM, Δt::Float64) where {TM<:ThermoMechano}
+  update_time_step!(obj.thermo,  Δt)
+  update_time_step!(obj.mechano, Δt)
+end
+
+# ===================
 # MultiPhysicalModel models
 # ===================
 
