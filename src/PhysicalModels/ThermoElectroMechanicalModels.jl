@@ -122,7 +122,7 @@ end
 
 
 function (obj::ThermoElectroMechModel{ThermalModel3rdLaw,<:Electro,<:Mechano})(Λ::Float64=0.0)
-  @unpack Cv0, θr, α, κ, γv, γd = obj.thermo
+  @unpack cv0, θr, α, κ, γv, γd = obj.thermo
   em = ElectroMechModel(obj.electro, obj.mechano)
   Ψem, ∂Ψem∂F, ∂Ψem∂E, ∂Ψem∂FF, ∂Ψem∂EF, ∂Ψem∂EE = em()
   gv, ∂gv, ∂∂gv, gd, ∂gd, ∂∂gd = obj.thermo()
@@ -145,7 +145,7 @@ function (obj::ThermoElectroMechModel{ThermalModel3rdLaw,<:Electro,<:Mechano})(�
 end
 
 function Dissipation(obj::ThermoElectroMechModel{ThermalModel3rdLaw,<:Electro,<:Mechano})
-  @unpack Cv0, θr, α, κ, γv, γd = obj.thermo
+  @unpack cv0, θr, α, κ, γv, γd = obj.thermo
   gv, ∂gv, ∂∂gv, gd, ∂gd, ∂∂gd = obj.thermo()
   Dvis = Dissipation(obj.mechano)
   D(F, E, θ, X...) = (1 + gd(θ)) * Dvis(F, X...)

@@ -36,7 +36,7 @@ end
 
 
 function (obj::ThermoMechModel{ThermalModel3rdLaw,<:Mechano})(Λ::Float64=0.0)
-  @unpack Cv0, θr, α, κ, γv, γd = obj.thermo
+  @unpack cv0, θr, α, κ, γv, γd = obj.thermo
   gv, ∂gv, ∂∂gv, gd, ∂gd, ∂∂gd = obj.thermo()
   Ψm, ∂Ψm∂F, ∂∂Ψm∂FF = obj.mechano()
   ηR, ∂ηR∂F, ∂∂ηR∂FF = _getCoupling(obj.thermo, obj.mechano)
@@ -50,10 +50,10 @@ function (obj::ThermoMechModel{ThermalModel3rdLaw,<:Mechano})(Λ::Float64=0.0)
 end
 
 function _getCoupling(thermo::ThermalModel3rdLaw, ::Mechano)
-  @unpack Cv0, θr, α, κ, γv, γd = thermo
+  @unpack cv0, θr, α, κ, γv, γd = thermo
   J(F) = det(F)
   H(F) = cof(F)
-  ηR(F) = α*(J(F) - 1.0) + Cv0/γv
+  ηR(F) = α*(J(F) - 1.0) + cv0/γv
   ∂ηR∂J(F) = α
   ∂ηR∂F(F) = ∂ηR∂J(F)*H(F)
   ∂∂ηR∂FF(F) = ×ᵢ⁴(∂ηR∂J(F) * F)

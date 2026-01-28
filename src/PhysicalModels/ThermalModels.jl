@@ -24,19 +24,19 @@ end
 
 
 struct ThermalModel3rdLaw <: Thermo
-  Cv0::Float64
+  cv0::Float64
   θr::Float64
   α::Float64
   κ::Float64
   γv::Float64
   γd::Float64
-  function ThermalModel3rdLaw(; Cv0::Float64, θr::Float64, α::Float64, κ::Float64, γv::Float64, γd::Float64)
-    new(Cv0, θr, α, κ, γv, γd)
+  function ThermalModel3rdLaw(; cv0::Float64, θr::Float64, α::Float64, κ::Float64, γv::Float64, γd::Float64)
+    new(cv0, θr, α, κ, γv, γd)
   end
 end
 
 function (obj::ThermalModel3rdLaw)()
-  @unpack Cv0, θr, α, κ, γv, γd = obj
+  @unpack cv0, θr, α, κ, γv, γd = obj
   g(θ,θr,γ) = 1/(γ+1) * ((θ/θr)^(γ+1) -1)
   ∂g(θ,θr,γ) = θ^γ / θr^(γ+1)
   ∂∂g(θ,θr,γ) = γ*θ^(γ-1) / θr^(γ+1)
