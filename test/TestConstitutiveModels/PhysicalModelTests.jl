@@ -5,7 +5,7 @@ using StaticArrays
 using Test
 using HyperFEM.PhysicalModels
 using HyperFEM.TensorAlgebra
-
+using HyperFEM.IO
 
 
 import Base: -
@@ -470,12 +470,11 @@ end
   ∇φ = VectorValue(1.0, 2.0, 3.0)
   θt = 3.4 - 1.0
   θr = 293.0
-  Cv = 17.385
+  Cv0 = 17.385
   modelMR = MooneyRivlin3D(λ=0.0, μ1=0.5, μ2=0.5)
   modelID = IdealDielectric(ε=1.0)
-  modelT = ThermalModel(Cv=Cv, θr=θr, α=0.00156331, γv=2.0, γd=2.0)
-
-  modelTEM = ThermoElectroMech_Bonet(modelT, modelID, modelMR)
+  modelT = ThermalModel3rdLaw(Cv0=Cv0, θr=θr, α=0.00156331, κ=1.0, γv=2.0, γd=2.0)
+  modelTEM = ThermoElectroMechModel(modelT, modelID, modelMR)
   Ψ, ∂Ψu, ∂ΨE, ∂Ψθ, ∂ΨFF, ∂ΨEE, ∂2Ψθθ, ∂ΨEF, ∂ΨFθ, ∂ΨEθ = modelTEM()
 
   K = Kinematics(Mechano, Solid)
@@ -509,7 +508,8 @@ end
   F0 = I3
   E0 = VectorValue(0.,0.,0.)
   cv(F,E,θ,x...) = -θ*∂2Ψ∂2θ(F,E,θ,x...)
-  @test isapprox(Cv, cv(F0, E0, θr); rtol=1e-14)
+  @test isapprox(Cv0, cv(F0, E0, θr); rtol=1e-14)
+  # @test isapprox(0, Ψ(F0, E0, 0); atol=1e-14)
 end
 
 

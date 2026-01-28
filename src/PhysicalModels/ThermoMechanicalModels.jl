@@ -35,6 +35,32 @@ struct ThermoMechModel{T<:Thermo,M<:Mechano} <: ThermoMechano
 end
 
 
+function (obj::ThermoMechModel{ThermalModel3rdLaw,<:Mechano})(Λ::Float64=0.0)
+  @unpack Cv0, θr, α, κ, γv, γd = obj.thermo
+  gv, ∂gv, ∂∂gv, gd, ∂gd, ∂∂gd = obj.thermo()
+  Ψm, ∂Ψm∂F, ∂∂Ψm∂FF = obj.mechano()
+  ηR, ∂ηR∂F, ∂∂ηR∂FF = _getCoupling(obj.thermo, obj.mechano)
+  Ψ(F, θ, X...)       =  Ψm(F, X...)*(1.0+gd(θ)) - θr*gv(θ)*ηR(F)
+  ∂Ψ∂F(F, θ, X...)    =  (1.0+gd(θ)) *∂Ψm∂F(F, X...) - θr*gv(θ)*∂ηR∂F(F)
+  ∂Ψ∂θ(F, θ, X...)    =  ∂gd(θ) *Ψm(F, X...) - θr*∂gv(θ)*ηR(F)
+  ∂∂Ψ∂FF(F, θ, X...)  =  (1.0+gd(θ)) *∂∂Ψm∂FF(F, E, X...) - θr*gv(θ)*∂∂ηR∂FF(F)
+  ∂∂Ψ∂θθ(F, θ, X...)  =  ∂∂gd(θ) *Ψm(F, X...) - θr*∂∂gv(θ)*ηR(F)
+  ∂∂Ψ∂Fθ(F, θ, X...)  =  ∂gd(θ) *∂Ψm∂F(F, X...) - θr*∂gv(θ)*∂ηR∂F(F)
+  return (Ψ, ∂Ψ∂F, ∂Ψ∂θ, ∂∂Ψ∂FF, ∂∂Ψ∂θθ, ∂∂Ψ∂Fθ)
+end
+
+function _getCoupling(thermo::ThermalModel3rdLaw, ::Mechano)
+  @unpack Cv0, θr, α, κ, γv, γd = thermo
+  J(F) = det(F)
+  H(F) = cof(F)
+  ηR(F) = α*(J(F) - 1.0) + Cv0/γv
+  ∂ηR∂J(F) = α
+  ∂ηR∂F(F) = ∂ηR∂J(F)*H(F)
+  ∂∂ηR∂FF(F) = ×ᵢ⁴(∂ηR∂J(F) * F)
+  return (ηR, ∂ηR∂F, ∂∂ηR∂FF)
+end
+
+
 struct ThermoMech_EntropicPolyconvex{T<:Thermo,M<:Mechano} <: ThermoMechano
   thermo::T
   mechano::M
