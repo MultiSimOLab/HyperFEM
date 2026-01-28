@@ -17,6 +17,10 @@ struct ThermoMechModel{T<:Thermo,M<:Mechano} <: ThermoMechano
     new{T,M}(thermo, mechano, fθ, dfdθ)
   end
 
+  function ThermoMechModel(thermo::ThermalModel3rdLaw, mechano::M) where {M<:Mechano}
+    new{ThermalModel3rdLaw,M}(thermo,mechano)
+  end
+
   function (obj::ThermoMechModel)(Λ::Float64=1.0)
     Ψt, ∂Ψt_θ, ∂Ψt_θθ = obj.thermo(Λ)
     Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano(Λ)

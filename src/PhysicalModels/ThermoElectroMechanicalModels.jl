@@ -19,7 +19,7 @@ struct ThermoElectroMechModel{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectroM
   mechano::M
   fθ::Function
   dfdθ::Function
-  
+
   function ThermoElectroMechModel(thermo::T, electro::E, mechano::M; fθ::Function, dfdθ::Function) where {T<:Thermo,E<:Electro,M<:Mechano}
     new{T,E,M}(thermo, electro, mechano, fθ, dfdθ)
   end
