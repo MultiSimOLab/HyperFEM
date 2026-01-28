@@ -44,6 +44,7 @@ end
 @publish PhysicalModels TransverseIsotropy3D
 @publish PhysicalModels TransverseIsotropy2D
 @publish PhysicalModels ThermalModel
+@publish PhysicalModels ThermalModel3rdLaw
 @publish PhysicalModels IdealDielectric
 @publish PhysicalModels Magnetic
 @publish PhysicalModels IdealMagnetic
@@ -57,7 +58,6 @@ end
 @publish PhysicalModels FlexoElectroModel
 @publish PhysicalModels ThermoElectroMech_Govindjee
 @publish PhysicalModels ThermoElectroMech_PINNs
-@publish PhysicalModels ThermoElectroMech_Bonet
 @publish PhysicalModels MagnetoMechModel
 @publish PhysicalModels ARAP2D
 @publish PhysicalModels ARAP2D_regularized
