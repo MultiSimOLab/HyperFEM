@@ -81,6 +81,15 @@ function _getCoupling(thermo::ThermalModel3rdLaw, ::Mechano)
   return (ηR, ∂ηR∂F, ∂∂ηR∂FF)
 end
 
+function Dissipation(obj::ThermoMechModel{ThermalModel3rdLaw,<:Mechano})
+  @unpack cv0, θr, α, κ, γv, γd = obj.thermo
+  gv, ∂gv, ∂∂gv, gd, ∂gd, ∂∂gd = obj.thermo()
+  Dvis = Dissipation(obj.mechano)
+  D(F, θ, X...) = (1 + gd(θ)) * Dvis(F, X...)
+  ∂D∂θ(F, θ, X...) = ∂gd(θ) * Dvis(F, X...)
+  return(D, ∂D∂θ)
+end
+
 
 struct ThermoMech_EntropicPolyconvex{T<:Thermo,M<:Mechano} <: ThermoMechano
   thermo::T
