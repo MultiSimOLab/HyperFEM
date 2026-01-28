@@ -165,9 +165,18 @@ function return_mapping_algorithm!(obj::ViscousIncompressible,
   res, ∂res = JacobianReturnMapping(γα, Ce, Se(Ce), Se_trial, ∂Se∂Ce(Ce), C, λα)
   maxiter = 20
   tol = 1e-6
-  for _ in 1:maxiter
+  for i in 1:maxiter
     #---------- Update -----------#
-    Δu = -∂res \ res[:]
+    local Δu
+    try
+      Δu = -∂res \ res[:]
+    catch e
+      if e isa LinearAlgebra.SingularException
+        error("Singular jacobian in return mapping algorithm (singular value at pos $(e.info), iteration $i)")
+      else
+        rethrow()
+      end
+    end
     Ce += TensorValue{3,3}(Tuple(Δu[1:end-1]))  # TODO: Check reconstruction of TensorValue. ERROR: MethodError: no method matching (TensorValue{3, 3})(::Vector{Float64})
     λα += Δu[end]
     #---- Residual and jacobian ---------#
