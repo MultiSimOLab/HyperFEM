@@ -43,7 +43,7 @@ end
 function solve!(m::StaggeredModel;
     stepping=(nsteps=20, nsubsteps=1, maxbisec=15),
     presolver=(τ, ∆τ) -> nothing,
-    evolτ=ramp(1.0),
+    evolτ=t-> max(min(t, 1.0), 0.0),
     kargsolve)
 
     nsubsteps = stepping[:nsubsteps]

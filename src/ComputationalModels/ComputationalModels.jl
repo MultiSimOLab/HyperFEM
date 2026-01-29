@@ -1,7 +1,6 @@
 module ComputationalModels
 using HyperFEM.PhysicalModels
 using HyperFEM.Solvers
-using HyperFEM.EvolutionFunctions
 
 using Gridap
 using Gridap.Helpers
