@@ -412,7 +412,7 @@ function jacobian(physicalmodel::ThermoElectroMech_PINNs, kine::NTuple{2,Kinemat
   jacobian(physicalmodel, ThermoElectro, kine,(u, φ, θ), dθ, vφ, dΩ, Λ)
 end
 
-function transient_residual(physicalmodel::ThermoElectroMech_Bonet, ::Type{Thermo}, kine::NTuple{3,KinematicModel}, (u, φ, θ), vθ, dΩ, Λ=1.0)
+function transient_residual(physicalmodel::ThermoElectroMechModel, ::Type{Thermo}, kine::NTuple{3,KinematicModel}, (u, φ, θ), vθ, dΩ, Λ=1.0)
   κ = physicalmodel.thermo.κ
   return ∫(κ * ∇(θ) ⋅ ∇(vθ))dΩ
 end
