@@ -123,32 +123,33 @@ end
 
 function (obj::ThermoElectroMechModel{ThermalModel3rdLaw,<:Electro,<:Mechano})(Λ::Float64=0.0)
   @unpack cv0, θr, α, κ, γv, γd = obj.thermo
+  gv, ∂gv, ∂∂gv = volumetric_law(obj.thermo)
+  gd, ∂gd, ∂∂gd = isochoric_law(obj.thermo)
   em = ElectroMechModel(obj.electro, obj.mechano)
   Ψem, ∂Ψem∂F, ∂Ψem∂E, ∂Ψem∂FF, ∂Ψem∂EF, ∂Ψem∂EE = em()
-  gv, ∂gv, ∂∂gv, gd, ∂gd, ∂∂gd = obj.thermo()
   ηR, ∂ηR∂F, ∂∂ηR∂FF = _getCoupling(obj.thermo, obj.mechano)
 
-  Ψ(F, E, θ, X...) = Ψem(F, E, X...)*(1.0+gd(θ)) - θr*gv(θ)*ηR(F)
+  Ψ(F, E, θ, X...) = gd(θ)*Ψem(F, E, X...) - θr*gv(θ)*ηR(F)
 
-  ∂Ψ∂F(F, E, θ, X...)  =  (1.0+gd(θ)) *∂Ψem∂F(F, E, X...) - θr*gv(θ)*∂ηR∂F(F)
-  ∂Ψ∂E(F, E, θ, X...)  =  (1.0+gd(θ)) *∂Ψem∂E(F, E, X...)
-  ∂Ψ∂θ(F, E, θ, X...)  =  ∂gd(θ) *Ψem(F, E, X...) - θr*∂gv(θ)*ηR(F)
+  ∂Ψ∂F(F, E, θ, X...)  =   gd(θ)*∂Ψem∂F(F, E, X...) - θr*gv(θ)*∂ηR∂F(F)
+  ∂Ψ∂E(F, E, θ, X...)  =   gd(θ)*∂Ψem∂E(F, E, X...)
+  ∂Ψ∂θ(F, E, θ, X...)  =  ∂gd(θ)*Ψem(F, E, X...) - θr*∂gv(θ)*ηR(F)
 
-  ∂∂Ψ∂FF(F, E, θ, X...)  =  (1.0+gd(θ)) *∂Ψem∂FF(F, E, X...) - θr*gv(θ)*∂∂ηR∂FF(F)
-  ∂∂Ψ∂EE(F, E, θ, X...)  =  (1.0+gd(θ)) *∂Ψem∂EE(F, E, X...)
-  ∂∂Ψ∂θθ(F, E, θ, X...)  =  ∂∂gd(θ) *Ψem(F, E, X...) - θr*∂∂gv(θ)*ηR(F)
+  ∂∂Ψ∂FF(F, E, θ, X...)  =    gd(θ)*∂Ψem∂FF(F, E, X...) - θr*gv(θ)*∂∂ηR∂FF(F)
+  ∂∂Ψ∂EE(F, E, θ, X...)  =    gd(θ)*∂Ψem∂EE(F, E, X...)
+  ∂∂Ψ∂θθ(F, E, θ, X...)  =  ∂∂gd(θ)*Ψem(F, E, X...) - θr*∂∂gv(θ)*ηR(F)
 
-  ∂∂Ψ∂EF(F, E, θ, X...)  =  (1.0+gd(θ)) *∂Ψem∂EF(F, E, X...)
-  ∂∂Ψ∂Fθ(F, E, θ, X...) =  ∂gd(θ) *∂Ψem∂F(F, E, X...) - θr*∂gv(θ)*∂ηR∂F(F)
-  ∂∂Ψ∂Eθ(F, E, θ, X...) =  ∂gd(θ) *∂Ψem∂E(F, E, X...)
+  ∂∂Ψ∂EF(F, E, θ, X...)  =  gd(θ)*∂Ψem∂EF(F, E, X...)
+  ∂∂Ψ∂Fθ(F, E, θ, X...) =  ∂gd(θ)*∂Ψem∂F(F, E, X...) - θr*∂gv(θ)*∂ηR∂F(F)
+  ∂∂Ψ∂Eθ(F, E, θ, X...) =  ∂gd(θ)*∂Ψem∂E(F, E, X...)
   return (Ψ, ∂Ψ∂F, ∂Ψ∂E, ∂Ψ∂θ, ∂∂Ψ∂FF, ∂∂Ψ∂EE, ∂∂Ψ∂θθ, ∂∂Ψ∂EF, ∂∂Ψ∂Fθ, ∂∂Ψ∂Eθ)
 end
 
 function Dissipation(obj::ThermoElectroMechModel{ThermalModel3rdLaw,<:Electro,<:Mechano})
   @unpack cv0, θr, α, κ, γv, γd = obj.thermo
-  gv, ∂gv, ∂∂gv, gd, ∂gd, ∂∂gd = obj.thermo()
+  gd, ∂gd, ∂∂gd = isochoric_law(obj.thermo)
   Dvis = Dissipation(obj.mechano)
-  D(F, E, θ, X...) = (1 + gd(θ)) * Dvis(F, X...)
+  D(F, E, θ, X...) = gd(θ) * Dvis(F, X...)
   ∂D∂θ(F, E, θ, X...) = ∂gd(θ) * Dvis(F, X...)
   return(D, ∂D∂θ)
 end

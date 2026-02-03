@@ -35,16 +35,22 @@ struct ThermalModel3rdLaw <: Thermo
   end
 end
 
+function volumetric_law(model::ThermalModel3rdLaw)
+  θr, γ = model.θr, model.γv
+  g(θ) = 1/(γ+1) * ((θ/θr)^(γ+1) -1)
+  ∂g(θ) = θ^γ / θr^(γ+1)
+  ∂∂g(θ) = γ*θ^(γ-1) / θr^(γ+1)
+  return (g, ∂g, ∂∂g)
+end
+
+function isochoric_law(model::ThermalModel3rdLaw)
+  θr, γ = model.θr, model.γd
+  g(θ) = (θ/θr)^(-γ)
+  ∂g(θ) = -γ*θ^(-γ-1) * θr^γ
+  ∂∂g(θ) = γ*(γ+1)*θ^(-γ-2) * θr^γ
+  return (g, ∂g, ∂∂g)
+end
+
 function (obj::ThermalModel3rdLaw)()
-  @unpack cv0, θr, α, κ, γv, γd = obj
-  g(θ,θr,γ) = 1/(γ+1) * ((θ/θr)^(γ+1) -1)
-  ∂g(θ,θr,γ) = θ^γ / θr^(γ+1)
-  ∂∂g(θ,θr,γ) = γ*θ^(γ-1) / θr^(γ+1)
-  gd(θ) = g(θ,θr,γd)
-  ∂gd(θ) = ∂g(θ,θr,γd)
-  ∂∂gd(θ) = ∂∂g(θ,θr,γd)
-  gv(θ) = g(θ,θr,γv)
-  ∂gv(θ) = ∂g(θ,θr,γv)
-  ∂∂gv(θ) = ∂∂g(θ,θr,γv)
-  return (gv, ∂gv, ∂∂gv, gd, ∂gd, ∂∂gd)
+  throw("The thermal model 3rd law is not callable. Please, define the energy in combination with other models.")
 end
