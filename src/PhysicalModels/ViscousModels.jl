@@ -42,66 +42,108 @@ function Dissipation(obj::ViscousIncompressible)
   D(F, Fn, A) = ViscousDissipation(obj, Se, ∂Se∂Ce, F, Fn, A)
 end
 
+struct NVisco{N} <: Visco 
+  branches::NTuple{N,Visco}
+end
+
+function NVisco(branches::Vararg{Visco})
+  NVisco(branches)
+end
+
+function Base.length(::NVisco{N}) where N
+  N
+end
+
+function Base.getindex(obj::NVisco,i)
+  obj.branches[i]
+end
+
+function Base.iterate(obj::NVisco, state=0)
+  state >= length(obj) && return
+  obj[state+1], state+1
+end
+
+function (obj::NVisco)()
+  DΨv   = map(b -> b(),  obj)
+  Ψα    = map(x -> x[1], DΨv)
+  ∂ΨαF  = map(x -> x[2], DΨv)
+  ∂ΨαFF = map(x -> x[3], DΨv)
+  Ψ(F, Fn, A...)     = mapreduce((Ψi, Ai) -> Ψi(F, Fn, Ai), +, Ψα, A; init=0)
+  ∂Ψ∂F(F, Fn, A...)  = mapreduce((∂ΨiF, Ai) -> ∂ΨiF(F, Fn, Ai), +, ∂ΨαF, A; init=zerotensor3)
+  ∂Ψ∂FF(F, Fn, A...) = mapreduce((∂ΨiFF, Ai) -> ∂ΨiFF(F, Fn, Ai), +, ∂ΨαFF, A; init=zerotensor9)
+  (Ψ, ∂Ψ∂F, ∂Ψ∂FF)
+end
+
+function update_time_step!(obj::NVisco, Δt::Float64)
+  foreach(b -> update_time_step!(b, Δt), obj)
+  Δt
+end
+
+function initialize_state(obj::NVisco, points::Measure)
+  map(b -> initialize_state(b, points), obj)
+end
+
+function update_state!(obj::NVisco, states, F, Fn)
+  @assert length(obj) == length(states)
+  map((b, s) -> update_state!(b, s, F, Fn), obj, states)
+end
+
+function Dissipation(obj::NVisco)
+  Dα = map(Dissipation, obj)
+  D(F, Fn, A...) = mapreduce((Di, Ai) -> Di(F, Fn, Ai), +, Dα, A)
+end
+
 struct GeneralizedMaxwell{E<:Elasto} <: ViscoElastic{E}
   longterm::E
-  branches::NTuple{N,Visco} where N
+  branches::NVisco{N} where N
   Δt::Ref{Float64}
   function GeneralizedMaxwell(longTerm::E, branches::Vararg{Visco}) where {E<:Elasto}
-    new{E}(longTerm,branches,0)
+    new{E}(longTerm,NVisco(branches),0)
   end
 end
 
 function (obj::GeneralizedMaxwell{<:IsoElastic})()
   Ψe, ∂ΨeF, ∂ΨeFF = obj.longterm()
-  DΨv   = map(b -> b(), obj.branches)
-  Ψα    = map(x -> x[1], DΨv)
-  ∂ΨαF  = map(x -> x[2], DΨv)
-  ∂ΨαFF = map(x -> x[3], DΨv)
-  Ψ(F, Fn, A...)     = mapreduce((Ψi, Ai) -> Ψi(F, Fn, Ai), +, Ψα, A; init=Ψe(F))
-  ∂Ψ∂F(F, Fn, A...)  = mapreduce((∂ΨiF, Ai) -> ∂ΨiF(F, Fn, Ai), +, ∂ΨαF, A; init=∂ΨeF(F))
-  ∂Ψ∂FF(F, Fn, A...) = mapreduce((∂ΨiFF, Ai) -> ∂ΨiFF(F, Fn, Ai), +, ∂ΨαFF, A; init=∂ΨeFF(F))
+  Ψv, ∂ΨvF, ∂ΨvFF = obj.branches()
+  Ψ(F, Fn, A...)     = Ψe(F) + Ψv(F, Fn, A...)
+  ∂Ψ∂F(F, Fn, A...)  = ∂ΨeF(F) + ∂ΨvF(F, Fn, A...)
+  ∂Ψ∂FF(F, Fn, A...) = ∂ΨeFF(F) + ∂ΨvFF(F, Fn, A...)
   (Ψ, ∂Ψ∂F, ∂Ψ∂FF)
 end
 
 function (obj::GeneralizedMaxwell{<:AnisoElastic})()
   Ψe, ∂ΨeF, ∂ΨeFF = obj.longterm()
-  DΨv   = map(b -> b(), obj.branches)
-  Ψα    = map(x -> x[1], DΨv)
-  ∂ΨαF  = map(x -> x[2], DΨv)
-  ∂ΨαFF = map(x -> x[3], DΨv)
-  Ψ(F, n, Fn, A...)     = mapreduce((Ψi, Ai) -> Ψi(F, Fn, Ai), +, Ψα, A; init=Ψe(F,n))
-  ∂Ψ∂F(F, n, Fn, A...)  = mapreduce((∂ΨiF, Ai) -> ∂ΨiF(F, Fn, Ai), +, ∂ΨαF, A; init=∂ΨeF(F,n))
-  ∂Ψ∂FF(F, n, Fn, A...) = mapreduce((∂ΨiFF, Ai) -> ∂ΨiFF(F, Fn, Ai), +, ∂ΨαFF, A; init=∂ΨeFF(F,n))
+  Ψv, ∂ΨvF, ∂ΨvFF = obj.branches()
+  Ψ(F, n, Fn, A...)     = Ψe(F, n) + Ψv(F, Fn, A...)
+  ∂Ψ∂F(F, n, Fn, A...)  = ∂ΨeF(F, n) + ∂ΨvF(F, Fn, A...)
+  ∂Ψ∂FF(F, n, Fn, A...) = ∂ΨeFF(F, n) + ∂ΨvFF(F, Fn, A...)
   (Ψ, ∂Ψ∂F, ∂Ψ∂FF)
 end
 
 function update_time_step!(obj::GeneralizedMaxwell, Δt::Float64)
-  foreach(b -> update_time_step!(b, Δt), obj.branches)
-  obj.Δt[] = Δt
+  update_time_step!(obj.longterm, Δt)
+  update_time_step!(obj.branches, Δt)
 end
 
 function initialize_state(obj::GeneralizedMaxwell, points::Measure)
-  map(b -> initialize_state(b, points), obj.branches)
+  initialize_state(obj.branches, points)
 end
 
 function update_state!(obj::GeneralizedMaxwell{<:IsoElastic}, states, F, Fn)
-  @assert length(obj.branches) == length(states)
-  map((b, s) -> update_state!(b, s, F, Fn), obj.branches, states)
+  update_state!(obj.branches, states, F, Fn)
 end
 
-function update_state!(obj::GeneralizedMaxwell{<:AnisoElastic}, states, F, N, Fn)
-  @assert length(obj.branches) == length(states)
-  map((b, s) -> update_state!(b, s, F, Fn), obj.branches, states)
+function update_state!(obj::GeneralizedMaxwell{<:AnisoElastic}, states, F, n, Fn)
+  update_state!(obj.branches, states, F, Fn)
 end
 
 function Dissipation(obj::GeneralizedMaxwell{<:IsoElastic})
-  Dα = map(Dissipation, obj.branches)
-  D(F, Fn, A...) = mapreduce((Di, Ai) -> Di(F, Fn, Ai), +, Dα, A)
+  Dissipation(obj.branches)
 end
 
 function Dissipation(obj::GeneralizedMaxwell{<:AnisoElastic})
-  Dα = map(Dissipation, obj.branches)
-  D(F, N, Fn, A...) = mapreduce((Di, Ai) -> Di(F, Fn, Ai), +, Dα, A)
+  Dvis = Dissipation(obj.branches)
+  D(F, n, Fn, A...) = Dvis(F, Fn, A...)
 end
 
 
