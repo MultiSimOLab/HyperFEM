@@ -44,7 +44,6 @@ end
 @publish PhysicalModels TransverseIsotropy3D
 @publish PhysicalModels TransverseIsotropy2D
 @publish PhysicalModels ThermalModel
-@publish PhysicalModels ThermalModel3rdLaw
 @publish PhysicalModels IdealDielectric
 @publish PhysicalModels Magnetic
 @publish PhysicalModels IdealMagnetic
@@ -54,8 +53,10 @@ end
 @publish PhysicalModels ElectroMechModel
 @publish PhysicalModels ThermoElectroMechModel
 @publish PhysicalModels ThermoMechModel
+@publish PhysicalModels ThermoMech_Bonet
 @publish PhysicalModels ThermoMech_EntropicPolyconvex
 @publish PhysicalModels FlexoElectroModel
+@publish PhysicalModels ThermoElectroMech_Bonet
 @publish PhysicalModels ThermoElectroMech_Govindjee
 @publish PhysicalModels ThermoElectroMech_PINNs
 @publish PhysicalModels MagnetoMechModel

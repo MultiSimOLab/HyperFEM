@@ -45,12 +45,13 @@ export IdealMagnetic2D
 export HardMagnetic
 export HardMagnetic2D
 export ThermalModel
-export ThermalModel3rdLaw
 export ElectroMechModel
 export ThermoElectroMechModel
 export ThermoMechModel
+export ThermoMech_Bonet
 export ThermoMech_EntropicPolyconvex
 export FlexoElectroModel
+export ThermoElectroMech_Bonet
 export ThermoElectroMech_Govindjee
 export ThermoElectroMech_PINNs
 export MagnetoMechModel

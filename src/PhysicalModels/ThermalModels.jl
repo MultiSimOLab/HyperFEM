@@ -23,34 +23,34 @@ struct ThermalModel <: Thermo
 end
 
 
-struct ThermalModel3rdLaw <: Thermo
-  cv0::Float64
-  θr::Float64
-  α::Float64
-  κ::Float64
-  γv::Float64
-  γd::Float64
-  function ThermalModel3rdLaw(; cv0::Float64, θr::Float64, α::Float64, κ::Float64, γv::Float64, γd::Float64)
-    new(cv0, θr, α, κ, γv, γd)
-  end
-end
+# struct ThermalModel3rdLaw <: Thermo
+#   cv0::Float64
+#   θr::Float64
+#   α::Float64
+#   κ::Float64
+#   γv::Float64
+#   γd::Float64
+#   function ThermalModel3rdLaw(; cv0::Float64, θr::Float64, α::Float64, κ::Float64, γv::Float64, γd::Float64)
+#     new(cv0, θr, α, κ, γv, γd)
+#   end
+# end
 
-function volumetric_law(model::ThermalModel3rdLaw)
-  θr, γ = model.θr, model.γv
-  g(θ) = 1/(γ+1) * ((θ/θr)^(γ+1) -1)
-  ∂g(θ) = θ^γ / θr^(γ+1)
-  ∂∂g(θ) = γ*θ^(γ-1) / θr^(γ+1)
-  return (g, ∂g, ∂∂g)
-end
+# function volumetric_law(model::ThermalModel3rdLaw)
+#   θr, γ = model.θr, model.γv
+#   g(θ) = 1/(γ+1) * ((θ/θr)^(γ+1) -1)
+#   ∂g(θ) = θ^γ / θr^(γ+1)
+#   ∂∂g(θ) = γ*θ^(γ-1) / θr^(γ+1)
+#   return (g, ∂g, ∂∂g)
+# end
 
-function isochoric_law(model::ThermalModel3rdLaw)
-  θr, γ = model.θr, model.γd
-  g(θ) = (θ/θr)^(-γ)
-  ∂g(θ) = -γ*θ^(-γ-1) * θr^γ
-  ∂∂g(θ) = γ*(γ+1)*θ^(-γ-2) * θr^γ
-  return (g, ∂g, ∂∂g)
-end
+# function isochoric_law(model::ThermalModel3rdLaw)
+#   θr, γ = model.θr, model.γd
+#   g(θ) = (θ/θr)^(-γ)
+#   ∂g(θ) = -γ*θ^(-γ-1) * θr^γ
+#   ∂∂g(θ) = γ*(γ+1)*θ^(-γ-2) * θr^γ
+#   return (g, ∂g, ∂∂g)
+# end
 
-function (obj::ThermalModel3rdLaw)()
-  throw("The thermal model 3rd law is not callable. Please, define the energy in combination with other models.")
-end
+# function (obj::ThermalModel3rdLaw)()
+#   throw("The thermal model 3rd law is not callable. Please, define the energy in combination with other models.")
+# end

@@ -28,9 +28,9 @@ struct ThermoElectroMechModel{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectroM
     new{T,E,M}(thermo, electro, mechano, fθ, dfdθ)
   end
 
-  function ThermoElectroMechModel(thermo::ThermalModel3rdLaw, electro::E, mechano::M) where {E<:Electro, M<:Mechano}
-    new{ThermalModel3rdLaw,E,M}(thermo, electro, mechano)
-  end
+  # function ThermoElectroMechModel(thermo::ThermalModel3rdLaw, electro::E, mechano::M) where {E<:Electro, M<:Mechano}
+  #   new{ThermalModel3rdLaw,E,M}(thermo, electro, mechano)
+  # end
 
   function (obj::ThermoElectroMechModel)(Λ::Float64=1.0)
     Ψt, ∂Ψt_θ, ∂Ψt_θθ = obj.thermo(Λ)
@@ -121,35 +121,60 @@ struct ThermoElectroMech_Govindjee{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoEle
 end
 
 
-function (obj::ThermoElectroMechModel{ThermalModel3rdLaw,<:Electro,<:Mechano})(Λ::Float64=0.0)
-  @unpack cv0, θr, α, κ, γv, γd = obj.thermo
-  gv, ∂gv, ∂∂gv = volumetric_law(obj.thermo)
-  gd, ∂gd, ∂∂gd = isochoric_law(obj.thermo)
+struct ThermoElectroMech_Bonet{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoMechano
+  thermo::T
+  electro::E
+  mechano::M
+  gv::VolumetricLaw
+  gd::DeviatoricLaw
+  gvis::DeviatoricLaw
+end
+
+function ThermoElectroMech_Bonet(thermo::T, electro::E, mechano::M; γv::Float64, γd::Float64, γvis::Float64=γd) where {T<:Thermo,E<:Electro,M<:Mechano}
+  gv   = VolumetricLaw(thermo.θr, γv)
+  gd   = DeviatoricLaw(thermo.θr, γd)
+  gvis = DeviatoricLaw(thermo.θr, γvis)
+  ThermoElectroMech_Bonet{T,E,M}(thermo,electro,mechano,gv,gd,gvis)
+end
+
+function (obj::ThermoElectroMech_Bonet{<:Thermo,<:Electro,<:Elasto})(Λ::Float64=0.0)
+  θr = obj.thermo.θr
+  gv, ∂gv, ∂∂gv = derivatives(obj.gv)
+  gd, ∂gd, ∂∂gd = derivatives(obj.gd)
   em = ElectroMechModel(obj.electro, obj.mechano)
   Ψem, ∂Ψem∂F, ∂Ψem∂E, ∂Ψem∂FF, ∂Ψem∂EF, ∂Ψem∂EE = em()
-  ηR, ∂ηR∂F, ∂∂ηR∂FF = _getCoupling(obj.thermo, obj.mechano)
+  ηR, ∂ηR∂F, ∂∂ηR∂FF = entropy(obj)
 
   Ψ(F, E, θ, X...) = gd(θ)*Ψem(F, E, X...) - θr*gv(θ)*ηR(F)
 
-  ∂Ψ∂F(F, E, θ, X...)  =   gd(θ)*∂Ψem∂F(F, E, X...) - θr*gv(θ)*∂ηR∂F(F)
-  ∂Ψ∂E(F, E, θ, X...)  =   gd(θ)*∂Ψem∂E(F, E, X...)
+  ∂Ψ∂F(F, E, θ, X...)  =  gd(θ)*∂Ψem∂F(F, E, X...) - θr*gv(θ)*∂ηR∂F(F)
+  ∂Ψ∂E(F, E, θ, X...)  =  gd(θ)*∂Ψem∂E(F, E, X...)
   ∂Ψ∂θ(F, E, θ, X...)  =  ∂gd(θ)*Ψem(F, E, X...) - θr*∂gv(θ)*ηR(F)
 
-  ∂∂Ψ∂FF(F, E, θ, X...)  =    gd(θ)*∂Ψem∂FF(F, E, X...) - θr*gv(θ)*∂∂ηR∂FF(F)
-  ∂∂Ψ∂EE(F, E, θ, X...)  =    gd(θ)*∂Ψem∂EE(F, E, X...)
+  ∂∂Ψ∂FF(F, E, θ, X...)  =  gd(θ)*∂Ψem∂FF(F, E, X...) - θr*gv(θ)*∂∂ηR∂FF(F)
+  ∂∂Ψ∂EE(F, E, θ, X...)  =  gd(θ)*∂Ψem∂EE(F, E, X...)
   ∂∂Ψ∂θθ(F, E, θ, X...)  =  ∂∂gd(θ)*Ψem(F, E, X...) - θr*∂∂gv(θ)*ηR(F)
 
   ∂∂Ψ∂EF(F, E, θ, X...)  =  gd(θ)*∂Ψem∂EF(F, E, X...)
-  ∂∂Ψ∂Fθ(F, E, θ, X...) =  ∂gd(θ)*∂Ψem∂F(F, E, X...) - θr*∂gv(θ)*∂ηR∂F(F)
-  ∂∂Ψ∂Eθ(F, E, θ, X...) =  ∂gd(θ)*∂Ψem∂E(F, E, X...)
+  ∂∂Ψ∂Fθ(F, E, θ, X...)  =  ∂gd(θ)*∂Ψem∂F(F, E, X...) - θr*∂gv(θ)*∂ηR∂F(F)
+  ∂∂Ψ∂Eθ(F, E, θ, X...)  =  ∂gd(θ)*∂Ψem∂E(F, E, X...)
   return (Ψ, ∂Ψ∂F, ∂Ψ∂E, ∂Ψ∂θ, ∂∂Ψ∂FF, ∂∂Ψ∂EE, ∂∂Ψ∂θθ, ∂∂Ψ∂EF, ∂∂Ψ∂Fθ, ∂∂Ψ∂Eθ)
 end
 
-function Dissipation(obj::ThermoElectroMechModel{ThermalModel3rdLaw,<:Electro,<:Mechano})
-  @unpack cv0, θr, α, κ, γv, γd = obj.thermo
-  gd, ∂gd, ∂∂gd = isochoric_law(obj.thermo)
-  Dvis = Dissipation(obj.mechano)
-  D(F, E, θ, X...) = gd(θ) * Dvis(F, X...)
-  ∂D∂θ(F, E, θ, X...) = ∂gd(θ) * Dvis(F, X...)
-  return(D, ∂D∂θ)
+function entropy(obj::ThermoElectroMech_Bonet)
+  tm = ThermoMech_Bonet(obj.thermo, obj.mechano, obj.gv, obj.gd, obj.gvis)
+  entropy(tm)
 end
+
+function Dissipation(obj::ThermoElectroMech_Bonet)
+  tm = ThermoMech_Bonet(obj.thermo, obj.mechano, obj.gv, obj.gd, obj.gvis)
+  Dissipation(tm)
+end
+
+# function Dissipation(obj::ThermoElectroMech_Bonet)
+#   gd, ∂gd, ∂∂gd = isochoric_law(obj.thermo)
+#   Dvis = Dissipation(obj.mechano)
+#   D(F, E, θ, X...) = gd(θ) * Dvis(F, X...)
+#   ∂D∂θ(F, E, θ, X...) = ∂gd(θ) * Dvis(F, X...)
+#   return(D, ∂D∂θ)
+# end
