@@ -17,6 +17,9 @@ end
 @publish TensorAlgebra logreg
 @publish TensorAlgebra Box
 @publish TensorAlgebra Ellipsoid
+@publish TensorAlgebra I2
+@publish TensorAlgebra I3
+@publish TensorAlgebra I4
 @publish TensorAlgebra I9
 @publish TensorAlgebra Tensorize
 
