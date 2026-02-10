@@ -101,9 +101,9 @@ function InjectivityCheck(α, ∇u, ∇du)
   F = ∇u + one(∇u)
   J = det(F)
   H = J * inv(F)'
-  if det(F+∇du) < 0.2
-  @show det(F), det(F+∇du)
-  end
+  # if det(F+∇du) < 0.2
+  # @show det(F), det(F+∇du)
+  # end
   return true, min(0.95*abs(( -J) / (det(∇du) + tr(H' * ∇du) )), 1.0)
 
 end
