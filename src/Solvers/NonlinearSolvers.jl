@@ -13,8 +13,8 @@ struct Newton_RaphsonSolver <: Algebra.NonlinearSolver
   linesearch::AbstractLineSearch
 end
 
-function Newton_RaphsonSolver(ls; maxiter=100, atol=1e-12, rtol=1.e-6, verbose=0, name="Newton-Raphson", linesearch::AbstractLineSearch=LineSearch())
-  tols = SolverTolerances{Float64}(; maxiter=maxiter, atol=atol, rtol=rtol)
+function Newton_RaphsonSolver(ls; maxiter=100, atol=1e-12, rtol=1.e-6, cuvtol=1.e-5,verbose=0, name="Newton-Raphson", linesearch::AbstractLineSearch=LineSearch())
+  tols = SolverTolerances{Float64}(; maxiter=maxiter, atol=atol, rtol=rtol, cuvtol=cuvtol)
   log = ConvergenceLog(name, tols; verbose=verbose)
   return Newton_RaphsonSolver(ls, log, linesearch)
 end
@@ -63,11 +63,10 @@ function _solve_nr!(x, A, b, dx, ns, nls, op)
     rmul!(b, -1)
     solve!(dx, ns, b)
 
-    #linesearch x and b changed
-    # if abs(b' * dx) < 1e-6
-    #   break
-    # end
-    # x .+= dx
+    # curvature stopping criterion
+    if abs(b' * dx) < log.tols.cuvtol
+      break
+    end
 
     α = linesearch(x, dx, b, op)
     x .+= α * dx

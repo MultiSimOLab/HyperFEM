@@ -99,7 +99,7 @@ U = MultiFieldFESpace([Uu, Uφ])
 km=Kinematics(Mechano,Solid)
 ke=Kinematics(Electro,Solid)
 
-F,_,_ = get_Kinematics(kM)
+F,_,_ = get_Kinematics(km)
 E     = get_Kinematics(ke)
 
 # residual and jacobian function of load factor
