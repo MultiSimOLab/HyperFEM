@@ -120,12 +120,26 @@ function derivatives(law::DeviatoricLaw)
   return (g, ∂g, ∂∂g)
 end
 
+struct InterceptLaw <: ThermalLaw
+  θr::Float64
+  γ::Float64
+  δ::Float64
+end
+
+function derivatives(law::InterceptLaw)
+  θr, γ, δ = law.θr, law.γ, law.δ
+  g(θ) = (θ/θr)^(-γ) + δ
+  ∂g(θ) = -γ*θ^(-γ-1) * θr^γ
+  ∂∂g(θ) = γ*(γ+1)*θ^(-γ-2) * θr^γ
+  return (g, ∂g, ∂∂g)
+end
+
 struct ThermoMech_Bonet{T<:Thermo,M<:Mechano} <: ThermoMechano
   thermo::T
   mechano::M
   gv::VolumetricLaw
-  gd::DeviatoricLaw
-  gvis::DeviatoricLaw
+  gd::ThermalLaw
+  gvis::ThermalLaw
 end
 
 function ThermoMech_Bonet(thermo::T, mechano::M; γv::Float64, γd::Float64, γvis::Float64=γd) where {T<:Thermo,M<:Mechano}

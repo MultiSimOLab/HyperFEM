@@ -88,6 +88,11 @@ end
 @publish PhysicalModels get_Kinematics
 @publish PhysicalModels getIsoInvariants
 
+@publish PhysicalModels ThermalLaw
+@publish PhysicalModels VolumetricLaw
+@publish PhysicalModels DeviatoricLaw
+@publish PhysicalModels InterceptLaw
+
 @publish PhysicalModels SecondPiola
 @publish PhysicalModels Dissipation
 @publish PhysicalModels initialize_state
