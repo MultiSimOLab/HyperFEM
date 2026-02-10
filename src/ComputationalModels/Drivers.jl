@@ -68,9 +68,9 @@ function solve!(m::StaggeredModel;
         for τ_inner in 1:nsubsteps
             map((x) -> TrialFESpace!(x.spaces[1], x.dirichlet, 1.0), m.compmodels)
             _, flagconv = map((x, y) -> solve!(x; y...), m.compmodels, kargsolve)
-            map((x, y) -> TrialFESpace!(x.fe_space, y.dirichlet, 1.0), m.state⁻, m.compmodels)
-            map((x, y) -> x .= y, x⁻, x⁺)
         end
+        map((x, y) -> TrialFESpace!(x.fe_space, y.dirichlet, 1.0), m.state⁻, m.compmodels)
+        map((x, y) -> x .= y, x⁻, x⁺)
     end
 
     return x⁺, flagconv
