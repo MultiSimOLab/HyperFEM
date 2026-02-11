@@ -1,7 +1,7 @@
 name = "HyperFEM"
 uuid = "ddbf423a-3df4-409e-9685-3dc416cae46c"
 authors = ["MultiSimo_Group"]
-version = "1.0.0-DEV"
+version = "0.0.1"
 
 [deps]
 AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
