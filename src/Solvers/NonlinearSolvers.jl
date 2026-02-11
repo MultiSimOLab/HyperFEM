@@ -65,6 +65,7 @@ function _solve_nr!(x, A, b, dx, ns, nls, op)
 
     # curvature stopping criterion
     if abs(b' * dx) < 1e-5
+      res = 2.22e-22
       break
     end
 
