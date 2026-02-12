@@ -65,11 +65,9 @@ degree = 2 * order
 dΩ = Measure(Ω, degree)
 
 # Dirichlet boundary conditions 
-evolu(Λ) = 1.0
 dir_u_tags = ["fixedup"]
 dir_u_values = [[0.0, 0.0, 0.0]]
-dir_u_timesteps = [evolu]
-Du = DirichletBC(dir_u_tags, dir_u_values, dir_u_timesteps)
+Du = DirichletBC(dir_u_tags, dir_u_values)
 
 evolφ(Λ) = Λ
 dir_φ_tags = ["midsuf", "topsuf"]
@@ -88,8 +86,8 @@ Vu = TestFESpace(geomodel, reffeu, D_bc.BoundaryCondition[1], conformity=:H1)
 Vφ = TestFESpace(geomodel, reffeφ, D_bc.BoundaryCondition[2], conformity=:H1)
 
 # Trial FE Spaces
-Uu = TrialFESpace(Vu, D_bc.BoundaryCondition[1], 1.0)
-Uφ = TrialFESpace(Vφ, D_bc.BoundaryCondition[2], 1.0)
+Uu = TrialFESpace(Vu, D_bc.BoundaryCondition[1])
+Uφ = TrialFESpace(Vφ, D_bc.BoundaryCondition[2])
 
 # Multifield FE Spaces
 V = MultiFieldFESpace([Vu, Vφ])
