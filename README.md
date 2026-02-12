@@ -25,7 +25,7 @@ src="https://github.com/jmartfrut/HyperFEM/blob/main/docs/imgs/logo.png?raw=true
 ## Installation
 Open the Julia REPL, type `]` to enter package mode, and install as follows
 ```julia
-pkg> add https://github.com/MultiSimOLab/HyperFEM
+pkg> add HyperFEM
 ```
 
 ## Usage
