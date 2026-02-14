@@ -139,7 +139,8 @@ end
 @publish ComputationalModels  evaluate!
 @publish ComputationalModels  InterpolableBC
 @publish ComputationalModels  InterpolableBC!
-@publish ComputationalModels TrialFESpace! # Exporting internal function of Gridap
+@publish ComputationalModels  TrialFESpace! # Exporting internal function of Gridap
+@publish ComputationalModels  L2_Projection
 
 # Note: the files FaceLabeling, CartesianTags and Evolution functions should be moved to a module different than ComputationalModels
 @publish ComputationalModels add_tag_from_vertex_filter!
