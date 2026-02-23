@@ -107,6 +107,20 @@ function derivatives(law::VolumetricLaw)
   return (g, ∂g, ∂∂g)
 end
 
+struct EntropicMeltingLaw <: ThermalLaw
+  θr::Float64
+  θM::Float64
+  γ::Float64
+end
+
+function derivatives(law::EntropicMeltingLaw)
+  @unpack θr, θM, γ = law
+  g(θ) = (1 - (θ/θM)^(γ+1)) / (1 - (θr/θM)^(γ+1))
+  ∂g(θ) = -(γ+1)*θ^γ/θM^(γ+1) / (1 - (θr/θM)^(γ+1))
+  ∂∂g(θ) = -γ*(γ+1)*θ^(γ-1)/θM^(γ+1) / (1 - (θr/θM)^(γ+1))
+  return (g, ∂g, ∂∂g)
+end
+
 struct DeviatoricLaw <: ThermalLaw
   θr::Float64
   γ::Float64
@@ -159,9 +173,27 @@ end
 
 function derivatives(law::PolynomialLaw)
   @unpack θr, a, b, c = law
-  f(θ)   = a*(θ-θr)^3  + b*(θ-θr)^2 + c*(θ-θr) + 1
-  ∂f(θ)  = 3a*(θ-θr)^2 + 2b*(θ-θr) + c
-  ∂∂f(θ) = 6a*(θ-θr) + 2b
+  f(θ)   = a*((θ-θr)/θr)^3  + b*((θ-θr)/θr)^2 + c*(θ-θr)/θr + 1
+  ∂f(θ)  = 3a*(θ-θr)^2/θr^3 + 2b*(θ-θr)/θr^2 + c/θr
+  ∂∂f(θ) = 6a*(θ-θr)/θr^3 + 2b/θr^2
+  return (f, ∂f, ∂∂f)
+end
+
+struct LogisticLaw <: ThermalLaw
+  θr::Float64
+  μ::Float64
+  σ::Float64
+end
+
+function derivatives(law::LogisticLaw)
+  @unpack θr, μ, σ = law
+  z(x) = (log(x) - μ) / σ
+  std_pdf(x) = 1/σ/sqrt(2 * π) * exp(-z(x)^2 / 2)
+  std_cdf(x) = 0.5 * (1 + erf(z(x) / sqrt(2)))
+  ξR = 1 / (1-std_cdf(θr))
+  f(θ) = ξR * (1-std_cdf(θ))
+  ∂f(θ) = -ξR / θ * std_pdf(θ)
+  ∂∂f(θ) = ξR / θ^2 * std_pdf(θ) * (1 + z(θ)/σ)
   return (f, ∂f, ∂∂f)
 end
 

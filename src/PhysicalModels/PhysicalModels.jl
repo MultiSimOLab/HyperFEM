@@ -11,6 +11,7 @@ using ..TensorAlgebra
 using ..TensorAlgebra: _∂H∂F_2D
 using ..TensorAlgebra: trAA
 using StaticArrays
+using SpecialFunctions  # implements erf
 
 import Base: +
 import Gridap: update_state!

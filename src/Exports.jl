@@ -93,6 +93,8 @@ end
 @publish PhysicalModels ThermalLaw
 @publish PhysicalModels VolumetricLaw
 @publish PhysicalModels DeviatoricLaw
+@publish PhysicalModels EntropicMeltingLaw
+@publish PhysicalModels LogisticLaw
 @publish PhysicalModels InterceptLaw
 @publish PhysicalModels TrigonometricLaw
 @publish PhysicalModels PolynomialLaw
