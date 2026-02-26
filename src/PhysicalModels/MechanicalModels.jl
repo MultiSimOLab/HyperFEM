@@ -619,8 +619,9 @@ struct EightChain <: IsoElastic
       C_iso = J(F)^(-2 / 3) * C
       β = sqrt(tr(C_iso) / 3 / N)
       L = β * (3.0 - β^2) / (1.0 - β^2)
-      L0 = (3N - 1) / (N - 1) / sqrt(N)
-      μ * N * (β * L + log(L / sinh(L)) - L0 / sqrt(N) - log(L0 / sinh(L0)))
+      β0 = 1 / sqrt(N)
+      L0 = β0 * (3.0 - β0^2) / (1.0 - β0^2)
+      μ * N * (β * L + log(L / sinh(L)) - β0*L0 - log(L0 / sinh(L0)))
     end
 
     ∂Ψ∂F(F) = begin
