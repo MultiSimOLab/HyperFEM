@@ -25,7 +25,7 @@ src="https://github.com/jmartfrut/HyperFEM/blob/main/docs/imgs/logo.png?raw=true
 ## Installation
 Open the Julia REPL, type `]` to enter package mode, and install as follows
 ```julia
-pkg> add https://github.com/MultiSimOLab/HyperFEM
+pkg> add HyperFEM
 ```
 
 ## Usage
@@ -99,7 +99,7 @@ U = MultiFieldFESpace([Uu, Uφ])
 km=Kinematics(Mechano,Solid)
 ke=Kinematics(Electro,Solid)
 
-F,_,_ = get_Kinematics(kM)
+F,_,_ = get_Kinematics(km)
 E     = get_Kinematics(ke)
 
 # residual and jacobian function of load factor

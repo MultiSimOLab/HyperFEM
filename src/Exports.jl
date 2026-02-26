@@ -17,6 +17,9 @@ end
 @publish TensorAlgebra logreg
 @publish TensorAlgebra Box
 @publish TensorAlgebra Ellipsoid
+@publish TensorAlgebra I2
+@publish TensorAlgebra I3
+@publish TensorAlgebra I4
 @publish TensorAlgebra I9
 @publish TensorAlgebra Tensorize
 
@@ -148,7 +151,8 @@ end
 @publish ComputationalModels  evaluate!
 @publish ComputationalModels  InterpolableBC
 @publish ComputationalModels  InterpolableBC!
-@publish ComputationalModels TrialFESpace! # Exporting internal function of Gridap
+@publish ComputationalModels  TrialFESpace! # Exporting internal function of Gridap
+@publish ComputationalModels  L2_Projection
 
 # Note: the files FaceLabeling, CartesianTags and Evolution functions should be moved to a module different than ComputationalModels
 @publish ComputationalModels add_tag_from_vertex_filter!
