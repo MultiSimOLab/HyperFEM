@@ -20,7 +20,7 @@ end
 # MultiPhysicalModel models
 # ===================
 
-struct ThermoMechModel{T<:Thermo,M<:Mechano} <: ThermoMechano
+struct ThermoMechModel{T<:Thermo,M<:Mechano} <: ThermoMechano{T,M}
   thermo::T
   mechano::M
   fθ::Function
@@ -197,7 +197,7 @@ function derivatives(law::LogisticLaw)
   return (f, ∂f, ∂∂f)
 end
 
-struct ThermoMech_Bonet{T<:Thermo,M<:Mechano} <: ThermoMechano
+struct ThermoMech_Bonet{T<:Thermo,M<:Mechano} <: ThermoMechano{T,M}
   thermo::T
   mechano::M
   gv::VolumetricLaw
@@ -264,7 +264,7 @@ function Dissipation(obj::ThermoMech_Bonet)
 end
 
 
-struct ThermoMech_EntropicPolyconvex{T<:Thermo,M<:Mechano} <: ThermoMechano
+struct ThermoMech_EntropicPolyconvex{T<:Thermo,M<:Mechano} <: ThermoMechano{T,M}
   thermo::T
   mechano::M
   β::Float64

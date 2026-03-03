@@ -113,7 +113,7 @@ abstract type ViscoElastic{E<:Elasto} <: Mechano end
 abstract type MultiPhysicalModel <: PhysicalModel end
 abstract type ElectroMechano <: MultiPhysicalModel end
 abstract type ThermoElectroMechano <: MultiPhysicalModel end
-abstract type ThermoMechano <: MultiPhysicalModel end
+abstract type ThermoMechano{T,M} <: MultiPhysicalModel end
 abstract type ThermoElectro <: MultiPhysicalModel end
 abstract type FlexoElectro <: MultiPhysicalModel end
 abstract type MagnetoMechano <: MultiPhysicalModel end
