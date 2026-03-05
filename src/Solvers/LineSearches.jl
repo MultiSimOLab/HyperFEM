@@ -72,7 +72,7 @@ struct Injectivity_Preserving_LS{A} <: AbstractLineSearch
 
   function (obj::Injectivity_Preserving_LS)(x::AbstractVector, dx::AbstractVector, b::AbstractVector, op::NonlinearOperator)
 
-    _, maxiter, αmin, ρ, c, β = obj.α, obj.maxiter, obj.αmin, obj.ρ, obj.c, obj.β
+    _, maxiter, αmin, ρ, c= obj.α, obj.maxiter, obj.αmin, obj.ρ, obj.c
     #update cell state
     U, V = obj.caches
     xh = FEFunction(U, x)
