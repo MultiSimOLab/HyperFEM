@@ -62,16 +62,17 @@ struct Injectivity_Preserving_LS{A} <: AbstractLineSearch
   αmin::Float64
   ρ::Float64
   c::Float64
+  β::Float64
   caches::A
-  function Injectivity_Preserving_LS(α::CellState, U, V; maxiter::Int64=50, αmin::Float64=1e-16, ρ::Float64=0.5, c::Float64=0.95)
+  function Injectivity_Preserving_LS(α::CellState, U, V; maxiter::Int64=50, αmin::Float64=1e-16, ρ::Float64=0.5, c::Float64=0.95, β::Float64=0.95)
     caches = (U, V)
-    new{typeof(caches)}(α, maxiter, αmin, ρ, c, caches)
+    new{typeof(caches)}(α, maxiter, αmin, ρ, c, β, caches)
   end
  
 
   function (obj::Injectivity_Preserving_LS)(x::AbstractVector, dx::AbstractVector, b::AbstractVector, op::NonlinearOperator)
 
-    _, maxiter, αmin, ρ, c = obj.α, obj.maxiter, obj.αmin, obj.ρ, obj.c
+    _, maxiter, αmin, ρ, c, β = obj.α, obj.maxiter, obj.αmin, obj.ρ, obj.c, obj.β
     #update cell state
     U, V = obj.caches
     xh = FEFunction(U, x)
@@ -94,9 +95,7 @@ struct Injectivity_Preserving_LS{A} <: AbstractLineSearch
 
 end
 
-
-
-function InjectivityCheck(α, ∇u, ∇du)
+function InjectivityCheck(α, ∇u, ∇du, β)
   ε = 1e-6
   F = ∇u + one(∇u)
   J = det(F)
@@ -104,12 +103,12 @@ function InjectivityCheck(α, ∇u, ∇du)
   # if det(F+∇du) < 0.2
   # @show det(F), det(F+∇du)
   # end
-  return true, min(0.95*abs(( -J) / (det(∇du) + tr(H' * ∇du) )), 1.0)
+  return true, min(β*abs(( -J) / (det(∇du) + tr(H' * ∇du) )), 1.0)
 
 end
 
 
 function update_cellstate!(obj::Injectivity_Preserving_LS, xh, dxh)
-  update_state!(InjectivityCheck, obj.α, ∇(xh)', ∇(dxh)')
+  update_state!(InjectivityCheck, obj.α, ∇(xh)', ∇(dxh)', obj.β)
   return minimum(minimum((obj.α.values)))
 end
