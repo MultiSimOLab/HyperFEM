@@ -109,6 +109,6 @@ end
 
 
 function update_cellstate!(obj::Injectivity_Preserving_LS, xh, dxh)
-  update_state!(InjectivityCheck, obj.α, ∇(xh)', ∇(dxh)', obj.β)
+  update_state!(InjectivityCheck, obj.α, ∇(xh)', ∇(dxh)', x->obj.β)
   return minimum(minimum((obj.α.values)))
 end
