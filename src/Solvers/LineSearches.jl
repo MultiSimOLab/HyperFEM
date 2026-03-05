@@ -62,11 +62,11 @@ struct Injectivity_Preserving_LS{A} <: AbstractLineSearch
   αmin::Float64
   ρ::Float64
   c::Float64
-  β::Float64
+  β::CellField
   caches::A
   function Injectivity_Preserving_LS(α::CellState, U, V; maxiter::Int64=50, αmin::Float64=1e-16, ρ::Float64=0.5, c::Float64=0.95, β::Float64=0.95)
     caches = (U, V)
-    new{typeof(caches)}(α, maxiter, αmin, ρ, c, β, caches)
+    new{typeof(caches)}(α, maxiter, αmin, ρ, c, CellField(β, α.points.trian), caches)
   end
  
 
@@ -109,6 +109,6 @@ end
 
 
 function update_cellstate!(obj::Injectivity_Preserving_LS, xh, dxh)
-  update_state!(InjectivityCheck, obj.α, ∇(xh)', ∇(dxh)', x->obj.β)
+  update_state!(InjectivityCheck, obj.α, ∇(xh)', ∇(dxh)', obj.β)
   return minimum(minimum((obj.α.values)))
 end
