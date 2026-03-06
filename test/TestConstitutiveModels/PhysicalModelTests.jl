@@ -473,8 +473,8 @@ end
   cv0 = 17.385
   modelMR = MooneyRivlin3D(λ=0.0, μ1=0.5, μ2=0.5)
   modelID = IdealDielectric(ε=1.0)
-  modelT = ThermalModel3rdLaw(cv0=cv0, θr=θr, α=0.00156331, κ=1.0, γv=2.0, γd=2.0)
-  modelTEM = ThermoElectroMechModel(modelT, modelID, modelMR)
+  modelT = ThermalModel(Cv=cv0, θr=θr, α=0.00156331, κ=1.0)
+  modelTEM = ThermoElectroMech_Bonet(modelT, modelID, modelMR, γv=2.0, γd=2.0)
   Ψ, ∂Ψu, ∂ΨE, ∂Ψθ, ∂ΨFF, ∂ΨEE, ∂2Ψθθ, ∂ΨEF, ∂ΨFθ, ∂ΨEθ = modelTEM()
 
   K = Kinematics(Mechano, Solid)

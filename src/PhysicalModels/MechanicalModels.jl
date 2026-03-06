@@ -144,10 +144,10 @@ Base.hcat(a::AnisoElastic...) = MultiAnisoElastic(a)
 
 
 function (obj::MultiAnisoElastic)(args...)
-  DΨ = map(a -> a(args...), obj.Models)
-  Ψα = map(x -> x[1], DΨ)
-  ∂Ψα∂F = map(x -> x[2], DΨ)
-  ∂Ψα∂FF = map(x -> x[3], DΨ)
+  DΨ     = map(a -> a(args...), obj.Models)
+  Ψα     = getindex.(DΨ, 1)
+  ∂Ψα∂F  = getindex.(DΨ, 2)
+  ∂Ψα∂FF = getindex.(DΨ, 3)
   Ψ(F, N) = mapreduce((Ψi, Ni) -> Ψi(F, Ni), +, Ψα, N)
   ∂Ψ∂F(F, N) = mapreduce((∂Ψi∂F, Ni) -> ∂Ψi∂F(F, Ni), +, ∂Ψα∂F, N)
   ∂Ψ∂FF(F, N) = mapreduce((∂Ψi∂FF, Ni) -> ∂Ψi∂FF(F, Ni), +, ∂Ψα∂FF, N)
@@ -619,8 +619,9 @@ struct EightChain <: IsoElastic
       C_iso = J(F)^(-2 / 3) * C
       β = sqrt(tr(C_iso) / 3 / N)
       L = β * (3.0 - β^2) / (1.0 - β^2)
-      L0 = (3N - 1) / (N - 1) / sqrt(N)
-      μ * N * (β * L + log(L / sinh(L)) - L0 / sqrt(N) - log(L0 / sinh(L0)))
+      β0 = 1 / sqrt(N)
+      L0 = β0 * (3.0 - β0^2) / (1.0 - β0^2)
+      μ * N * (β * L + log(L / sinh(L)) - β0*L0 - log(L0 / sinh(L0)))
     end
 
     ∂Ψ∂F(F) = begin

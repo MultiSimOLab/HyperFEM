@@ -47,7 +47,6 @@ end
 @publish PhysicalModels TransverseIsotropy3D
 @publish PhysicalModels TransverseIsotropy2D
 @publish PhysicalModels ThermalModel
-@publish PhysicalModels ThermalModel3rdLaw
 @publish PhysicalModels IdealDielectric
 @publish PhysicalModels Magnetic
 @publish PhysicalModels IdealMagnetic
@@ -57,8 +56,10 @@ end
 @publish PhysicalModels ElectroMechModel
 @publish PhysicalModels ThermoElectroMechModel
 @publish PhysicalModels ThermoMechModel
+@publish PhysicalModels ThermoMech_Bonet
 @publish PhysicalModels ThermoMech_EntropicPolyconvex
 @publish PhysicalModels FlexoElectroModel
+@publish PhysicalModels ThermoElectroMech_Bonet
 @publish PhysicalModels ThermoElectroMech_Govindjee
 @publish PhysicalModels ThermoElectroMech_PINNs
 @publish PhysicalModels MagnetoMechModel
@@ -89,6 +90,17 @@ end
 @publish PhysicalModels EvolutiveKinematics
 @publish PhysicalModels get_Kinematics
 @publish PhysicalModels getIsoInvariants
+
+@publish PhysicalModels entropy
+@publish PhysicalModels derivatives
+@publish PhysicalModels ThermalLaw
+@publish PhysicalModels VolumetricLaw
+@publish PhysicalModels DeviatoricLaw
+@publish PhysicalModels EntropicMeltingLaw
+@publish PhysicalModels LogisticLaw
+@publish PhysicalModels InterceptLaw
+@publish PhysicalModels TrigonometricLaw
+@publish PhysicalModels PolynomialLaw
 
 @publish PhysicalModels SecondPiola
 @publish PhysicalModels Dissipation

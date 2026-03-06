@@ -23,6 +23,8 @@ export I9
 export I2
 export I4
 export Id
+export zerotensor3
+export zerotensor9
 
 export logreg
 export Tensorize

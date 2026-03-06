@@ -11,6 +11,7 @@ using ..TensorAlgebra
 using ..TensorAlgebra: _∂H∂F_2D
 using ..TensorAlgebra: trAA
 using StaticArrays
+using SpecialFunctions  # implements erf
 
 import Base: +
 import Gridap: update_state!
@@ -45,12 +46,13 @@ export IdealMagnetic2D
 export HardMagnetic
 export HardMagnetic2D
 export ThermalModel
-export ThermalModel3rdLaw
 export ElectroMechModel
 export ThermoElectroMechModel
 export ThermoMechModel
+export ThermoMech_Bonet
 export ThermoMech_EntropicPolyconvex
 export FlexoElectroModel
+export ThermoElectroMech_Bonet
 export ThermoElectroMech_Govindjee
 export ThermoElectroMech_PINNs
 export MagnetoMechModel
@@ -108,10 +110,12 @@ abstract type AnisoElastic <: Elasto end
 abstract type Visco <: Mechano end
 abstract type ViscoElastic{E<:Elasto} <: Mechano end
 
+abstract type ThermalLaw end
+
 abstract type MultiPhysicalModel <: PhysicalModel end
 abstract type ElectroMechano <: MultiPhysicalModel end
 abstract type ThermoElectroMechano <: MultiPhysicalModel end
-abstract type ThermoMechano <: MultiPhysicalModel end
+abstract type ThermoMechano{T,M} <: MultiPhysicalModel end
 abstract type ThermoElectro <: MultiPhysicalModel end
 abstract type FlexoElectro <: MultiPhysicalModel end
 abstract type MagnetoMechano <: MultiPhysicalModel end
