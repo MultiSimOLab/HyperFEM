@@ -64,9 +64,21 @@ jobs:
       - name: Smoke Test (Step 2 of Debug)
         run: |
           julia --project -e '
-            println("--- Attempting to load HyperFEM... ---")
+            println("1. Loading base dependencies...")
+            using LinearAlgebra, StaticArrays, SparseArrays
+            println("Base dependencies loaded.")
+            
+            println("2. Loading Gridap...")
+            using Gridap
+            println("Gridap loaded.")
+
+            println("3. Loading GridapSolvers...")
+            using GridapSolvers
+            println("GridapSolvers loaded.")
+
+            println("4. Loading HyperFEM...")
             using HyperFEM
-            println("--- Package loaded successfully. ---")
+            println("HyperFEM loaded.")
           '
         continue-on-error: true
 
