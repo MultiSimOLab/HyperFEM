@@ -34,10 +34,6 @@ struct ThermoMechModel{T<:Thermo,M<:Mechano} <: ThermoMechano{T,M}
     new{T,M}(thermo, mechano, fθ, dfdθ)
   end
 
-  # function ThermoMechModel(thermo::ThermalModel3rdLaw, mechano::M) where {M<:Mechano}
-  #   new{ThermalModel3rdLaw,M}(thermo,mechano)
-  # end
-
   function (obj::ThermoMechModel)(Λ::Float64=1.0)
     Ψt, ∂Ψt_θ, ∂Ψt_θθ = obj.thermo(Λ)
     Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano(Λ)
@@ -54,42 +50,6 @@ struct ThermoMechModel{T<:Thermo,M<:Mechano} <: ThermoMechano{T,M}
     return (Ψ, ∂Ψu, ∂Ψθ, ∂Ψuu, ∂Ψθθ, ∂Ψuθ, η)
   end
 end
-
-
-# function (obj::ThermoMechModel{ThermalModel3rdLaw,<:Mechano})(Λ::Float64=0.0)
-#   @unpack cv0, θr, α, κ, γv, γd = obj.thermo
-#   gv, ∂gv, ∂∂gv = volumetric_law(obj.thermo)
-#   gd, ∂gd, ∂∂gd = isochoric_law(obj.thermo)
-#   Ψm, ∂Ψm∂F, ∂∂Ψm∂FF = obj.mechano()
-#   ηR, ∂ηR∂F, ∂∂ηR∂FF = _getCoupling(obj.thermo, obj.mechano)
-#   Ψ(F, θ, X...)       =  gd(θ)*Ψm(F, X...) - θr*gv(θ)*ηR(F)
-#   ∂Ψ∂F(F, θ, X...)    =  gd(θ)*∂Ψm∂F(F, X...) - θr*gv(θ)*∂ηR∂F(F)
-#   ∂Ψ∂θ(F, θ, X...)    =  ∂gd(θ)*Ψm(F, X...) - θr*∂gv(θ)*ηR(F)
-#   ∂∂Ψ∂FF(F, θ, X...)  =  gd(θ)*∂∂Ψm∂FF(F, E, X...) - θr*gv(θ)*∂∂ηR∂FF(F)
-#   ∂∂Ψ∂θθ(F, θ, X...)  =  ∂∂gd(θ)*Ψm(F, X...) - θr*∂∂gv(θ)*ηR(F)
-#   ∂∂Ψ∂Fθ(F, θ, X...)  =  ∂gd(θ)*∂Ψm∂F(F, X...) - θr*∂gv(θ)*∂ηR∂F(F)
-#   return (Ψ, ∂Ψ∂F, ∂Ψ∂θ, ∂∂Ψ∂FF, ∂∂Ψ∂θθ, ∂∂Ψ∂Fθ)
-# end
-
-# function _getCoupling(thermo::ThermalModel3rdLaw, ::Mechano)
-#   @unpack cv0, θr, α, κ, γv, γd = thermo
-#   J(F) = det(F)
-#   H(F) = cof(F)
-#   ηR(F) = α*(J(F) - 1.0) + cv0/γv
-#   ∂ηR∂J(F) = α
-#   ∂ηR∂F(F) = ∂ηR∂J(F)*H(F)
-#   ∂∂ηR∂FF(F) = ×ᵢ⁴(∂ηR∂J(F) * F)
-#   return (ηR, ∂ηR∂F, ∂∂ηR∂FF)
-# end
-
-# function Dissipation(obj::ThermoMechModel{ThermalModel3rdLaw,<:Mechano})
-#   @unpack cv0, θr, α, κ, γv, γd = obj.thermo
-#   gd, ∂gd, ∂∂gd = isochoric_law(obj.thermo)
-#   Dvis = Dissipation(obj.mechano)
-#   D(F, θ, X...) = gd(θ) * Dvis(F, X...)
-#   ∂D∂θ(F, θ, X...) = ∂gd(θ) * Dvis(F, X...)
-#   return(D, ∂D∂θ)
-# end
 
 
 abstract type ThermalLaw end

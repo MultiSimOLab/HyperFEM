@@ -28,10 +28,6 @@ struct ThermoElectroMechModel{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectroM
     new{T,E,M}(thermo, electro, mechano, fθ, dfdθ)
   end
 
-  # function ThermoElectroMechModel(thermo::ThermalModel3rdLaw, electro::E, mechano::M) where {E<:Electro, M<:Mechano}
-  #   new{ThermalModel3rdLaw,E,M}(thermo, electro, mechano)
-  # end
-
   function (obj::ThermoElectroMechModel)(Λ::Float64=1.0)
     Ψt, ∂Ψt_θ, ∂Ψt_θθ = obj.thermo(Λ)
     Ψm, ∂Ψm_u, ∂Ψm_uu = obj.mechano(Λ)

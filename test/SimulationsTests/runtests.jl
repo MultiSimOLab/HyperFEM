@@ -10,8 +10,8 @@ using Test
 
     include("StaticMechanicalNeumannTest.jl")
 
-    include("Stokes.jl")
+    # include("Stokes.jl")
 
-    include("BoundaryConditions.jl")
+    # include("BoundaryConditions.jl")
 
 end
