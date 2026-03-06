@@ -31,9 +31,7 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
 
-  diagnostics: # run diagnostics on failure
-    needs: test
-    if: failure()
+  diagnostics:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
