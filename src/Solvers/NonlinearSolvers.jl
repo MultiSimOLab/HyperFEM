@@ -11,12 +11,13 @@ struct Newton_RaphsonSolver <: Algebra.NonlinearSolver
   ls::Algebra.LinearSolver
   log::ConvergenceLog{Float64}
   linesearch::AbstractLineSearch
+  ctol::Float64
 end
 
-function Newton_RaphsonSolver(ls; maxiter=100, atol=1e-12, rtol=1.e-6, verbose=0, name="Newton-Raphson", linesearch::AbstractLineSearch=LineSearch())
+function Newton_RaphsonSolver(ls; maxiter=100, atol=1e-12, rtol=1.e-6, ctol=1.e-5, verbose=0, name="Newton-Raphson", linesearch::AbstractLineSearch=LineSearch())
   tols = SolverTolerances{Float64}(; maxiter=maxiter, atol=atol, rtol=rtol)
   log = ConvergenceLog(name, tols; verbose=verbose)
-  return Newton_RaphsonSolver(ls, log, linesearch)
+  return Newton_RaphsonSolver(ls, log, linesearch,ctol)
 end
 
 AbstractTrees.children(s::Newton_RaphsonSolver) = [s.ls]
@@ -63,17 +64,18 @@ function _solve_nr!(x, A, b, dx, ns, nls, op)
     rmul!(b, -1)
     solve!(dx, ns, b)
 
-    #linesearch x and b changed
-    # if abs(b' * dx) < 1e-6
-    #   break
-    # end
-    # x .+= dx
+    # curvature stopping criterion
+    if abs(b' * dx) < nls.ctol
+      res = 2.22e-22
+      done = update!(log, res)
+      break
+    end
 
     α = linesearch(x, dx, b, op)
     x .+= α * dx
-    if α < 1.0 && Int(log.verbose)>0
-    println("Activated line-search: $α")
-    end
+    # if α < 1.0 && Int(log.verbose)>0
+    # println("Activated line-search: $α")
+    # end
     # Check convergence for the current residual
     # residual!(b, op, x)
     res = norm(b)

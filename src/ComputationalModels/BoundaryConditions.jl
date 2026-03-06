@@ -67,7 +67,7 @@ function _get_bc_func(tags_::Vector{String}, values_, bc_timesteps)
     @inbounds for i in eachindex(tags_)
 
         if values_[i] === DirichletCoupling || typeof(values_[i]) <: DirichletCoupling
-            bc_func_[i] = (Λ) -> (x) -> x 
+            bc_func_[i] = (Λ) -> (x) -> x
         else
             if isnothing(bc_timesteps[i])
                 bc_func_[i] = values_[i]
@@ -97,6 +97,16 @@ struct DirichletBC{A} <: BoundaryCondition
         caches = (bc_values)
         new{typeof(caches)}(tags_, funcs_, bc_timesteps, caches)
     end
+
+
+    function DirichletBC(bc_tags::Vector{String}, bc_values)
+        @assert(length(bc_tags) == length(bc_values))
+        bc_timesteps = [Λ -> 1.0 for _ in 1:length(bc_tags)]
+        tags_, funcs_ = _get_bc_func(bc_tags, bc_values, bc_timesteps)
+        caches = (bc_values)
+        new{typeof(caches)}(tags_, funcs_, bc_timesteps, caches)
+    end
+
 end
 
 function updateBC!(m::DirichletBC, bc_values, bc_timesteps)
@@ -206,7 +216,7 @@ struct InterpolableBC{A,B,C} <: DirichletCoupling
         dim = length(U.space.fe_dof_basis.trian.model.grid.node_coordinates[1])
         mask = U.space.dirichlet_dof_tag .== dcmask[1]
         vals = U.dirichlet_values[mask]
-        Interface_coords_ = reshape(vals, dim,:)'
+        Interface_coords_ = reshape(vals, dim, :)'
         coords = VectorValue.(eachrow(Interface_coords_))
         v = evaluate(Interpolable(1.0), coords)
         bc_values = reduce(vcat, map(x -> get_array(x), v))
@@ -228,4 +238,3 @@ function InterpolableBC!(U::TrialFESpace, bc::DirichletBC, interface_tags::Strin
     return obj
 end
 
- 

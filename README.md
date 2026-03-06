@@ -25,7 +25,7 @@ src="https://github.com/jmartfrut/HyperFEM/blob/main/docs/imgs/logo.png?raw=true
 ## Installation
 Open the Julia REPL, type `]` to enter package mode, and install as follows
 ```julia
-pkg> add https://github.com/MultiSimOLab/HyperFEM
+pkg> add HyperFEM
 ```
 
 ## Usage
@@ -99,7 +99,7 @@ U = MultiFieldFESpace([Uu, Uφ])
 km=Kinematics(Mechano,Solid)
 ke=Kinematics(Electro,Solid)
 
-F,_,_ = get_Kinematics(kM)
+F,_,_ = get_Kinematics(km)
 E     = get_Kinematics(ke)
 
 # residual and jacobian function of load factor
@@ -154,7 +154,7 @@ src="https://github.com/MultiSimOLab/HyperFEM/blob/main/docs/imgs/sims_.png?raw=
 
 In order to give credit to the HyperFEM contributors, we ask that you please reference the paper:
 
-C. Perez‐Garcia, R. Ortigosa, J. Martínez‐Frutos, and D. Garcia‐Gonzalez, **Topology and material optimization in ultra-soft magnetoactive structures: making advantage of residual anisotropies.** Adv. Mater. (2025): e18489. https://https://doi.org/10.1002/adma.202518489
+C. Perez‐Garcia, R. Ortigosa, J. Martínez‐Frutos, and D. Garcia‐Gonzalez, **Topology and material optimization in ultra-soft magnetoactive structures: making advantage of residual anisotropies.** Adv. Mater. (2025): e18489. https://doi.org/10.1002/adma.202518489
  
 
 along with the required citations for [Gridap](https://github.com/gridap/Gridap.jl).

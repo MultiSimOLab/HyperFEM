@@ -16,6 +16,7 @@ import Base: +
 import Gridap: update_state!
 
 export Yeoh3D
+export Gent2D
 export NeoHookean3D
 export IncompressibleNeoHookean3D
 export IncompressibleNeoHookean2D
@@ -44,6 +45,7 @@ export IdealMagnetic2D
 export HardMagnetic
 export HardMagnetic2D
 export ThermalModel
+export ThermalModel3rdLaw
 export ElectroMechModel
 export ThermoElectroMechModel
 export ThermoMechModel
@@ -51,7 +53,6 @@ export ThermoMech_EntropicPolyconvex
 export FlexoElectroModel
 export ThermoElectroMech_Govindjee
 export ThermoElectroMech_PINNs
-export ThermoElectroMech_Bonet
 export MagnetoMechModel
 export GeneralizedMaxwell
 export ViscousIncompressible

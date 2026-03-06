@@ -17,6 +17,9 @@ end
 @publish TensorAlgebra logreg
 @publish TensorAlgebra Box
 @publish TensorAlgebra Ellipsoid
+@publish TensorAlgebra I2
+@publish TensorAlgebra I3
+@publish TensorAlgebra I4
 @publish TensorAlgebra I9
 @publish TensorAlgebra Tensorize
 
@@ -25,6 +28,7 @@ end
 @publish PhysicalModels LinearElasticity3D
 @publish PhysicalModels LinearElasticity2D
 @publish PhysicalModels Yeoh3D
+@publish PhysicalModels Gent2D
 @publish PhysicalModels NeoHookean3D
 @publish PhysicalModels IncompressibleNeoHookean3D
 @publish PhysicalModels IncompressibleNeoHookean2D
@@ -43,6 +47,7 @@ end
 @publish PhysicalModels TransverseIsotropy3D
 @publish PhysicalModels TransverseIsotropy2D
 @publish PhysicalModels ThermalModel
+@publish PhysicalModels ThermalModel3rdLaw
 @publish PhysicalModels IdealDielectric
 @publish PhysicalModels Magnetic
 @publish PhysicalModels IdealMagnetic
@@ -56,7 +61,6 @@ end
 @publish PhysicalModels FlexoElectroModel
 @publish PhysicalModels ThermoElectroMech_Govindjee
 @publish PhysicalModels ThermoElectroMech_PINNs
-@publish PhysicalModels ThermoElectroMech_Bonet
 @publish PhysicalModels MagnetoMechModel
 @publish PhysicalModels ARAP2D
 @publish PhysicalModels ARAP2D_regularized
@@ -135,7 +139,8 @@ end
 @publish ComputationalModels  evaluate!
 @publish ComputationalModels  InterpolableBC
 @publish ComputationalModels  InterpolableBC!
-@publish ComputationalModels TrialFESpace! # Exporting internal function of Gridap
+@publish ComputationalModels  TrialFESpace! # Exporting internal function of Gridap
+@publish ComputationalModels  L2_Projection
 
 # Note: the files FaceLabeling, CartesianTags and Evolution functions should be moved to a module different than ComputationalModels
 @publish ComputationalModels add_tag_from_vertex_filter!
