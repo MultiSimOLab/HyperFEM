@@ -13,6 +13,7 @@ permissions: # needed to allow julia-actions/cache to delete old caches that it 
 jobs:
   test: # main CI tests
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -29,3 +30,52 @@ jobs:
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
+
+  diagnostics: # run diagnostics on failure
+    needs: test
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: pre
+          arch: x64
+      - uses: julia-actions/cache@v2
+
+      - name: Install dependencies and Debug Info
+        run: |
+          julia --project -e '
+            using Pkg
+            Pkg.instantiate()
+            Pkg.status()
+            println("--- Julia version: ---")
+            @show VERSION
+          '
+
+      - name: Force Precompilation (Step 1 of Debug)
+        run: |
+          julia --project -e '
+            using Pkg
+            println("--- Starting manual precompilation... ---")
+            Pkg.precompile()
+            println("--- Manual precompilation completed successfully. ---")
+          '
+        continue-on-error: true
+
+      - name: Smoke Test (Step 2 of Debug)
+        run: |
+          julia --project -e '
+            println("--- Attempting to load HyperFEM... ---")
+            using HyperFEM
+            println("--- Package loaded successfully. ---")
+          '
+        continue-on-error: true
+
+      - name: Run Tests
+        run: |
+          julia --project -e '
+            using Pkg
+            Pkg.test(coverage=true)
+          '
+        continue-on-error: true
