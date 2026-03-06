@@ -52,8 +52,6 @@ struct ThermoMechModel{T<:Thermo,M<:Mechano} <: ThermoMechano{T,M}
 end
 
 
-abstract type ThermalLaw end
-
 struct VolumetricLaw <: ThermalLaw
   θr::Float64
   γ::Float64

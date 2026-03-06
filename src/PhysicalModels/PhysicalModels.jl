@@ -110,6 +110,8 @@ abstract type AnisoElastic <: Elasto end
 abstract type Visco <: Mechano end
 abstract type ViscoElastic{E<:Elasto} <: Mechano end
 
+abstract type ThermalLaw end
+
 abstract type MultiPhysicalModel <: PhysicalModel end
 abstract type ElectroMechano <: MultiPhysicalModel end
 abstract type ThermoElectroMechano <: MultiPhysicalModel end
