@@ -3,16 +3,16 @@
 # Magneto mechanical models
 # ===============================
 
-struct MagnetoMechModel{MG<:Magneto,MC<:Mechano} <: MagnetoMechano
-  magneto::MG
-  mechano::MC
+struct MagnetoMechModel{G<:Magneto,M<:Mechano} <: MagnetoMechano{G,M}
+  magneto::G
+  mechano::M
 
-  function MagnetoMechModel(magneto::MG, mechano::MC) where {MG <: Magneto, MC <: Mechano}
-    new{MG,MC}(magneto, mechano)
+  function MagnetoMechModel(magneto::G, mechano::M) where {G <: Magneto, M <: Mechano}
+    new{G,M}(magneto, mechano)
   end
   
-  function MagnetoMechModel(; magneto::MG, mechano::MC) where {MG <: Magneto, MC <: Mechano}
-    new{MG,MC}(magneto, mechano)
+  function MagnetoMechModel(; magneto::G, mechano::M) where {G <: Magneto, M <: Mechano}
+    new{G,M}(magneto, mechano)
   end
 
   function (obj::MagnetoMechModel{<:Magneto,<:IsoElastic})(Λ::Float64=1.0)
