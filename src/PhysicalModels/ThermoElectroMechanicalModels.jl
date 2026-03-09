@@ -1,19 +1,19 @@
 
-function initialize_state(obj::TEM, points::Measure) where {TEM<:ThermoElectroMechano}
+function initialize_state(obj::ThermoElectroMechano, points::Measure)
   initialize_state(obj.mechano, points)
 end
 
-function update_state!(obj::TEM, state, F, E, θ, args...) where {TEM<:ThermoElectroMechano}
+function update_state!(obj::ThermoElectroMechano, state, F, E, θ, args...)
   update_state!(obj.mechano, state, F, args...)
 end
 
-function update_time_step!(obj::TEM, Δt::Float64) where {TEM<:ThermoElectroMechano}
+function update_time_step!(obj::ThermoElectroMechano, Δt::Float64)
   update_time_step!(obj.thermo,  Δt)
   update_time_step!(obj.electro, Δt)
   update_time_step!(obj.mechano, Δt)
 end
 
-struct ThermoElectroMechModel{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectroMechano
+struct ThermoElectroMechModel{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectroMechano{T,E,M}
   thermo::T
   electro::E
   mechano::M
@@ -53,7 +53,7 @@ struct ThermoElectroMechModel{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectroM
 end
 
 
-struct ThermoElectroMech_Govindjee{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectroMechano
+struct ThermoElectroMech_Govindjee{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectroMechano{T,E,M}
   thermo::T
   electro::E
   mechano::M
@@ -117,7 +117,7 @@ struct ThermoElectroMech_Govindjee{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoEle
 end
 
 
-struct ThermoElectroMech_Bonet{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectroMechano
+struct ThermoElectroMech_Bonet{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoElectroMechano{T,E,M}
   thermo::T
   electro::E
   mechano::M
@@ -166,11 +166,3 @@ function Dissipation(obj::ThermoElectroMech_Bonet)
   tm = ThermoMech_Bonet(obj.thermo, obj.mechano, obj.gv, obj.gd, obj.gvis)
   Dissipation(tm)
 end
-
-# function Dissipation(obj::ThermoElectroMech_Bonet)
-#   gd, ∂gd, ∂∂gd = isochoric_law(obj.thermo)
-#   Dvis = Dissipation(obj.mechano)
-#   D(F, E, θ, X...) = gd(θ) * Dvis(F, X...)
-#   ∂D∂θ(F, E, θ, X...) = ∂gd(θ) * Dvis(F, X...)
-#   return(D, ∂D∂θ)
-# end

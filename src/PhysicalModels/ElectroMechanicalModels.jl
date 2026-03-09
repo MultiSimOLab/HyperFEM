@@ -1,5 +1,5 @@
 
-struct ElectroMechModel{E<:Electro,M<:Mechano} <: ElectroMechano
+struct ElectroMechModel{E<:Electro,M<:Mechano} <: ElectroMechano{E,M}
   electro::E
   mechano::M
 
@@ -117,7 +117,7 @@ function (+)(Model1::Mechano, Model2::Electro)
   ElectroMechModel(Model2, Model1)
 end
 
-struct FlexoElectroModel{EM<:ElectroMechano} <: FlexoElectro
+struct FlexoElectroModel{EM<:ElectroMechano} <: FlexoElectro{EM}
   electromechano::EM
   κ::Float64
 
