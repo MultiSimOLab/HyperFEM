@@ -1,15 +1,4 @@
 
-"""
-    sqrt(A::TensorValue{3})::TensorValue{3}
-
-Compute the square root of a 3x3 matrix by means of eigen decomposition.
-"""
-function sqrt(A::TensorValue{3})
-  λ, Q = eigen(A)
-  λ = sqrt.(λ)
-  TensorValue{3}(λ[1]*Q[1:3]*Q[1:3]' + λ[2]*Q[4:6]*Q[4:6]' + λ[3]*Q[7:9]*Q[7:9]')
-end
-
 
 """
     cof(A::TensorValue)::TensorValue
