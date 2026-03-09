@@ -131,7 +131,6 @@ end
 @publish ComputationalModels  StaticLinearModel
 @publish ComputationalModels  solve!
 @publish ComputationalModels  dirichlet_preconditioning!
-@publish ComputationalModels  GmshDiscreteModel
 @publish ComputationalModels  updateBC!
 @publish ComputationalModels  PostProcessor
 @publish ComputationalModels  vtk_save

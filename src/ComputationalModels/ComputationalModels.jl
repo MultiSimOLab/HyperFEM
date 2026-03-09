@@ -19,9 +19,6 @@ using GridapSolvers.SolverInterfaces: finished, print_message, converged
 using LinearAlgebra
 using WriteVTK
 
-using GridapGmsh 
-using GridapGmsh: GmshDiscreteModel
-
 import Base.getindex
 
 include("BoundaryConditions.jl")
@@ -48,7 +45,6 @@ export TestFESpace
 export TestFESpace!
 
 include("GridapExtras.jl")
-export GmshDiscreteModel
 export evaluate!
 
 include("Drivers.jl")

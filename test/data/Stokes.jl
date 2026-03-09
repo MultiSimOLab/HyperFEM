@@ -1,4 +1,4 @@
-using Gridap, GridapSolvers
+using Gridap, GridapSolvers, GridapGmsh
 using GridapSolvers.LinearSolvers
 using TimerOutputs
 using Gridap.FESpaces

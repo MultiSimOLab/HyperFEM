@@ -1,4 +1,4 @@
-using Gridap
+using Gridap, GridapGmsh
 using Gridap.FESpaces
 
 @testset "Dirichlet BC testing analytical mapping" begin
