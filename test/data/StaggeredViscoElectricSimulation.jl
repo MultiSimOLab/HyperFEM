@@ -3,7 +3,7 @@ using HyperFEM: jacobian, solve!
 using HyperFEM.ComputationalModels.PostMetrics
 using HyperFEM.ComputationalModels.CartesianTags
 using HyperFEM.ComputationalModels.EvolutionFunctions
-using Gridap, GridapGmsh, GridapSolvers, DrWatson
+using Gridap, GridapGmsh, GridapSolvers
 using GridapSolvers.NonlinearSolvers
 using Gridap.FESpaces
 
