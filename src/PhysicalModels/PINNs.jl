@@ -29,7 +29,7 @@ end
 
 
 
-struct ThermoElectroMech_PINNs{A,B,C,D} <: ThermoElectroMechano{T,E,M}
+struct ThermoElectroMech_PINNs{A,B,C,D} <: ThermoElectroMechano{Thermo,Electro,Mechano}
   W::A
   b::B
   ϵ::C
