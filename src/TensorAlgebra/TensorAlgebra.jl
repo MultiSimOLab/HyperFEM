@@ -6,7 +6,6 @@ using StaticArrays
 using LinearAlgebra
 import Base: *
 import Base: +
-import Base: sqrt
 
 export (*)
 export (×ᵢ⁴)
@@ -34,7 +33,6 @@ export δᵢₗδⱼₖ2D
 export δᵢⱼδₖₗ3D
 export δᵢₖδⱼₗ3D
 export δᵢₗδⱼₖ3D
-export sqrt
 export cof
 export contraction_IP_JPKL
 export contraction_IP_PJKL
@@ -44,9 +42,9 @@ export Ellipsoid
 
 # outer ⊗ \otimes
 # inner ⊙ \odot
-# cross × \times
-# sum +
-# dot ⋅ * 
+# cross ×  \times
+# sum   +  +
+# dot   ⋅  * 
 
 include("FlatIndexing.jl")
 

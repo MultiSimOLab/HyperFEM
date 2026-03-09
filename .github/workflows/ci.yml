@@ -13,6 +13,7 @@ permissions: # needed to allow julia-actions/cache to delete old caches that it 
 jobs:
   test: # main CI tests
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
