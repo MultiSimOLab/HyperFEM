@@ -21,30 +21,3 @@ struct ThermalModel <: Thermo
     return (Ψ, ∂Ψθ, ∂Ψθθ)
   end
 end
-
-
-struct ThermalModel3rdLaw <: Thermo
-  cv0::Float64
-  θr::Float64
-  α::Float64
-  κ::Float64
-  γv::Float64
-  γd::Float64
-  function ThermalModel3rdLaw(; cv0::Float64, θr::Float64, α::Float64, κ::Float64, γv::Float64, γd::Float64)
-    new(cv0, θr, α, κ, γv, γd)
-  end
-end
-
-function (obj::ThermalModel3rdLaw)()
-  @unpack cv0, θr, α, κ, γv, γd = obj
-  g(θ,θr,γ) = 1/(γ+1) * ((θ/θr)^(γ+1) -1)
-  ∂g(θ,θr,γ) = θ^γ / θr^(γ+1)
-  ∂∂g(θ,θr,γ) = γ*θ^(γ-1) / θr^(γ+1)
-  gd(θ) = g(θ,θr,γd)
-  ∂gd(θ) = ∂g(θ,θr,γd)
-  ∂∂gd(θ) = ∂∂g(θ,θr,γd)
-  gv(θ) = g(θ,θr,γv)
-  ∂gv(θ) = ∂g(θ,θr,γv)
-  ∂∂gv(θ) = ∂∂g(θ,θr,γv)
-  return (gv, ∂gv, ∂∂gv, gd, ∂gd, ∂∂gd)
-end
