@@ -29,7 +29,7 @@ end
 
 
 
-struct ThermoElectroMech_PINNs{A,B,C,D} <: ThermoElectroMechano
+struct ThermoElectroMech_PINNs{A,B,C,D} <: ThermoElectroMechano{T,E,M}
   W::A
   b::B
   ϵ::C
@@ -41,9 +41,6 @@ struct ThermoElectroMech_PINNs{A,B,C,D} <: ThermoElectroMechano
     A, B, C, D = typeof(W), typeof(b), typeof(ϵ), typeof(β)
     new{A,B,C,D}(W, b, ϵ, β, nLayer, κ)
   end
-
-
-
 
   function (obj::ThermoElectroMech_PINNs)(Λ::Float64=1.0)
 
@@ -86,6 +83,5 @@ struct ThermoElectroMech_PINNs{A,B,C,D} <: ThermoElectroMechano
     η(F, E, θ) = -∂Ψθ(F, E, θ)
 
     return (Ψ, ∂ΨF, ∂ΨE, ∂Ψθ, ∂ΨFF, ∂ΨEE, ∂Ψθθ, ∂ΨEF, ∂ΨFθ, ∂ΨEθ, η)
-
   end
 end
