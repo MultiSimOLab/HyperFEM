@@ -10,8 +10,10 @@ using Test
 
     include("StaticMechanicalNeumannTest.jl")
 
-    # include("Stokes.jl")
+    include("StaggeredElectroMechanicalTest.jl")
 
-    # include("BoundaryConditions.jl")
+    include("Stokes.jl")
+
+    include("BoundaryConditions.jl")
 
 end
