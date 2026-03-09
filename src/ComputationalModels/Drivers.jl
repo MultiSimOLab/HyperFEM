@@ -23,9 +23,9 @@ struct StaggeredModel{A,B,C,D} <: ComputationalModel
     caches::D
 
     function StaggeredModel(
-        CompModels::Tuple{Vararg{<:ComputationalModel,N}},
-        state⁺::Tuple{Vararg{<:FEFunction,N}},
-        state⁻::Tuple{Vararg{<:FEFunction,N}}) where N
+        CompModels::Tuple{Vararg{ComputationalModel,N}},
+        state⁺::Tuple{Vararg{FEFunction,N}},
+        state⁻::Tuple{Vararg{FEFunction,N}}) where N
 
         x⁺ = map((x) -> get_free_dof_values(x), state⁺)
         x⁻ = map((x) -> get_free_dof_values(x), state⁻)
