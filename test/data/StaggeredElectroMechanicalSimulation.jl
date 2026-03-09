@@ -86,11 +86,11 @@ function staggered_electro_mechanical_simulation(; is_vtk=true, verbose=true)
   comp_model_mec = StaticNonlinearModel(res_mec, jac_mec, Uu, Vu, Du; nls=nls_, xh=uh⁺)
   comp_model= StaggeredModel((comp_model_elec,comp_model_mec), (φh⁺,uh⁺), (φh⁻,uh⁻))
 
-  args_elec = Dict(:stepping => (nsteps=1, maxbisec=5))
-  args_mec  = Dict(:stepping => (nsteps=5, maxbisec=5))
+  args_elec = Dict(:stepping => (nsteps=1, maxbisec=1))
+  args_mec  = Dict(:stepping => (nsteps=5, maxbisec=1))
   args=(args_elec,args_mec)
 
-  x = solve!(comp_model; stepping=(nsteps=5, nsubsteps=1, maxbisec=15), kargsolve=args)
+  x = solve!(comp_model; stepping=(nsteps=5, nsubsteps=1, maxbisec=1), kargsolve=args)
 
   if is_vtk
     writevtk(Ω, outpath, cellfields=["φh" => φh⁺, "uh" => uh⁺])
