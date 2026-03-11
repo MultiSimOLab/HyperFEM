@@ -6,11 +6,12 @@ using Gridap.Helpers
 using UnPack
 using ForwardDiff
 using LinearAlgebra
+using StaticArrays
+
 using ..TensorAlgebra
 using ..TensorAlgebra: _∂H∂F_2D
 using ..TensorAlgebra: trAA
-using StaticArrays
-using SpecialFunctions  # implements erf
+using ..TensorAlgebra: erf
 
 import Base: +
 import Gridap: update_state!
