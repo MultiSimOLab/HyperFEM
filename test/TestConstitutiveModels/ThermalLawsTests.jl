@@ -29,8 +29,8 @@ end
   end
 end
 
-@testset "TrigonometricLaw" begin
-  law = TrigonometricLaw(273.15, 400.0)
+@testset "PolynomialLaw" begin
+  law = PolynomialLaw(θr=273.15, a=1.1, b=2.2, c=3.3)
   f, df, ddf = law()
   for θ ∈ 200.0:50:400
     @test isapprox(df(θ), ForwardDiff.derivative(f, θ), rtol=1e-10)

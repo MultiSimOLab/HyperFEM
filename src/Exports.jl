@@ -98,7 +98,6 @@ end
 @publish PhysicalModels EntropicElasticityLaw
 @publish PhysicalModels NonlinearMeltingLaw
 @publish PhysicalModels NonlinearSofteningLaw
-@publish PhysicalModels TrigonometricLaw
 @publish PhysicalModels PolynomialLaw
 
 @publish PhysicalModels SecondPiola

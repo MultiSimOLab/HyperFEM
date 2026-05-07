@@ -72,27 +72,12 @@ function (law::NonlinearSofteningLaw)()
   return (f, ∂f, ∂∂f)
 end
 
-struct TrigonometricLaw <: ThermalLaw
-  θr::Float64
-  θM::Float64
-end
-
-function (law::TrigonometricLaw)()
-  @unpack θr, θM = law  
-  g(θ) = θ/θr * sin(2π*θ/θM)
-  G(θ) = 1/2/π * θM/θr * (1 - cos(2π*θ/θM))
-  H(θ) = 1/2/π * θM/θr * (θ - θM/2/π * sin(2π*θ/θM))
-  f(θ) = (H(θr) - H(θ)) / (H(θM) - H(θr)) + 1.0
-  ∂f(θ) = -G(θ) / (H(θM) - H(θr))
-  ∂∂f(θ) = -g(θ) / θ / (H(θM) - H(θr))
-  return (f, ∂f, ∂∂f)
-end
-
 struct PolynomialLaw <: ThermalLaw
   θr::Float64
   a::Float64
   b::Float64
   c::Float64
+  PolynomialLaw(; θr, a, b, c) = new(θr, a, b, c)
 end
 
 function (law::PolynomialLaw)()
