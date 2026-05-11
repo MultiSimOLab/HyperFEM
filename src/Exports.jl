@@ -49,6 +49,7 @@ end
 @publish PhysicalModels TransverseIsotropy2D
 @publish PhysicalModels ThermalModel
 @publish PhysicalModels ThermalVolumetric
+@publish PhysicalModels ThermalDeviatoric
 @publish PhysicalModels IdealDielectric
 @publish PhysicalModels Magnetic
 @publish PhysicalModels IdealMagnetic

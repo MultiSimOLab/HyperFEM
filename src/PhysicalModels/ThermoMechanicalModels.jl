@@ -64,6 +64,28 @@ function (obj::ThermalVolumetric)()
 end
 
 
+struct ThermalDeviatoric{M<:Mechano} <: ThermoMechano{Nothing,M}
+  mechano::M
+  law::ThermalLaw
+
+  function ThermalDeviatoric(mechano::M, law::ThermalLaw) where {M<:Mechano}
+    new{M}(mechano, law)
+  end
+end
+
+function (obj::ThermalDeviatoric{<:IsoElastic})()
+  Ψm, ∂Ψm∂F, ∂∂Ψm∂FF = obj.mechano()
+  f, df, ddf = obj.law()
+  Ψ(F,θ)      = Ψm(F) * f(θ)
+  ∂Ψ∂F(F,θ)   = ∂Ψm∂F(F) * f(θ)
+  ∂∂Ψ∂FF(F,θ) = ∂∂Ψm∂FF(F) * f(θ)
+  ∂Ψ∂θ(F,θ)   = Ψm(F) * df(θ)
+  ∂∂Ψ∂θθ(F,θ) = Ψm(F) * ddf(θ)
+  ∂∂Ψ∂Fθ(F,θ) = ∂Ψm∂F(F) * df(θ)
+  return (Ψ, ∂Ψ∂F, ∂Ψ∂θ, ∂∂Ψ∂FF, ∂∂Ψ∂θθ, ∂∂Ψ∂Fθ)
+end
+
+
 struct ThermoMechModel{T<:Thermo,M<:Mechano} <: ThermoMechano{T,M}
   thermo::T
   mechano::M

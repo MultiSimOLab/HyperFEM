@@ -47,6 +47,7 @@ export HardMagnetic
 export HardMagnetic2D
 export ThermalModel
 export ThermalVolumetric
+export ThermalDeviatoric
 export ElectroMechModel
 export ThermoElectroMechModel
 export ThermoMechModel
