@@ -56,19 +56,19 @@ end
 
 struct NonlinearSofteningLaw <: ThermalLaw
   θr::Float64
-  θt::Float64
+  θT::Float64
   γ::Float64
   δ::Float64
-  NonlinearSofteningLaw(; θr, θt, γ, δ=0) = new(θr, θt, γ, δ)
+  NonlinearSofteningLaw(; θr, θT, γ, δ=0) = new(θr, θT, γ, δ)
 end
 
 function (law::NonlinearSofteningLaw)()
-  @unpack θr, θt, γ, δ = law
-  u(θ) = exp(-(θ/θt)^(γ+1))
+  @unpack θr, θT, γ, δ = law
+  u(θ) = exp(-(θ/θT)^(γ+1))
   C = (1-δ) * u(θr) + δ
   f(θ) = ((1-δ) * u(θ) + δ) / C
-  ∂f(θ) = -(1-δ)/C * (γ+1)/θt * (θ/θt)^γ * u(θ)
-  ∂∂f(θ) = (1-δ)/C * (γ+1)/θ^2 * (θ/θt)^(γ+1) * ((γ+1)*(θ/θt)^(γ+1)-γ) * u(θ)
+  ∂f(θ) = -(1-δ)/C * (γ+1)/θT * (θ/θT)^γ * u(θ)
+  ∂∂f(θ) = (1-δ)/C * (γ+1)/θ^2 * (θ/θT)^(γ+1) * ((γ+1)*(θ/θT)^(γ+1)-γ) * u(θ)
   return (f, ∂f, ∂∂f)
 end
 
