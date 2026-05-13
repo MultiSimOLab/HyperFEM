@@ -25,6 +25,28 @@ end
 # Thermal laws
 # ===================
 
+struct ConstantEnergyLaw <: ThermalLaw end
+
+function (law::ConstantEnergyLaw)()
+  f(θ) = 1.0
+  ∂f(θ) = 0.0
+  ∂∂f(θ) = 0.0
+  return (f, ∂f, ∂∂f)
+end
+
+struct ConstantCvLaw <: ThermalLaw
+  θr::Float64
+  ConstantCvLaw(θr) = new(θr)
+  ConstantCvLaw(; θr) = new(θr)
+end
+
+function (law::ConstantCvLaw)()
+  f(θ) = (θ-θr) -θ*log(θ/θr)
+  ∂f(θ) = -log(θ/θr)
+  ∂∂f(θ) = -1/θ
+  return (f, ∂f, ∂∂f)
+end
+
 struct EntropicElasticityLaw <: ThermalLaw
   θr::Float64
   γ::Float64

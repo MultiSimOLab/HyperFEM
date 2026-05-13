@@ -2,6 +2,24 @@ using ForwardDiff
 using HyperFEM
 using Test
 
+@testset "ConstantEnergyLaw" begin
+  law = ConstantEnergyLaw()
+  f, df, ddf = law()
+  for θ ∈ 200.0:50:400
+    @test isapprox(df(θ), ForwardDiff.derivative(f, θ), rtol=1e-3)
+    @test isapprox(ddf(θ), ForwardDiff.derivative(df, θ), rtol=1e-10)
+  end
+end
+
+@testset "ConstantCvLaw" begin
+  law = ConstantCvLaw(θr=273.15)
+  f, df, ddf = law()
+  for θ ∈ 200.0:50:400
+    @test isapprox(df(θ), ForwardDiff.derivative(f, θ), rtol=1e-3)
+    @test isapprox(ddf(θ), ForwardDiff.derivative(df, θ), rtol=1e-10)
+  end
+end
+
 @testset "EntropicElasticityLaw" begin
   law = EntropicElasticityLaw(θr=273.15, γ=0.55)
   f, df, ddf = law()
