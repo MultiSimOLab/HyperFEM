@@ -95,6 +95,8 @@ end
 @publish PhysicalModels getIsoInvariants
 
 @publish PhysicalModels ThermalLaw
+@publish PhysicalModels ConstantEnergyLaw
+@publish PhysicalModels ConstantCvLaw
 @publish PhysicalModels EntropicElasticityLaw
 @publish PhysicalModels NonlinearMeltingLaw
 @publish PhysicalModels NonlinearSofteningLaw
