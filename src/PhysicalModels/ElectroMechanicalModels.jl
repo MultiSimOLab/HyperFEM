@@ -73,8 +73,13 @@ function update_time_step!(obj::ElectroMechModel, Δt::Float64)
   update_time_step!(obj.mechano, Δt)
 end
 
+function CellState(obj::ElectroMechModel, args...)
+  CellState(obj.mechano, args...)
+end
+
 function initialize_state(obj::ElectroMechModel, points::Measure)
-  initialize_state(obj.mechano, points)
+  @warn "The function 'initialize_state' is deprecated, use 'CellState' instead."
+  CellState(obj.mechano, points)
 end
 
 function update_state!(obj::ElectroMechModel, state, F, E, args...)

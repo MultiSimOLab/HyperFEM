@@ -13,7 +13,7 @@ using ..TensorAlgebra: _∂H∂F_2D
 using ..TensorAlgebra: trAA
 
 import Base: +
-import Gridap: update_state!
+import Gridap: CellState, update_state!
 
 export Yeoh3D
 export Gent2D
@@ -83,8 +83,6 @@ export EnergyInterpolationScheme
 export SecondPiola
 export Dissipation
 
-export DerivativeStrategy
-
 export initialize_state
 export update_time_step!
 
@@ -98,8 +96,6 @@ export getIsoInvariants
 
 export HessianRegularization
 export Hessian∇JRegularization
-
-struct DerivativeStrategy{Kind} end
 
 abstract type PhysicalModel end
 abstract type Mechano <: PhysicalModel end
@@ -159,13 +155,17 @@ Base.broadcastable(m::PhysicalModel) = Ref(m) # Allows to use the @. syntax for 
 """
 Initialize the state variables for the given constitutive model and discretization.
 """
+function CellState(::PhysicalModel, args...)
+  return nothing
+end
+
 function initialize_state(::PhysicalModel, points::Measure)
   return nothing
 end
 
 
 """
-Update the state variables. The state variables must be initialized using the function 'initialize_state'.
+Update the state variables. The state variables must be initialized using the function 'CellState' with the constitutive model.
 """
 function update_state!(::PhysicalModel, vars...)
 end
