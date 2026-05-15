@@ -41,6 +41,7 @@ struct ConstantCvLaw <: ThermalLaw
 end
 
 function (law::ConstantCvLaw)()
+  θr = law.θr
   f(θ) = (θ-θr) -θ*log(θ/θr)
   ∂f(θ) = -log(θ/θr)
   ∂∂f(θ) = -1/θ
