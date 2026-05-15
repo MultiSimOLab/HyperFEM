@@ -6,8 +6,8 @@ using Test
   law = ConstantEnergyLaw()
   f, df, ddf = law()
   for θ ∈ 200.0:50:400
-    @test isapprox(df(θ), ForwardDiff.derivative(f, θ), rtol=1e-3)
-    @test isapprox(ddf(θ), ForwardDiff.derivative(df, θ), rtol=1e-10)
+    @test df(θ) ≈ ForwardDiff.derivative(f, θ)
+    @test ddf(θ) ≈ ForwardDiff.derivative(df, θ)
   end
 end
 
@@ -15,8 +15,8 @@ end
   law = ConstantCvLaw(θr=273.15)
   f, df, ddf = law()
   for θ ∈ 200.0:50:400
-    @test isapprox(df(θ), ForwardDiff.derivative(f, θ), rtol=1e-3)
-    @test isapprox(ddf(θ), ForwardDiff.derivative(df, θ), rtol=1e-10)
+    @test df(θ) ≈ ForwardDiff.derivative(f, θ)
+    @test ddf(θ) ≈ ForwardDiff.derivative(df, θ)
   end
 end
 
@@ -24,8 +24,8 @@ end
   law = EntropicElasticityLaw(θr=273.15, γ=0.55)
   f, df, ddf = law()
   for θ ∈ 200.0:50:400
-    @test isapprox(df(θ), ForwardDiff.derivative(f, θ), rtol=1e-3)
-    @test isapprox(ddf(θ), ForwardDiff.derivative(df, θ), rtol=1e-10)
+    @test df(θ) ≈ ForwardDiff.derivative(f, θ)
+    @test ddf(θ) ≈ ForwardDiff.derivative(df, θ)
   end
 end
 
@@ -33,8 +33,8 @@ end
   law = NonlinearMeltingLaw(θr=273.15, θM=400.0, γ=0.55)
   f, df, ddf = law()
   for θ ∈ 200.0:50:400
-    @test isapprox(df(θ), ForwardDiff.derivative(f, θ), rtol=1e-10)
-    @test isapprox(ddf(θ), ForwardDiff.derivative(df, θ), rtol=1e-10)
+    @test df(θ) ≈ ForwardDiff.derivative(f, θ)
+    @test ddf(θ) ≈ ForwardDiff.derivative(df, θ)
   end
 end
 
@@ -42,8 +42,8 @@ end
   law = NonlinearSofteningLaw(θr=273.15, θT=300.0, γ=2.0, δ=0.5)
   f, df, ddf = law()
   for θ ∈ 200.0:50:400
-    @test isapprox(df(θ), ForwardDiff.derivative(f, θ), rtol=1e-10)
-    @test isapprox(ddf(θ), ForwardDiff.derivative(df, θ), rtol=1e-10)
+    @test df(θ) ≈ ForwardDiff.derivative(f, θ)
+    @test ddf(θ) ≈ ForwardDiff.derivative(df, θ)
   end
 end
 
@@ -51,7 +51,7 @@ end
   law = PolynomialLaw(θr=273.15, a=1.1, b=2.2, c=3.3)
   f, df, ddf = law()
   for θ ∈ 200.0:50:400
-    @test isapprox(df(θ), ForwardDiff.derivative(f, θ), rtol=1e-10)
-    @test isapprox(ddf(θ), ForwardDiff.derivative(df, θ), rtol=1e-10)
+    @test df(θ) ≈ ForwardDiff.derivative(f, θ)
+    @test ddf(θ) ≈ ForwardDiff.derivative(df, θ)
   end
 end
