@@ -158,9 +158,6 @@ end
 @publish DiscreteModeling aspect_ratio
 @publish DiscreteModeling element_size
 
-Base.@deprecate_binding ComputationalModels.CartesianTags DiscreteModeling.CartesianTags
-Base.@deprecate_binding ComputationalModels.EvolutionFunctions DiscreteModeling.EvolutionFunctions
-
 @publish Solvers IterativeSolver
 @publish Solvers Newton_RaphsonSolver
 @publish Solvers Injectivity_Preserving_LS

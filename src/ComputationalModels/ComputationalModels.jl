@@ -24,6 +24,9 @@ using GridapGmsh: GmshDiscreteModel
 
 import Base.getindex
 
+Base.@deprecate_binding CartesianTags DiscreteModeling.CartesianTags
+Base.@deprecate_binding EvolutionFunctions DiscreteModeling.EvolutionFunctions
+
 include("BoundaryConditions.jl")
 export DirichletBC
 export NeumannBC
