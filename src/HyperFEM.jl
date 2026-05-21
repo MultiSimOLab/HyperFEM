@@ -5,7 +5,7 @@ include("PhysicalModels/PhysicalModels.jl")
 include("WeakForms/WeakForms.jl")
 include("Solvers/Solvers.jl")
 include("ComputationalModels/ComputationalModels.jl")
-
+include("DiscreteModeling/DiscreteModeling.jl")
 include("Io.jl")
 include("Exports.jl")
 
