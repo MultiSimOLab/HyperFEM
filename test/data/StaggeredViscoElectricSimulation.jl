@@ -22,8 +22,8 @@ function staggered_visco_electric_simulation(; t_end=2, writevtk=true, verbose=t
   partition = (8, 2, 2)
   geometry = CartesianDiscreteModel(domain, partition)
   labels = get_face_labeling(geometry)
-  add_tag_from_tags!(labels, "fixed", CartesianTags.faceX0)
-  add_tag_from_tags!(labels, "bottom", CartesianTags.faceZ0)
+  add_tag_from_tags!(labels, "fixed", CartesianTags.face0YZ⁺)
+  add_tag_from_tags!(labels, "bottom", CartesianTags.faceXY0⁺)
   add_tag_from_tags!(labels, "top", CartesianTags.faceZ1)
   add_tag_from_vertex_filter!(labels, geometry, "mid", x -> x[3] ≈ 0.5thick)
 
