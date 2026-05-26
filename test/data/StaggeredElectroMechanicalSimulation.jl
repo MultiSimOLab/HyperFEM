@@ -17,8 +17,8 @@ function staggered_electro_mechanical_simulation(; is_vtk=true, verbose=true)
   partition = (8, 2, 2)
   geometry = CartesianDiscreteModel(domain, partition)
   labels = get_face_labeling(geometry)
-  add_tag_from_tags!(labels, "fixedu", CartesianTags.faceX0)
-  add_tag_from_tags!(labels, "topsuf", CartesianTags.faceZ1)
+  add_tag_from_tags!(labels, "fixedu", CartesianTags.face0YZ⁺)
+  add_tag_from_tags!(labels, "topsuf", CartesianTags.faceXY1⁺)
   add_tag_from_vertex_filter!(labels, geometry, "midsuf", x -> x[3] ≈ 0.001)
 
   # Constitutive model

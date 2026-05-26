@@ -18,8 +18,8 @@ function visco_elastic_simulation(;t_end=15, writevtk=true, verbose=true)
   labels = get_face_labeling(model)
   add_tag_from_tags!(labels, "corner1", CartesianTags.corner000)
   add_tag_from_tags!(labels, "corner2", CartesianTags.corner010)
-  add_tag_from_tags!(labels, "fixed", CartesianTags.faceX0)
-  add_tag_from_tags!(labels, "moving", CartesianTags.faceX1)
+  add_tag_from_tags!(labels, "fixed",  CartesianTags.face0YZ⁺)
+  add_tag_from_tags!(labels, "moving", CartesianTags.face1YZ⁺)
 
   # Constitutive model
   μ = 1.37e4   # Pa
