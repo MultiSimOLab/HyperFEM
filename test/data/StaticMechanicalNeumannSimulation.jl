@@ -19,8 +19,8 @@ function static_mechanical_neumann_simulation(;writevtk=true, verbose=true)
   thick  = 0.002  # m
   geometry = CartesianDiscreteModel((0, long, 0, width, 0, thick), (5,2,2))
   labels = get_face_labeling(geometry)
-  add_tag_from_tags!(labels, "fixed", CartesianTags.faceX0)
-  add_tag_from_tags!(labels, "force", CartesianTags.faceX1)
+  add_tag_from_tags!(labels, "fixed", CartesianTags.face0YZ⁺)
+  add_tag_from_tags!(labels, "force", CartesianTags.face1YZ⁺)
   
   physmodel = MooneyRivlin3D(λ=3.0, μ1=1.0, μ2=0.0, ρ=1.0)
 
