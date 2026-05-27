@@ -55,7 +55,7 @@ struct EntropicElasticityLaw <: ThermalLaw
 end
 
 function (law::EntropicElasticityLaw)()
-  @unpack θr, γ = law
+  (; θr, γ) = law
   f(θ) = (θ/θr)^(γ+1)
   ∂f(θ) = (γ+1) * θ^γ / θr^(γ+1)
   ∂∂f(θ) = γ*(γ+1) * θ^(γ-1) / θr^(γ+1)
@@ -70,7 +70,7 @@ struct NonlinearMeltingLaw <: ThermalLaw
 end
 
 function (law::NonlinearMeltingLaw)()
-  @unpack θr, θM, γ = law
+  (; θr, θM, γ) = law
   f(θ) = (1 - (θ/θM)^(γ+1)) / (1 - (θr/θM)^(γ+1))
   ∂f(θ) = -(γ+1)*θ^γ/θM^(γ+1) / (1 - (θr/θM)^(γ+1))
   ∂∂f(θ) = -γ*(γ+1)*θ^(γ-1)/θM^(γ+1) / (1 - (θr/θM)^(γ+1))
@@ -86,7 +86,7 @@ struct NonlinearSofteningLaw <: ThermalLaw
 end
 
 function (law::NonlinearSofteningLaw)()
-  @unpack θr, θT, γ, δ = law
+  (; θr, θT, γ, δ) = law
   u(θ) = exp(-(θ/θT)^(γ+1))
   C = (1-δ) * u(θr) + δ
   f(θ) = ((1-δ) * u(θ) + δ) / C
@@ -104,7 +104,7 @@ struct PolynomialLaw <: ThermalLaw
 end
 
 function (law::PolynomialLaw)()
-  @unpack θr, a, b, c = law
+  (; θr, a, b, c) = law
   f(θ)   = a*((θ-θr)/θr)^3  + b*((θ-θr)/θr)^2 + c*(θ-θr)/θr + 1
   ∂f(θ)  = 3a*(θ-θr)^2/θr^3 + 2b*(θ-θr)/θr^2 + c/θr
   ∂∂f(θ) = 6a*(θ-θr)/θr^3 + 2b/θr^2
