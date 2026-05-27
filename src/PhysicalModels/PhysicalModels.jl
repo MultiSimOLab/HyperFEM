@@ -12,7 +12,7 @@ using ..TensorAlgebra: _∂H∂F_2D
 using ..TensorAlgebra: trAA
 
 import Base: +
-import Gridap: CellState, update_state!
+import Gridap: update_state!
 
 export Yeoh3D
 export Gent2D
@@ -154,7 +154,7 @@ Base.broadcastable(m::PhysicalModel) = Ref(m) # Allows to use the @. syntax for 
 """
 Initialize the state variables for the given constitutive model and discretization.
 """
-function CellState(::PhysicalModel, args...)
+function Gridap.CellData.CellState(::PhysicalModel, args...)
   return nothing
 end
 

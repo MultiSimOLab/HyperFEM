@@ -1,5 +1,5 @@
 
-function CellState(obj::ThermoElectroMechano, args...)
+function Gridap.CellData.CellState(obj::ThermoElectroMechano, args...)
   CellState(obj.mechano, args...)
 end
 

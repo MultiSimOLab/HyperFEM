@@ -3,7 +3,7 @@
 # Common functions
 # ===================
 
-function CellState(obj::ThermoMechano, args...)
+function Gridap.CellData.CellState(obj::ThermoMechano, args...)
   CellState(obj.mechano, args...)
 end
 
