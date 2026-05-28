@@ -680,14 +680,14 @@ end
 
 struct EightChain5Terms <: IsoElastic
   μ::Float64
-  λm::Float64
-  EightChain5Terms(; μ::Float64, λm::Float64) = new(μ, λm)
+  N::Float64
+  EightChain5Terms(; μ::Float64, N::Float64) = new(μ, N)
 end
 
 function (obj::EightChain5Terms)()
-  (; μ, λm) = obj
+  (; μ, N) = obj
   α = (1/2, 1/20, 11/1050, 19/7000, 519/673750)
-  β = 1 / λm^2
+  β = 1 / N
   ∂W∂I(I) = sum(i*αi*β^(i-1)*I^(i-1) for (i, αi) in enumerate(α))
   ∂∂W∂II(I) = sum(i*(i-1)*α[i]*β^(i-1)*I^(i-2) for i in 2:length(α))
   C1 = μ / 2 / ∂W∂I(3)
