@@ -24,7 +24,6 @@ end
 @publish TensorAlgebra Tensorize
 
 
-@publish PhysicalModels DerivativeStrategy
 @publish PhysicalModels LinearElasticity3D
 @publish PhysicalModels LinearElasticity2D
 @publish PhysicalModels Yeoh3D
@@ -45,10 +44,12 @@ end
 @publish PhysicalModels NonlinearMooneyRivlin_CV
 @publish PhysicalModels NonlinearIncompressibleMooneyRivlin2D_CV
 @publish PhysicalModels EightChain
+@publish PhysicalModels EightChain5Terms
 @publish PhysicalModels TransverseIsotropy3D
 @publish PhysicalModels TransverseIsotropy2D
 @publish PhysicalModels ThermalModel
 @publish PhysicalModels ThermalVolumetric
+@publish PhysicalModels ThermalDeviatoric
 @publish PhysicalModels IdealDielectric
 @publish PhysicalModels Magnetic
 @publish PhysicalModels IdealMagnetic
@@ -58,6 +59,7 @@ end
 @publish PhysicalModels ElectroMechModel
 @publish PhysicalModels ThermoElectroMechModel
 @publish PhysicalModels ThermoMechModel
+@publish PhysicalModels ThermoElectroModel
 @publish PhysicalModels ThermoMech_Bonet
 @publish PhysicalModels ThermoMech_EntropicPolyconvex
 @publish PhysicalModels FlexoElectroModel
@@ -94,10 +96,11 @@ end
 @publish PhysicalModels getIsoInvariants
 
 @publish PhysicalModels ThermalLaw
+@publish PhysicalModels ConstantEnergyLaw
+@publish PhysicalModels ConstantCvLaw
 @publish PhysicalModels EntropicElasticityLaw
 @publish PhysicalModels NonlinearMeltingLaw
 @publish PhysicalModels NonlinearSofteningLaw
-@publish PhysicalModels TrigonometricLaw
 @publish PhysicalModels PolynomialLaw
 
 @publish PhysicalModels SecondPiola
@@ -152,8 +155,11 @@ end
 @publish ComputationalModels  TrialFESpace! # Exporting internal function of Gridap
 @publish ComputationalModels  L2_Projection
 
-# Note: the files FaceLabeling, CartesianTags and Evolution functions should be moved to a module different than ComputationalModels
-@publish ComputationalModels add_tag_from_vertex_filter!
+@publish DiscreteModeling CartesianTags
+@publish DiscreteModeling EvolutionFunctions
+@publish DiscreteModeling add_tag_from_vertex_filter!
+@publish DiscreteModeling aspect_ratio
+@publish DiscreteModeling element_size
 
 @publish Solvers IterativeSolver
 @publish Solvers Newton_RaphsonSolver
