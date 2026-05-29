@@ -44,6 +44,7 @@ end
 @publish PhysicalModels NonlinearMooneyRivlin_CV
 @publish PhysicalModels NonlinearIncompressibleMooneyRivlin2D_CV
 @publish PhysicalModels EightChain
+@publish PhysicalModels EightChain5Terms
 @publish PhysicalModels TransverseIsotropy3D
 @publish PhysicalModels TransverseIsotropy2D
 @publish PhysicalModels ThermalModel
@@ -154,8 +155,11 @@ end
 @publish ComputationalModels  TrialFESpace! # Exporting internal function of Gridap
 @publish ComputationalModels  L2_Projection
 
-# Note: the files FaceLabeling, CartesianTags and Evolution functions should be moved to a module different than ComputationalModels
-@publish ComputationalModels add_tag_from_vertex_filter!
+@publish DiscreteModeling CartesianTags
+@publish DiscreteModeling EvolutionFunctions
+@publish DiscreteModeling add_tag_from_vertex_filter!
+@publish DiscreteModeling aspect_ratio
+@publish DiscreteModeling element_size
 
 @publish Solvers IterativeSolver
 @publish Solvers Newton_RaphsonSolver

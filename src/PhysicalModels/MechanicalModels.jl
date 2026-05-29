@@ -678,6 +678,37 @@ struct EightChain <: IsoElastic
 end
 
 
+struct EightChain5Terms <: IsoElastic
+  μ::Float64
+  N::Float64
+  EightChain5Terms(; μ::Float64, N::Float64) = new(μ, N)
+end
+
+function (obj::EightChain5Terms)()
+  (; μ, N) = obj
+  α = (1/2, 1/20, 11/1050, 19/7000, 519/673750)
+  β = 1 / N
+  ∂W∂I(I) = sum(i*αi*β^(i-1)*I^(i-1) for (i, αi) in enumerate(α))
+  ∂∂W∂II(I) = sum(i*(i-1)*α[i]*β^(i-1)*I^(i-2) for i in 2:length(α))
+  C1 = μ / 2 / ∂W∂I(3)
+  Ψ(F) = begin
+    I1F = F⊙F
+    C1 * sum(αi*β^(i-1)*(I1F^i - 3^i) for (i, αi) in enumerate(α))
+  end
+  ∂Ψ∂I(I) = C1 * ∂W∂I(I)
+  ∂Ψ∂F(F) = begin
+    I1F = F⊙F
+    ∂Ψ∂I(I1F) * 2F
+  end
+  ∂∂Ψ∂II(I) = C1 * ∂∂W∂II(I)
+  ∂∂Ψ∂FF(F) = begin
+    I1F = F⊙F
+    4*∂∂Ψ∂II(I1F)*(F⊗F) + 2*∂Ψ∂I(I1F)*δᵢₖδⱼₗ3D
+  end
+  return (Ψ, ∂Ψ∂F, ∂∂Ψ∂FF)
+end
+
+
 
 struct TransverseIsotropy3D <: AnisoElastic
   μ::Float64

@@ -26,12 +26,12 @@ function update_time_step!(obj::ViscousIncompressible, Δt::Float64)
   obj.Δt[] = Δt
 end
 
-function CellState(::ViscousIncompressible, F0::TensorValue, points::Measure)
+function Gridap.CellData.CellState(::ViscousIncompressible, F0::TensorValue, points::Measure)
   v = VectorValue(F0..., 0.0)
   CellState(v, points)
 end
 
-function CellState(obj::ViscousIncompressible, points::Measure)
+function Gridap.CellData.CellState(obj::ViscousIncompressible, points::Measure)
   CellState(obj, I3, points)
 end
 
@@ -88,7 +88,7 @@ function update_time_step!(obj::NVisco, Δt::Float64)
   Δt
 end
 
-function CellState(obj::NVisco, args...)
+function Gridap.CellData.CellState(obj::NVisco, args...)
   map(b -> CellState(b, args...), obj)
 end
 
@@ -139,7 +139,7 @@ function update_time_step!(obj::GeneralizedMaxwell, Δt::Float64)
   update_time_step!(obj.branches, Δt)
 end
 
-function CellState(obj::GeneralizedMaxwell, args...)
+function Gridap.CellData.CellState(obj::GeneralizedMaxwell, args...)
   CellState(obj.branches, args...)
 end
 

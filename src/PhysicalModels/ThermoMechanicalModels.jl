@@ -3,7 +3,7 @@
 # Common functions
 # ===================
 
-function CellState(obj::ThermoMechano, args...)
+function Gridap.CellData.CellState(obj::ThermoMechano, args...)
   CellState(obj.mechano, args...)
 end
 
@@ -46,7 +46,7 @@ struct ThermalVolumetric{T<:Thermo} <: ThermoMechano{T,Volumetric}
 end
 
 function (obj::ThermalVolumetric)()
-  @unpack Cv, θr, α, κ = obj.thermo
+  (; Cv, θr, α, κ) = obj.thermo
   cv0 = Cv  # FIXME
   U, ∂U∂F, ∂∂U∂FF = obj.mechano()
   κr = tangent(obj.mechano)

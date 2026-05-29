@@ -3,7 +3,6 @@ module PhysicalModels
 using Gridap
 using Gridap.CellData
 using Gridap.Helpers
-using UnPack
 using ForwardDiff
 using LinearAlgebra
 using StaticArrays
@@ -13,7 +12,7 @@ using ..TensorAlgebra: _∂H∂F_2D
 using ..TensorAlgebra: trAA
 
 import Base: +
-import Gridap: CellState, update_state!
+import Gridap: update_state!
 
 export Yeoh3D
 export Gent2D
@@ -35,6 +34,7 @@ export NonlinearNeoHookean_CV
 export NonlinearMooneyRivlin_CV
 export NonlinearIncompressibleMooneyRivlin2D_CV
 export EightChain
+export EightChain5Terms
 export TransverseIsotropy3D
 export TransverseIsotropy2D
 export LinearElasticity3D
@@ -155,7 +155,7 @@ Base.broadcastable(m::PhysicalModel) = Ref(m) # Allows to use the @. syntax for 
 """
 Initialize the state variables for the given constitutive model and discretization.
 """
-function CellState(::PhysicalModel, args...)
+function Gridap.CellData.CellState(::PhysicalModel, args...)
   return nothing
 end
 

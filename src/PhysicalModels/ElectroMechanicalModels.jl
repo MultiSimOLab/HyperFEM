@@ -73,7 +73,7 @@ function update_time_step!(obj::ElectroMechModel, Δt::Float64)
   update_time_step!(obj.mechano, Δt)
 end
 
-function CellState(obj::ElectroMechModel, args...)
+function Gridap.CellData.CellState(obj::ElectroMechModel, args...)
   CellState(obj.mechano, args...)
 end
 
