@@ -6,7 +6,7 @@
 
 struct Magnetic <: Magneto
   μ::Real
-  αr::Ref{Real}
+  αr::Ref{Float64}
   χe::Real
   
 function Magnetic(; μ0::Real, αr::Real, χe::Real=0.0)
@@ -164,7 +164,7 @@ end
 
 struct HardMagnetic2D <: Magneto
   μ::Real
-  αr::Ref{Real}
+  αr::Ref{Float64}
   χe::Real
   χr::Real
   χt::Real
