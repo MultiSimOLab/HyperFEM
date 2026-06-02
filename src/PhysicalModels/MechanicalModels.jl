@@ -756,9 +756,9 @@ struct TransverseIsotropy2D <: AnisoElastic
 end
 
 
-struct HGO_4Fibers <: AnisoElastic
-  c1::Vector{Real}
-  c2::Vector{Real}
+struct HGO_4Fibers{T<:Real} <: AnisoElastic
+  c1::Vector{T}
+  c2::Vector{T}
   function HGO_4Fibers(; c1::Vector{Real}, c2::Vector{Real})
     @assert length(c1) == length(c2) == 4
     new(c1, c2)
