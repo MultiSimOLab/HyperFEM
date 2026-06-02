@@ -119,7 +119,7 @@ end
 
 struct FlexoElectroModel{EM<:ElectroMechano} <: FlexoElectro{EM}
   electromechano::EM
-  κ::Float64
+  κ::Real
 
   function FlexoElectroModel(electro::E, mechano::M; κ=1.0) where {E<:Electro,M<:Mechano}
     physmodel = ElectroMechModel(electro, mechano)

@@ -151,16 +151,16 @@ end
 struct ThermoMech_EntropicPolyconvex{T<:Thermo,M<:Mechano} <: ThermoMechano{T,M}
   thermo::T
   mechano::M
-  β::Float64
+  β::Real
   G::Function
   ϕ::Function
   s::Function
 
-  function ThermoMech_EntropicPolyconvex(thermo::T, mechano::M; β::Float64, G::Function, ϕ::Function, s::Function) where {T <: Thermo, M <: Mechano}
+  function ThermoMech_EntropicPolyconvex(thermo::T, mechano::M; β::Real, G::Function, ϕ::Function, s::Function) where {T <: Thermo, M <: Mechano}
     new{T,M}(thermo, mechano, β, G, ϕ, s)
   end
 
-  function ThermoMech_EntropicPolyconvex(; thermo::T, mechano::M, β::Float64, G::Function, ϕ::Function, s::Function) where {T <: Thermo, M <: Mechano}
+  function ThermoMech_EntropicPolyconvex(; thermo::T, mechano::M, β::Real, G::Function, ϕ::Function, s::Function) where {T <: Thermo, M <: Mechano}
     new{T,M}(thermo, mechano, β, G, ϕ, s)
   end
 

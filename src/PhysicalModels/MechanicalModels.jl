@@ -5,8 +5,8 @@
 # ============================================
 
 struct VolumetricEnergy <: Volumetric
-  λ::Float64
-  function VolumetricEnergy(; λ::Float64)
+  λ::Real
+  function VolumetricEnergy(; λ::Real)
     new(λ)
   end
 end
@@ -35,13 +35,13 @@ end
 
 struct HessianRegularization <: Mechano
   mechano::Mechano
-  δ::Float64
+  δ::Real
 
-  function HessianRegularization(mechano::Mechano; δ::Float64=1.0e-6)
+  function HessianRegularization(mechano::Mechano; δ::Real=1.0e-6)
     new(mechano, δ)
   end
 
-  function HessianRegularization(; mechano::Mechano, δ::Float64=1.0e-6)
+  function HessianRegularization(; mechano::Mechano, δ::Real=1.0e-6)
     new(mechano, δ)
   end
 
@@ -62,14 +62,14 @@ end
 
 struct Hessian∇JRegularization <: Mechano
   mechano::Mechano
-  δ::Float64
-  κ::Float64
+  δ::Real
+  κ::Real
 
-  function Hessian∇JRegularization(mechano::Mechano; δ::Float64=1.0e-6, κ::Float64=1.0)
+  function Hessian∇JRegularization(mechano::Mechano; δ::Real=1.0e-6, κ::Real=1.0)
     new(mechano, δ, κ)
   end
 
-  function Hessian∇JRegularization(; mechano::Mechano, δ::Float64=1.0e-6, κ::Float64=1.0)
+  function Hessian∇JRegularization(; mechano::Mechano, δ::Real=1.0e-6, κ::Real=1.0)
     new(mechano, δ, κ)
   end
 
@@ -97,11 +97,11 @@ end
 # Energy interpolations
 # ======================
 struct EnergyInterpolationScheme <: IsoElastic
-  p::Float64
+  p::Real
   model1::IsoElastic
   model2::IsoElastic
 
-  function EnergyInterpolationScheme(model1::IsoElastic, model2::IsoElastic; p::Float64=3.0)
+  function EnergyInterpolationScheme(model1::IsoElastic, model2::IsoElastic; p::Real=3.0)
     new(p, model1, model2)
   end
 
@@ -191,11 +191,11 @@ end
 # ===================
 
 struct Yeoh3D <: IsoElastic
-  λ::Float64
-  C10::Float64
-  C20::Float64
-  C30::Float64
-  function Yeoh3D(; λ::Float64, C10::Float64, C20::Float64, C30::Float64)
+  λ::Real
+  C10::Real
+  C20::Real
+  C30::Real
+  function Yeoh3D(; λ::Real, C10::Real, C20::Real, C30::Real)
     new(λ, C10, C20, C30)
   end
 
@@ -228,10 +228,10 @@ struct Yeoh3D <: IsoElastic
 end
 
 struct LinearElasticity2D <: IsoElastic
-  λ::Float64
-  μ::Float64
-  ρ::Float64
-  function LinearElasticity2D(; λ::Float64, μ::Float64, ρ::Float64=0.0)
+  λ::Real
+  μ::Real
+  ρ::Real
+  function LinearElasticity2D(; λ::Real, μ::Real, ρ::Real=0.0)
     new(λ, μ, ρ)
   end
 
@@ -247,10 +247,10 @@ end
 
 
 mutable struct LinearElasticity3D <: IsoElastic
-  λ::Float64
-  μ::Float64
-  ρ::Float64
-  function LinearElasticity3D(; λ::Float64, μ::Float64, ρ::Float64=0.0)
+  λ::Real
+  μ::Real
+  ρ::Real
+  function LinearElasticity3D(; λ::Real, μ::Real, ρ::Real=0.0)
     new(λ, μ, ρ)
   end
 
@@ -266,10 +266,10 @@ end
 
 
 struct NeoHookean3D <: IsoElastic
-  λ::Float64
-  μ::Float64
-  ρ::Float64
-  function NeoHookean3D(; λ::Float64, μ::Float64, ρ::Float64=0.0)
+  λ::Real
+  μ::Real
+  ρ::Real
+  function NeoHookean3D(; λ::Real, μ::Real, ρ::Real=0.0)
     new(λ, μ, ρ)
   end
 
@@ -292,13 +292,13 @@ end
 
 
 struct Gent2D <: IsoElastic
-  λ::Float64
-  μ::Float64
-  Jm::Float64
-  γ::Float64
-  ρ::Float64
+  λ::Real
+  μ::Real
+  Jm::Real
+  γ::Real
+  ρ::Real
 
-  function Gent2D(; λ::Float64, μ::Float64, Jm::Float64, γ::Float64, ρ::Float64=0.0)
+  function Gent2D(; λ::Real, μ::Real, Jm::Real, γ::Real, ρ::Real=0.0)
     new(λ, μ, Jm, γ, ρ)
   end
 
@@ -332,11 +332,11 @@ end
 
 
 struct MooneyRivlin3D <: IsoElastic
-  λ::Float64
-  μ1::Float64
-  μ2::Float64
-  ρ::Float64
-  function MooneyRivlin3D(; λ::Float64, μ1::Float64, μ2::Float64, ρ::Float64=0.0)
+  λ::Real
+  μ1::Real
+  μ2::Real
+  ρ::Real
+  function MooneyRivlin3D(; λ::Real, μ1::Real, μ2::Real, ρ::Real=0.0)
     new(λ, μ1, μ2, ρ)
   end
 
@@ -363,12 +363,12 @@ end
 
 
 struct MooneyRivlin2D <: IsoElastic
-  λ::Float64
-  μ1::Float64
-  μ2::Float64
-  ρ::Float64
+  λ::Real
+  μ1::Real
+  μ2::Real
+  ρ::Real
 
-  function MooneyRivlin2D(; λ::Float64, μ1::Float64, μ2::Float64, ρ::Float64=0.0)
+  function MooneyRivlin2D(; λ::Real, μ1::Real, μ2::Real, ρ::Real=0.0)
     new(λ, μ1, μ2, ρ)
   end
 
@@ -389,13 +389,13 @@ end
 
 
 struct NonlinearMooneyRivlin3D <: IsoElastic
-  λ::Float64
-  μ1::Float64
-  μ2::Float64
-  α1::Float64
-  α2::Float64
-  ρ::Float64
-  function NonlinearMooneyRivlin3D(; λ::Float64, μ1::Float64, μ2::Float64, α1::Float64, α2::Float64, ρ::Float64=0.0)
+  λ::Real
+  μ1::Real
+  μ2::Real
+  α1::Real
+  α2::Real
+  ρ::Real
+  function NonlinearMooneyRivlin3D(; λ::Real, μ1::Real, μ2::Real, α1::Real, α2::Real, ρ::Real=0.0)
     new(λ, μ1, μ2, α1, α2, ρ)
   end
 
@@ -424,13 +424,13 @@ struct NonlinearMooneyRivlin3D <: IsoElastic
 end
 
 struct NonlinearMooneyRivlin2D <: IsoElastic
-  λ::Float64
-  μ1::Float64
-  μ2::Float64
-  α1::Float64
-  α2::Float64
-  ρ::Float64
-  function NonlinearMooneyRivlin2D(; λ::Float64, μ1::Float64, μ2::Float64, α1::Float64, α2::Float64, ρ::Float64=0.0)
+  λ::Real
+  μ1::Real
+  μ2::Real
+  α1::Real
+  α2::Real
+  ρ::Real
+  function NonlinearMooneyRivlin2D(; λ::Real, μ1::Real, μ2::Real, α1::Real, α2::Real, ρ::Real=0.0)
     new(λ, μ1, μ2, α1, α2, ρ)
   end
 
@@ -461,14 +461,14 @@ end
 
 
 struct NonlinearMooneyRivlin2D_CV <: IsoElastic
-  λ::Float64
-  μ1::Float64
-  μ2::Float64
-  α1::Float64
-  α2::Float64
-  γ::Float64
-  ρ::Float64
-  function NonlinearMooneyRivlin2D_CV(; λ::Float64, μ1::Float64, μ2::Float64, α1::Float64, α2::Float64, γ::Float64, ρ::Float64=0.0)
+  λ::Real
+  μ1::Real
+  μ2::Real
+  α1::Real
+  α2::Real
+  γ::Real
+  ρ::Real
+  function NonlinearMooneyRivlin2D_CV(; λ::Real, μ1::Real, μ2::Real, α1::Real, α2::Real, γ::Real, ρ::Real=0.0)
     new(λ, μ1, μ2, α1, α2, γ, ρ)
   end
 
@@ -496,14 +496,14 @@ struct NonlinearMooneyRivlin2D_CV <: IsoElastic
 end
 
 struct NonlinearMooneyRivlin_CV <: IsoElastic
-  λ::Float64
-  μ1::Float64
-  μ2::Float64
-  α1::Float64
-  α2::Float64
-  γ::Float64
-  ρ::Float64
-  function NonlinearMooneyRivlin_CV(; λ::Float64, μ1::Float64, μ2::Float64, α1::Float64, α2::Float64, γ::Float64, ρ::Float64=0.0)
+  λ::Real
+  μ1::Real
+  μ2::Real
+  α1::Real
+  α2::Real
+  γ::Real
+  ρ::Real
+  function NonlinearMooneyRivlin_CV(; λ::Real, μ1::Real, μ2::Real, α1::Real, α2::Real, γ::Real, ρ::Real=0.0)
     new(λ, μ1, μ2, α1, α2, γ, ρ)
   end
 
@@ -536,12 +536,12 @@ end
 
 
 struct NonlinearNeoHookean_CV <: IsoElastic
-  λ::Float64
-  μ::Float64
-  α::Float64
-  γ::Float64
-  ρ::Float64
-  function NonlinearNeoHookean_CV(; λ::Float64, μ::Float64, α::Float64, γ::Float64, ρ::Float64=0.0)
+  λ::Real
+  μ::Real
+  α::Real
+  γ::Real
+  ρ::Real
+  function NonlinearNeoHookean_CV(; λ::Real, μ::Real, α::Real, γ::Real, ρ::Real=0.0)
     new(λ, μ, α, γ, ρ)
   end
 
@@ -568,12 +568,12 @@ end
 
 
 struct NonlinearIncompressibleMooneyRivlin2D_CV <: IsoElastic
-  λ::Float64
-  μ::Float64
-  α::Float64
-  γ::Float64
-  ρ::Float64
-  function NonlinearIncompressibleMooneyRivlin2D_CV(; λ::Float64, μ::Float64, α::Float64, γ::Float64, ρ::Float64=0.0)
+  λ::Real
+  μ::Real
+  α::Real
+  γ::Real
+  ρ::Real
+  function NonlinearIncompressibleMooneyRivlin2D_CV(; λ::Real, μ::Real, α::Real, γ::Real, ρ::Real=0.0)
     new(λ, μ, α, γ, ρ)
   end
 
@@ -615,9 +615,9 @@ end
 
 
 struct EightChain <: IsoElastic
-  μ::Float64
-  N::Float64
-  function EightChain(; μ::Float64, N::Float64)
+  μ::Real
+  N::Real
+  function EightChain(; μ::Real, N::Real)
     new(μ, N)
   end
 
@@ -680,11 +680,11 @@ end
 
 
 struct TransverseIsotropy3D <: AnisoElastic
-  μ::Float64
-  α1::Float64
-  α2::Float64
-  ρ::Float64
-  function TransverseIsotropy3D(; μ::Float64, α1::Float64, α2::Float64, ρ::Float64=0.0)
+  μ::Real
+  α1::Real
+  α2::Real
+  ρ::Real
+  function TransverseIsotropy3D(; μ::Real, α1::Real, α2::Real, ρ::Real=0.0)
     new(μ, α1, α2, ρ)
   end
 
@@ -715,11 +715,11 @@ end
 
 
 struct TransverseIsotropy2D <: AnisoElastic
-  μ::Float64
-  α1::Float64
-  α2::Float64
-  ρ::Float64
-  function TransverseIsotropy2D(; μ::Float64, α1::Float64, α2::Float64, ρ::Float64=0.0)
+  μ::Real
+  α1::Real
+  α2::Real
+  ρ::Real
+  function TransverseIsotropy2D(; μ::Real, α1::Real, α2::Real, ρ::Real=0.0)
     new(μ, α1, α2, ρ)
   end
 
@@ -757,9 +757,9 @@ end
 
 
 struct HGO_4Fibers <: AnisoElastic
-  c1::Vector{Float64}
-  c2::Vector{Float64}
-  function HGO_4Fibers(; c1::Vector{Float64}, c2::Vector{Float64})
+  c1::Vector{Real}
+  c2::Vector{Real}
+  function HGO_4Fibers(; c1::Vector{Real}, c2::Vector{Real})
     @assert length(c1) == length(c2) == 4
     new(c1, c2)
   end
@@ -807,9 +807,9 @@ end
 
 
 struct HGO_1Fiber <: AnisoElastic
-  c1::Float64
-  c2::Float64
-  function HGO_1Fiber(; c1::Float64, c2::Float64)
+  c1::Real
+  c2::Real
+  function HGO_1Fiber(; c1::Real, c2::Real)
     new(c1, c2)
   end
 
@@ -837,11 +837,11 @@ end
 
 
 struct IncompressibleNeoHookean3D <: IsoElastic
-  λ::Float64
-  μ::Float64
-  ρ::Float64
-  δ::Float64
-  function IncompressibleNeoHookean3D(; λ::Float64, μ::Float64, ρ::Float64=0.0, δ::Float64=0.1)
+  λ::Real
+  μ::Real
+  ρ::Real
+  δ::Real
+  function IncompressibleNeoHookean3D(; λ::Real, μ::Real, ρ::Real=0.0, δ::Real=0.1)
     new(λ, μ, ρ, δ)
   end
 
@@ -897,11 +897,11 @@ function SecondPiola(obj::IncompressibleNeoHookean3D, Λ::Float64=1.0)
 end
 
 struct IncompressibleNeoHookean2D <: IsoElastic
-  λ::Float64
-  μ::Float64
-  ρ::Float64
-  δ::Float64
-  function IncompressibleNeoHookean2D(; λ::Float64, μ::Float64, ρ::Float64=0.0, δ::Float64=0.1)
+  λ::Real
+  μ::Real
+  ρ::Real
+  δ::Real
+  function IncompressibleNeoHookean2D(; λ::Real, μ::Real, ρ::Real=0.0, δ::Real=0.1)
     new(λ, μ, ρ, δ)
   end
 
@@ -938,11 +938,11 @@ struct IncompressibleNeoHookean2D <: IsoElastic
 end
 
 struct IncompressibleNeoHookean2D_CV <: IsoElastic
-  λ::Float64
-  μ::Float64
-  γ::Float64
-  ρ::Float64
-  function IncompressibleNeoHookean2D_CV(; λ::Float64, μ::Float64, γ::Float64, ρ::Float64=0.0)
+  λ::Real
+  μ::Real
+  γ::Real
+  ρ::Real
+  function IncompressibleNeoHookean2D_CV(; λ::Real, μ::Real, γ::Real, ρ::Real=0.0)
     new(λ, μ, γ, ρ)
   end
 
@@ -970,10 +970,10 @@ end
 
 
 struct ARAP2D_regularized <: IsoElastic
-  μ::Float64
-  ρ::Float64
-  δ::Float64
-  function ARAP2D_regularized(; μ::Float64, ρ::Float64=0.0, δ::Float64=0.1)
+  μ::Real
+  ρ::Real
+  δ::Real
+  function ARAP2D_regularized(; μ::Real, ρ::Real=0.0, δ::Real=0.1)
     new(μ, ρ, δ)
   end
 
@@ -1011,9 +1011,9 @@ end
 
 
 struct ARAP2D <: IsoElastic
-  μ::Float64
-  ρ::Float64
-  function ARAP2D(; μ::Float64, ρ::Float64=0.0)
+  μ::Real
+  ρ::Real
+  function ARAP2D(; μ::Real, ρ::Real=0.0)
     new(μ, ρ)
   end
 
@@ -1038,7 +1038,7 @@ end
 
 
 struct IsochoricNeoHookean3D <: IsoElastic
-  μ::Float64
+  μ::Real
 end
 
 function IsochoricNeoHookean3D(; μ::Real)
@@ -1083,12 +1083,12 @@ end
 
 
 struct IncompressibleNeoHookean3D_2dP <: Mechano
-  μ::Float64
-  τ::Float64
-  Δt::Float64
-  ρ::Float64
+  μ::Real
+  τ::Real
+  Δt::Real
+  ρ::Real
 
-  function IncompressibleNeoHookean3D_2dP(; μ::Float64, τ::Float64, Δt::Float64, ρ::Float64=0.0)
+  function IncompressibleNeoHookean3D_2dP(; μ::Real, τ::Real, Δt::Real, ρ::Real=0.0)
     new(μ, τ, Δt, ρ)
   end
 

@@ -5,11 +5,11 @@
 
 
 struct Magnetic <: Magneto
-  μ::Float64
-  αr::Ref{Float64}
-  χe::Float64
+  μ::Real
+  αr::Ref{Real}
+  χe::Real
   
-function Magnetic(; μ0::Float64, αr::Float64, χe::Float64=0.0)
+function Magnetic(; μ0::Real, αr::Real, χe::Real=0.0)
   new(μ0, Ref(αr), χe)
 end
 function (obj::Magnetic)(Λ::Float64=1.0)
@@ -27,9 +27,9 @@ end
 
 
 struct IdealMagnetic <: Magneto
-  μ::Float64
-  χe::Float64
-  function IdealMagnetic(; μ0::Float64, χe::Float64=0.0)
+  μ::Real
+  χe::Real
+  function IdealMagnetic(; μ0::Real, χe::Real=0.0)
     new(μ0, χe)
   end
   function (obj::IdealMagnetic)(Λ::Float64=1.0)
@@ -72,9 +72,9 @@ end
 
 
 struct IdealMagnetic2D <: Magneto
-  μ::Float64
-  χe::Float64
-  function IdealMagnetic2D(; μ0::Float64, χe::Float64=0.0)
+  μ::Real
+  χe::Real
+  function IdealMagnetic2D(; μ0::Real, χe::Real=0.0)
     new(μ0, χe)
   end
 
@@ -113,14 +113,14 @@ end
 
 
 struct HardMagnetic <: Magneto
-  μ::Float64
-  αr::Float64
-  χe::Float64
-  χr::Float64
-  χt::Float64
-  βmok::Float64
-  βcoup::Float64
-  function HardMagnetic(; μ0::Float64, αr::Float64, χe::Float64=0.0, χr::Float64=8.0, χt::Union{Float64,Nothing}=nothing, βmok::Float64=0.0, βcoup::Float64=0.0)
+  μ::Real
+  αr::Real
+  χe::Real
+  χr::Real
+  χt::Real
+  βmok::Real
+  βcoup::Real
+  function HardMagnetic(; μ0::Real, αr::Real, χe::Real=0.0, χr::Real=8.0, χt::Union{Real,Nothing}=nothing, βmok::Real=0.0, βcoup::Real=0.0)
     χt_val = isnothing(χt) ? χe : χt
     new(μ0, αr, χe, χr, χt_val, βmok, βcoup)
   end
@@ -163,14 +163,14 @@ end
 
 
 struct HardMagnetic2D <: Magneto
-  μ::Float64
-  αr::Ref{Float64}
-  χe::Float64
-  χr::Float64
-  χt::Float64
-  βmok::Float64
-  βcoup::Float64
-  function HardMagnetic2D(; μ0::Float64, αr::Float64, χe::Float64=0.0, χr::Float64=8.0, χt::Union{Float64,Nothing}=nothing, βmok::Float64=0.0, βcoup::Float64=0.0)
+  μ::Real
+  αr::Ref{Real}
+  χe::Real
+  χr::Real
+  χt::Real
+  βmok::Real
+  βcoup::Real
+  function HardMagnetic2D(; μ0::Real, αr::Real, χe::Real=0.0, χr::Real=8.0, χt::Union{Real,Nothing}=nothing, βmok::Real=0.0, βcoup::Real=0.0)
     χt_val = isnothing(χt) ? χe : χt
     new(μ0, Ref(αr), χe, χr, χt_val, βmok, βcoup)
   end
