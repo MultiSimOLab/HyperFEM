@@ -4,14 +4,17 @@
 # ===================
 
 
-struct Magnetic <: Magneto
+struct Magnetic{T<:Real} <: Magneto
   μ::Real
-  αr::Ref{Float64}
+  αr::Base.RefValue{T}
   χe::Real
   
-function Magnetic(; μ0::Real, αr::Real, χe::Real=0.0)
-  new(μ0, Ref(αr), χe)
+  function Magnetic(; μ0::Real, αr::Real, χe::Real=0.0)
+    T = typeof{αr}
+    new{T}(μ0, Ref(αr), χe)
+  end
 end
+
 function (obj::Magnetic)(Λ::Float64=1.0)
   μ, αr, χe = obj.μ, obj.αr, obj.χe
   ℋᵣ(N) = αr[] * Λ * N
@@ -20,9 +23,6 @@ function (obj::Magnetic)(Λ::Float64=1.0)
   ∂Ψmm_∂φ(ℋ₀, N) = (-μ) * (ℋ₀ + ℋᵣ(N)) * (1 + χe)
   ∂Ψmm_∂φφ(ℋ₀, N) = (-μ) * Id(N) * (1 + χe)
   return (Ψmm, ∂Ψmm_∂φ, ∂Ψmm_∂φφ)
-end
-
-
 end
 
 
@@ -162,9 +162,9 @@ struct HardMagnetic <: Magneto
 end
 
 
-struct HardMagnetic2D <: Magneto
+struct HardMagnetic2D{T<:Real} <: Magneto
   μ::Real
-  αr::Ref{Float64}
+  αr::Base.RefValue{T}
   χe::Real
   χr::Real
   χt::Real
@@ -172,7 +172,8 @@ struct HardMagnetic2D <: Magneto
   βcoup::Real
   function HardMagnetic2D(; μ0::Real, αr::Real, χe::Real=0.0, χr::Real=8.0, χt::Union{Real,Nothing}=nothing, βmok::Real=0.0, βcoup::Real=0.0)
     χt_val = isnothing(χt) ? χe : χt
-    new(μ0, Ref(αr), χe, χr, χt_val, βmok, βcoup)
+    T = typeof{αr}
+    new{T}(μ0, Ref(αr), χe, χr, χt_val, βmok, βcoup)
   end
 
   function (obj::HardMagnetic2D)(Λ::Float64=1.0)
@@ -206,5 +207,23 @@ struct HardMagnetic2D <: Magneto
     ∂Ψmm_∂φu(F, ℋ₀) = ∂Ψmm_∂ℋ₀H(F, ℋ₀) * _∂H∂F_2D() + (∂Ψmm_∂ℋ₀J(F, ℋ₀) ⊗₁²³ H(F))
     ∂Ψmm_∂φφ(F, ℋ₀) = (-μ / (J(F))) * (H(F)' * H(F)) * (1 + χe)
     return (Ψmm, ∂Ψmm_∂u, ∂Ψmm_∂φ, ∂Ψmm_∂uu, ∂Ψmm_∂φu, ∂Ψmm_∂φφ)
+  end
+end
+
+
+function Base.getproperty(obj::Union{Magnetic,HardMagnetic2D}, prop::Symbol)
+  if prop === :αr
+    return getfield(obj, :αr)[]
+  else
+    return getfield(obj, prop)
+  end
+end
+
+
+function Base.setproperty!(obj::Union{Magnetic,HardMagnetic2D}, prop::Symbol, val)
+  if prop === :αr
+    return getfield(obj, :αr)[] = val
+  else
+    return setfield!(obj, prop, val)
   end
 end
