@@ -35,9 +35,9 @@ struct ThermoElectroMech_PINNs{A,B,C,D} <: ThermoElectroMechano{Thermo,Electro,M
   ϵ::C
   β::D
   nLayer::Int64
-  κ::Float64
+  κ::Real
 
-  function ThermoElectroMech_PINNs(; W, b, ϵ, β, nLayer::Int64, κ::Float64=1e-4)
+  function ThermoElectroMech_PINNs(; W, b, ϵ, β, nLayer::Int64, κ::Real=1e-4)
     A, B, C, D = typeof(W), typeof(b), typeof(ϵ), typeof(β)
     new{A,B,C,D}(W, b, ϵ, β, nLayer, κ)
   end

@@ -4,8 +4,8 @@
 # ===================
 
 struct IdealDielectric <: Electro
-  ε::Float64
-  function IdealDielectric(; ε::Float64)
+  ε::Real
+  function IdealDielectric(; ε::Real)
     new(ε)
   end
 end

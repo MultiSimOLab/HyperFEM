@@ -61,13 +61,13 @@ struct ThermoElectroMech_Govindjee{T<:Thermo,E<:Electro,M<:Mechano} <: ThermoEle
   dfdθ::Function
   gθ::Function
   dgdθ::Function
-  β::Float64
+  β::Real
 
-  function ThermoElectroMech_Govindjee(thermo::T, electro::E, mechano::M; fθ::Function, dfdθ::Function, gθ::Function, dgdθ::Function, β::Float64=0.0) where {T<:Thermo,E<:Electro,M<:Mechano}
+  function ThermoElectroMech_Govindjee(thermo::T, electro::E, mechano::M; fθ::Function, dfdθ::Function, gθ::Function, dgdθ::Function, β::Real=0.0) where {T<:Thermo,E<:Electro,M<:Mechano}
     new{T,E,M}(thermo, electro, mechano, fθ, dfdθ, gθ, dgdθ, β)
   end
 
-  function ThermoElectroMech_Govindjee(; thermo::T, electro::E, mechano::M, fθ::Function, dfdθ::Function, gθ::Function, dgdθ::Function, β::Float64=0.0) where {T<:Thermo,E<:Electro,M<:Mechano}
+  function ThermoElectroMech_Govindjee(; thermo::T, electro::E, mechano::M, fθ::Function, dfdθ::Function, gθ::Function, dgdθ::Function, β::Real=0.0) where {T<:Thermo,E<:Electro,M<:Mechano}
     new{T,E,M}(thermo, electro, mechano, fθ, dfdθ, gθ, dgdθ, β)
   end
 

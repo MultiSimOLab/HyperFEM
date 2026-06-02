@@ -8,9 +8,9 @@ using ..TensorAlgebra
 
 struct ViscousIncompressible <: Visco
   elasto::Elasto
-  τ::Float64
-  Δt::Ref{Float64}
-  function ViscousIncompressible(elasto; τ::Float64)
+  τ::Real
+  Δt::Ref{Real}
+  function ViscousIncompressible(elasto; τ::Real)
     new(elasto, τ, 0)
   end
   function (obj::ViscousIncompressible)()
@@ -96,7 +96,7 @@ end
 struct GeneralizedMaxwell{E<:Elasto} <: ViscoElastic{E}
   longterm::E
   branches::NVisco{N} where N
-  Δt::Ref{Float64}
+  Δt::Ref{Real}
   function GeneralizedMaxwell(longTerm::E, branches::Vararg{Visco}) where {E<:Elasto}
     new{E}(longTerm,NVisco(branches),0)
   end

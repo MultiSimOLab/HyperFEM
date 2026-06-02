@@ -4,11 +4,11 @@
 # ===================
 
 struct ThermalModel <: Thermo
-  Cv::Float64
-  θr::Float64
-  α::Float64
-  κ::Float64
-  function ThermalModel(; Cv::Float64, θr::Float64, α::Float64, κ::Float64=10.0)
+  Cv::Real
+  θr::Real
+  α::Real
+  κ::Real
+  function ThermalModel(; Cv::Real, θr::Real, α::Real, κ::Real=10.0)
     new(Cv, θr, α, κ)
   end
 end
@@ -26,8 +26,8 @@ end
 # ===================
 
 struct EntropicElasticityLaw <: ThermalLaw
-  θr::Float64
-  γ::Float64
+  θr::Real
+  γ::Real
   EntropicElasticityLaw(; θr, γ) = new(θr, γ)
 end
 
@@ -40,9 +40,9 @@ function (law::EntropicElasticityLaw)()
 end
 
 struct NonlinearMeltingLaw <: ThermalLaw
-  θr::Float64
-  θM::Float64
-  γ::Float64
+  θr::Real
+  θM::Real
+  γ::Real
   NonlinearMeltingLaw(; θr, θM, γ) = new(θr, θM, γ)
 end
 
@@ -55,10 +55,10 @@ function (law::NonlinearMeltingLaw)()
 end
 
 struct NonlinearSofteningLaw <: ThermalLaw
-  θr::Float64
-  θt::Float64
-  γ::Float64
-  δ::Float64
+  θr::Real
+  θt::Real
+  γ::Real
+  δ::Real
   NonlinearSofteningLaw(; θr, θt, γ, δ=0) = new(θr, θt, γ, δ)
 end
 
@@ -73,8 +73,8 @@ function (law::NonlinearSofteningLaw)()
 end
 
 struct TrigonometricLaw <: ThermalLaw
-  θr::Float64
-  θM::Float64
+  θr::Real
+  θM::Real
 end
 
 function (law::TrigonometricLaw)()
@@ -89,10 +89,10 @@ function (law::TrigonometricLaw)()
 end
 
 struct PolynomialLaw <: ThermalLaw
-  θr::Float64
-  a::Float64
-  b::Float64
-  c::Float64
+  θr::Real
+  a::Real
+  b::Real
+  c::Real
 end
 
 function (law::PolynomialLaw)()
