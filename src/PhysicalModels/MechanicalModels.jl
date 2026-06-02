@@ -759,9 +759,9 @@ end
 struct HGO_4Fibers{T<:Real} <: AnisoElastic
   c1::Vector{T}
   c2::Vector{T}
-  function HGO_4Fibers(; c1::Vector{Real}, c2::Vector{Real})
+  function HGO_4Fibers(; c1::Vector{T}, c2::Vector{T}) where {T<:Real}
     @assert length(c1) == length(c2) == 4
-    new(c1, c2)
+    new{T}(c1, c2)
   end
 
   function (obj::HGO_4Fibers)(Λ::Float64=1.0; Threshold=0.01)
